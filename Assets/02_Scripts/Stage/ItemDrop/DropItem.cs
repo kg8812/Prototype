@@ -1,0 +1,72 @@
+using System;
+using Apis.Managers;
+using UnityEngine;
+using UnityEngine.Events;
+using Random = UnityEngine.Random;
+
+namespace Apis
+{
+    public enum DropItemType
+    {
+        Gold, Accessory, ActiveSkill, Weapon, Germ
+    }
+    public abstract class DropItem : MonoBehaviour , IOnInteract
+    {
+
+        // public int dropItemId;
+        public Rigidbody2D rigid;
+
+        public UnityEvent InteractionEvent;
+        
+        protected bool isInteractable;
+
+        bool Check() => isInteractable;
+        public Func<bool> InteractCheckEvent { get; set; }
+
+        public void OnInteract()
+        {
+            InteractionEvent?.Invoke();
+            InvokeInteraction();
+        }
+
+        public abstract void InvokeInteraction();
+
+        protected void Init(){
+            rigid = GetComponent<Rigidbody2D>();
+            InteractCheckEvent -= Check;
+            InteractCheckEvent += Check;
+        }
+    
+        public virtual void Dropping(){
+            Init();
+            float vx = Random.Range(-2f, 2f);
+            float vy = Random.Range(2f, 4f);
+            rigid.velocity = new Vector2(vx, vy);
+
+            // 드롭아이템 통일 스폰 물리 효과
+            Invoke(nameof(Droped), 1f);
+
+        }
+
+        //when 바닥에 닿았을 떄
+        protected virtual void Droped(){
+
+        }
+        
+        
+
+        protected virtual void OnEnable()
+        {
+        }
+
+        protected virtual void ReturnObject(SceneData _)
+        {
+
+        }
+
+        protected virtual void OnDisable()
+        { 
+        }
+    }
+
+}

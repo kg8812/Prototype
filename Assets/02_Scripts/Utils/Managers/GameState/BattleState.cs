@@ -1,0 +1,301 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using Apis;
+using Apis;
+using Defaut;
+using UI;
+using UnityEngine;
+
+namespace GameStateSpace
+{
+    public class BattleState : GameState
+    {
+        private Dictionary<StateCond, Guid> _guids;
+        
+        public BattleState()
+        {
+            _guids = new();
+            _guids.Add(StateCond.MonsterRecog, Guid.Empty);
+            _guids.Add(StateCond.Arena, Guid.Empty);
+            _guids.Add(StateCond.PlayerHit, Guid.Empty);
+            _guids.Add(StateCond.PlayerDeffued, Guid.Empty);
+
+            InitMonsterRecog();
+            InitArena();
+            InitPlayerHit();
+            InitPlayerDebuffed();
+        }
+
+        #region condition on off
+
+        private enum StateCond
+        {
+            MonsterRecog, Arena, PlayerHit, PlayerDeffued
+        }
+
+        private void TryOnWithCondition(StateCond condition)
+        {
+            _guids[condition] = GameManager.instance.TryOnGameState(GameStateType.BattleState);
+        }
+
+        private void TryOffWithCondition(StateCond condition)
+        {
+            if (_guids[condition] == Guid.Empty) return;
+            GameManager.instance.TryOffGameState(GameStateType.BattleState, _guids[condition]);
+            _guids[condition] = Guid.Empty;
+        }
+
+        #endregion
+        
+
+        public override void OnEnterState()
+        {
+        }
+
+        public override void OnExitState()
+        {
+        }
+
+        public override void KeyBoardControlling()
+        {
+            base.KeyBoardControlling();
+            GameManager.PlayerController?.KeyControl();
+            GameManager.DefaultController?.KeyControl();
+        }
+
+        public override void GamePadControlling()
+        {
+            base.GamePadControlling();
+            GameManager.PlayerController?.GamePadControl();
+            GameManager.DefaultController?.GamePadControl();
+        }
+
+
+        /**
+         * 진입 조건 목록 (or)
+         * 1. 몬스터 인식
+         * 2. 아레나 진입 - awake에서 관리
+         * 3. 플레이어 피격 - player onhit 기준
+         * 4. 일부 도트데미지 - player에 Debuff_DotDmg 존재 여부
+         */
+
+        #region 개별 조건들
+
+        #region 몬스터 인식
+        
+        private List<Monster> _recogMonsterList;
+
+        private void InitMonsterRecog()
+        {
+            _recogMonsterList = new();
+        }
+        
+        public void AddRecogMonster(Monster mon)
+        {
+            if (!_recogMonsterList.Contains(mon))
+            {
+                void ExitRecog(EventParameters _)
+                {
+                    RemoveRecogMonster(mon);
+                    mon.RemoveEvent(EventType.OnRecognitionExit, ExitRecog);
+                    mon.RemoveEvent(EventType.OnDisable, ExitRecog);
+                }
+                mon.AddEvent(EventType.OnRecognitionExit, ExitRecog);
+                mon.AddEvent(EventType.OnDisable, ExitRecog);
+                _recogMonsterList.Add(mon);
+                TryOnWithCondition(StateCond.MonsterRecog);
+            }
+            
+        }
+        
+        public void RemoveRecogMonster(Monster mon)
+        {
+            if (_recogMonsterList.Contains(mon))
+            {
+                _recogMonsterList.Remove(mon);
+                TryOnWithCondition(StateCond.MonsterRecog);
+            }
+        }
+
+        #endregion
+
+
+        #region 아레나 진입
+        
+        private bool _isEnterArena;
+        
+        private void InitArena()
+        {
+            _isEnterArena = false;
+            GameManager.instance.whenArenaStateChanged.AddListener(value =>
+            {
+                _isEnterArena = value;
+                if(value)
+                    TryOnWithCondition(StateCond.Arena);
+                else
+                    TryOffWithCondition(StateCond.Arena);
+            });
+        }
+
+        #endregion
+
+
+        #region 플레이어 피격
+        
+        private bool _isPlayerHit;
+        private Coroutine _battleStateHitCoroutine;
+        
+
+        private void InitPlayerHit()
+        {
+            _isPlayerHit = false;
+            _battleStateHitCoroutine = null;
+            
+            GameManager.instance.InitWithPlayer(p =>
+            {
+                p.AddEvent(EventType.OnAfterHit, LastHit);
+            });
+        }
+        
+        private void LastHit(EventParameters eventParameters)
+        {
+            if (!_isPlayerHit)
+            {
+                _isPlayerHit = true;
+                TryOnWithCondition(StateCond.PlayerHit);
+            }
+
+            if (_battleStateHitCoroutine != null)
+            {
+                GameManager.instance.StopCoroutineWrapper(_battleStateHitCoroutine);
+            }
+            _battleStateHitCoroutine = GameManager.instance.StartCoroutineWrapper(DelayLastHitForBattleState());
+        }
+        
+        private IEnumerator DelayLastHitForBattleState()
+        {
+            yield return new WaitForSeconds(Consts.BattleStateHitDelay);
+            if (_isPlayerHit)
+            {
+                _isPlayerHit = false;
+                TryOffWithCondition(StateCond.PlayerHit);
+            }
+        }
+
+        #endregion
+
+
+        #region 플레이어 도트 데미지
+
+        private bool _isPlayerDebuffed;
+
+        private void InitPlayerDebuffed()
+        {
+            _isPlayerDebuffed = false;
+            GameManager.instance.InitWithPlayer(p =>
+            {
+                p.AddEvent(EventType.OnSubBuffTaken, info =>
+                {
+                    if(info?.buffData.takenSubBuff is Debuff_DotDmg && info.buffData.takenSubBuff.target.CompareTag("Enemy"))
+                    {
+                        ChangePlayerDebuffed(true);
+                    }
+                });
+                p.AddEvent(EventType.OnSubBuffRemove, info =>
+                {
+                    if (info?.buffData.removedSubBuff is Debuff_DotDmg && info.buffData.removedSubBuff.target.CompareTag("Enemy"))
+                    {
+                        bool isFound = false;
+
+                        p.SubBuffManager.Traverse(subBuff =>
+                        {
+                            if (subBuff is Debuff_DotDmg && subBuff.buff.buffActor.CompareTag("Enemy"))
+                            {
+                                isFound = true;
+                            }
+                        });
+                        ChangePlayerDebuffed(isFound);
+                    }
+               
+                });
+            });
+        }
+        private void ChangePlayerDebuffed(bool value)
+        {
+            if (value == _isPlayerDebuffed) return;
+
+            if (value)
+            {
+                _isPlayerDebuffed = true;
+                TryOnWithCondition(StateCond.PlayerDeffued);
+            }
+            else
+            {
+                _isPlayerDebuffed = false;
+                TryOffWithCondition(StateCond.PlayerDeffued);
+            }
+        }
+
+        #endregion
+        #endregion
+        
+        #region 보스 체력바
+
+        // 일반 몬스터를 제외한 엘리트와 보스 몬스터
+        [HideInInspector] public List<Monster> curFightMonster = new();
+
+        private float curHp;
+        private float maxHp;
+        private UI_BossInfo _monsterHpBar;
+
+
+        private void CalculateHpRatio()
+        {
+           
+        }
+
+        public void RegisterMonsterForHpBar(Monster monster)
+        {
+            if (curFightMonster.Contains(monster))
+            {
+                return;
+            }
+
+            if (curFightMonster.Count == 0)
+            {
+                curFightMonster.Add(monster);
+                _monsterHpBar = GameManager.UI.CreateUI("UI_BossInfo", UIType.Main).GetComponent<UI_BossInfo>();
+                _monsterHpBar.Init(monster);
+                monster.AddEvent(EventType.OnHpDown, (ai) => { CalculateHpRatio(); });
+            }
+            else
+            {
+                if (curFightMonster[0].monsterId == monster.monsterId)
+                {
+                    curFightMonster.Add(monster);
+                    monster.AddEvent(EventType.OnHpDown, (ai) => { CalculateHpRatio(); });
+                }
+            }
+        }
+
+        public void RemoveMonsterForHpBar(Monster monster)
+        {
+            curFightMonster.Remove(monster);
+            if (curFightMonster.Count == 0)
+            {
+                GameManager.UI.CloseUI(_monsterHpBar);
+            }
+        }
+
+        public void ResetMonsterHpBar()
+        {
+            curFightMonster.Clear();
+            GameManager.UI.CloseUI(_monsterHpBar);
+        }
+
+        #endregion
+        
+    }
+
+}
