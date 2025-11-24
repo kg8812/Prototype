@@ -18,10 +18,6 @@ namespace Apis.Managers
         Init,
         Intro,
         Title,
-        Tutorial,
-        Lobby,
-        Sector,
-        Ending,
         Loading,
         Other
     }
@@ -139,11 +135,6 @@ namespace Apis.Managers
 
             return true;
         }
-
-        public bool IsSector(string sceneName)
-        {
-            return sceneName is "MainWorld";
-        }
         private bool IsFading(SceneData scene)
         {
             if (scene.sceneType == SceneType.Init || scene.sceneType == SceneType.Loading) return false;
@@ -155,32 +146,22 @@ namespace Apis.Managers
             SceneData newScene = new();
             newScene.sceneName = sceneName;
 
-            if (sceneName == "Init")
+            if (sceneName == Define.SceneNames.Init)
             {
                 newScene.sceneType = SceneType.Init;
                 newScene.isPlayerMustExist = false;
             }
-            else if (sceneName == "MainWorld")
-            {
-                newScene.sceneType = SceneType.Sector;
-                newScene.isPlayerMustExist = true;
-            }
-            else if (sceneName == "LoadingScene")
+            else if (sceneName == Define.SceneNames.Loading)
             {
                 newScene.sceneType = SceneType.Loading;
                 newScene.isPlayerMustExist = false;
             }
-            else if (sceneName.StartsWith("Sector"))
-            {
-                newScene.sceneType = SceneType.Sector;
-                newScene.isPlayerMustExist = true;
-            }
-            else if (sceneName == "Intro")
+            else if (sceneName == Define.SceneNames.Intro)
             {
                 newScene.sceneType = SceneType.Intro;
                 newScene.isPlayerMustExist = false;
             }
-            else if (sceneName == "Title")
+            else if (sceneName == Define.SceneNames.TitleSceneName)
             {
                 newScene.sceneType = SceneType.Title;
                 newScene.isPlayerMustExist = false;
@@ -191,13 +172,12 @@ namespace Apis.Managers
                 newScene.isPlayerMustExist = true;
             }
 
-            // Debug.Log($"scene type is {newScene.sceneName} {newScene.sceneType.ToString()}");
             return newScene;
         }
 
         private void OnSceneLoaded(Scene scene1, Scene scene2)
         {
-            if (scene2.name == "Init") return;
+            if (scene2.name == Define.SceneNames.Init) return;
             SceneData newScene = GetNextSceneData(scene2.name);
             if (newScene.sceneType == SceneType.Loading)
             {

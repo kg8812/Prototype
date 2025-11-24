@@ -65,7 +65,6 @@ public class Define
 
     #endregion
 
-
     #region Address 모음
 
     #region 사운드
@@ -140,6 +139,9 @@ public class Define
 
     public class SceneNames
     {
+        public const string Intro = "Intro";
+        public const string Init = "Init";
+        public const string Loading = "LoadingScene";
         public const string TitleSceneName = "Title";
         public const string LobbySceneName = "Lobby";
         public const string MainWorldSceneName = "MainWorld";

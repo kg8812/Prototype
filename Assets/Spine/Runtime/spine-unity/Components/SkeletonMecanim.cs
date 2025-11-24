@@ -117,7 +117,7 @@ namespace Spine.Unity {
 			UpdateAnimation(deltaTime);
 		}
 
-		public void UpdateAnimation (float deltaTime) {
+		protected void UpdateAnimation (float deltaTime) {
 			wasUpdatedAfterInit = true;
 
 			// animation status is kept by Mecanim Animator component

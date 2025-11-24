@@ -160,8 +160,6 @@ public partial class GameManager
         Sound.StopSceneBGM();
         FadeManager.instance.Fading(() =>
         {
-            SectorMag.MoveToLastShelter(true);
-            instance.BattleStateClass.ResetMonsterHpBar();
             instance.Player.ResetPlayerStatus();
         });
        
@@ -207,7 +205,6 @@ public partial class GameManager
     {
         if (Scene.CurSceneData.isPlayerMustExist && Player != null)
         {
-            Slot.SaveCurrentSlot();
         }
     }
 }

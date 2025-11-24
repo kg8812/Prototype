@@ -240,62 +240,6 @@ namespace GameStateSpace
         #endregion
         #endregion
         
-        #region 보스 체력바
-
-        // 일반 몬스터를 제외한 엘리트와 보스 몬스터
-        [HideInInspector] public List<Monster> curFightMonster = new();
-
-        private float curHp;
-        private float maxHp;
-        private UI_BossInfo _monsterHpBar;
-
-
-        private void CalculateHpRatio()
-        {
-           
-        }
-
-        public void RegisterMonsterForHpBar(Monster monster)
-        {
-            if (curFightMonster.Contains(monster))
-            {
-                return;
-            }
-
-            if (curFightMonster.Count == 0)
-            {
-                curFightMonster.Add(monster);
-                _monsterHpBar = GameManager.UI.CreateUI("UI_BossInfo", UIType.Main).GetComponent<UI_BossInfo>();
-                _monsterHpBar.Init(monster);
-                monster.AddEvent(EventType.OnHpDown, (ai) => { CalculateHpRatio(); });
-            }
-            else
-            {
-                if (curFightMonster[0].monsterId == monster.monsterId)
-                {
-                    curFightMonster.Add(monster);
-                    monster.AddEvent(EventType.OnHpDown, (ai) => { CalculateHpRatio(); });
-                }
-            }
-        }
-
-        public void RemoveMonsterForHpBar(Monster monster)
-        {
-            curFightMonster.Remove(monster);
-            if (curFightMonster.Count == 0)
-            {
-                GameManager.UI.CloseUI(_monsterHpBar);
-            }
-        }
-
-        public void ResetMonsterHpBar()
-        {
-            curFightMonster.Clear();
-            GameManager.UI.CloseUI(_monsterHpBar);
-        }
-
-        #endregion
-        
     }
 
 }

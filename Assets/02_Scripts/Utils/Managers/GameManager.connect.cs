@@ -104,23 +104,7 @@ public partial class GameManager : Singleton<GameManager>
             return _trigger;
         }
     }
-
-
-    private static SectorManager _sector;
-
-    public static SectorManager SectorMag
-    {
-        get
-        {
-            if (_sector == null)
-            {
-                _sector = new SectorManager();
-                // _sector.Init();
-            }
-
-            return _sector;
-        }
-    }
+    
 
     static SaveManager _save;
 
@@ -130,22 +114,6 @@ public partial class GameManager : Singleton<GameManager>
         {
             _save ??= new SaveManager();
             return _save;
-        }
-    }
-
-    
-    private static SlotManager _slot;
-
-    public static SlotManager Slot
-    {
-        get
-        {
-            if (_slot == null)
-            {
-                _slot = new SlotManager();
-                // _slot.Init();
-            }
-            return _slot;
         }
     }
 
@@ -162,28 +130,9 @@ public partial class GameManager : Singleton<GameManager>
         }
     }
 
-    private static DirectingManager _directing;
-
-    public static DirectingManager Directing
-    {
-        get
-        {
-            if (_directing == null)
-            {
-                _directing = new DirectingManager();
-                _directing.Init();
-            }
-
-            return _directing;
-        }
-    }
-
     private static ItemFactoryManager _item;
 
     public static ItemFactoryManager Item => _item ??= new ItemFactoryManager();
-
-    private static TagManager _tag;
-    public static TagManager Tag => _tag ??= new TagManager();
 
     private static AttackObject _atkObj;
 

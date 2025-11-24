@@ -106,7 +106,6 @@ public partial class GameManager
             {
                 playerTrans = null;
                 PlayerController = null;
-                TargetGroupCamera.instance.ResetTargets();
                 return;
             }
 
@@ -131,7 +130,6 @@ public partial class GameManager
                 Exp += info.target.Exp;
             });
             // CameraManager.instance.PlayerCam.Follow = playerTrans;
-            TargetGroupCamera.instance.RegisterTarget(CameraManager.instance.fakePlayerTarget.transform, player.camWeight, player.camRadius);
             player.AddEvent(EventType.OnDeath, _ => OnPlayerDie.Invoke(player));
             ChangeControllingEntity(player);
         }
