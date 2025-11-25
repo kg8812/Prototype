@@ -201,17 +201,7 @@ namespace Apis
             _isRecognized = true;
             GameManager.instance.BattleStateClass.AddRecogMonster(this);
             // 보스나 엘리트면 체력바 생성
-            if (MonsterData?.monsterType != MonsterType.Common)
-            {
-                GameManager.instance.BattleStateClass.RegisterMonsterForHpBar(this);
-
-                void Remove(EventParameters _)
-                {
-                    GameManager.instance.BattleStateClass.RemoveMonsterForHpBar(this);
-                    RemoveEvent(EventType.OnDeath, Remove);
-                }
-                AddEvent(EventType.OnDeath, Remove);
-            }
+           
             ExecuteEvent(EventType.OnRecognitionEnter, new EventParameters(this));
         }
 

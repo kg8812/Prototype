@@ -13,7 +13,6 @@ namespace Apis.SkillTrees
         private string description;
         private PlayerType _playerType;
         private TreeTypeEnum treeType;
-        private TagManager.SkillTreeTag[] tags;
         private int[] tagNames;
         private SlotTypeEnum _slotType;
         
@@ -35,7 +34,6 @@ namespace Apis.SkillTrees
         public int Index => index;
         public PlayerType PlayerType => _playerType;
         public TreeTypeEnum TreeType => treeType;
-        public TagManager.SkillTreeTag[] Tags => tags;
         public int[] TagNames => tagNames;
         
         // 호출은 액티브 -> 패시브 순으로 호출됨.
@@ -62,27 +60,11 @@ namespace Apis.SkillTrees
                 // description = LanguageManager.Str(data.description);
                 _playerType = data.playerType;
                 treeType = data.treeType;
-                tags = data.tags;
                 tagNames = data.tagNames;
                 _slotType = data.slotType;
 
                 level = 0;
             }
-        }
-
-        public bool CheckEquipable(SkillTreeSlot slot)
-        {
-            switch (slot.slotType)
-            {
-                case SkillTreeSlot.SlotType.Low:
-                    return SlotType != SlotTypeEnum.High;
-                case SkillTreeSlot.SlotType.High:
-                    return SlotType != SlotTypeEnum.Low;
-                case SkillTreeSlot.SlotType.Inven:
-                    return true;
-            }
-
-            return false;
         }
     }
 }

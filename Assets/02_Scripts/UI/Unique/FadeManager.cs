@@ -134,7 +134,7 @@ namespace UI
             
             float curTime = 0;
             
-            while (GameManager.instance.Player != null && GameManager.SectorMag.IsFirstSector && curTime < 5)
+            while (GameManager.instance.Player != null  && curTime < 5)
             {
                 curTime += 0.03f;
                 yield return new WaitForSecondsRealtime(0.03f);
@@ -148,7 +148,6 @@ namespace UI
         {
             if (GameManager.Scene.CurSceneData.isPlayerMustExist && _fadeStateGuid != Guid.Empty)
             {
-                IgnoreTimeScaleTrigger.ForceUpdateTrigger();
                 GameManager.instance.TryOffGameState(GameStateType.DefaultState,_fadeStateGuid);
                 _fadeStateGuid = Guid.Empty;
             } 

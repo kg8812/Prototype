@@ -55,7 +55,6 @@ public partial class Player
     {
         Shake(shakeTime);
         Blink(blinkTime);
-        effector.Play(PlayerEffector.CommonPlayerEffect.HIT, false, true);
     }
 
     private void Shake(float duration)

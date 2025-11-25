@@ -7,10 +7,8 @@ public class SkeletonAttach : MonoBehaviour
 {
     Actor _actor;
     public Actor Actor => _actor ??= transform.GetComponentInParentAndChild<Actor>();
-    private FootPrintCreator _footPrintCreator;
     protected virtual void Awake()
     {
-        _footPrintCreator = Actor.transform.GetComponentInParentAndChild<FootPrintCreator>();
     }
     
     public void AttackInCombo(int combo)
@@ -111,12 +109,6 @@ public class SkeletonAttach : MonoBehaviour
         GameManager.Factory.Return(transform.parent.gameObject);
     }
 
-    public void PullGrab(float time)
-    {
-        if(Actor is Player player)
-            player.PullGrab(time);
-    }
-
     public void InvinciblityOn()
     {
         if(Actor is Player player)
@@ -127,59 +119,6 @@ public class SkeletonAttach : MonoBehaviour
     {
         if(Actor is Player player)
             player.Invincibility(false);
-    }
-
-    public void ShakePlayerCam(string str)
-    {
-        Actor.ShakePlayerCam(str);
-    }
-
-    public void CreateFootPrint()
-    {
-        if (_footPrintCreator != null)
-        {
-            _footPrintCreator.SpawnFootPrint();
-        }
-    }
-
-    public void AttackEvent(string str)
-    {
-        if(Actor is not Player player || str.Length == 0) return;
-
-        var indices = str.Split(",");
-
-        if(indices.Length > 2){
-            Debug.LogError("Too Many Indices");
-            return;
-        }
-
-        if(player.AttackEvents == null){
-            Debug.LogError("AttackEvent Container is not loaded");
-            return;
-        }
-
-        if(player.PressingDir == 0 
-            && indices[0].Length > 0 
-            && int.TryParse(indices[0], out int istay))
-        {
-            // 정지 공격 이벤트
-            if(player.AttackEvents.Count <= istay){
-                Debug.LogError("AttackEvents index out of range");
-                return;
-            }
-            player.AttackEvents[istay].Invoke(player);
-        }
-        else if(player.PressingDir != 0 
-            && indices[1].Length > 0
-            && int.TryParse(indices[1], out int imove))
-        {
-            // 이동동 공격 이벤트
-            if(player.AttackEvents.Count <= imove){
-                Debug.LogError("AttackEvents index out of range");
-                return;
-            }
-            player.AttackEvents[imove].Invoke(player);
-        }
     }
 
     public void StopComboDelay()

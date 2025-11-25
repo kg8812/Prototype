@@ -28,7 +28,7 @@ namespace PlayerState {
                 _player.StopMoving();
 
             float _moveMultiplier = 1 * _player.MoveSpeed / _player.StatManager.BaseStat.Get(ActorStatType.MoveSpeed);
-            float normalizedSpeed = _player.Rb.velocity.magnitude / _player.MaxMoveVel * Mathf.Sign(_player.Rb.velocity.x);
+            float normalizedSpeed = _player.Rb.linearVelocity.magnitude / _player.MaxMoveVel * Mathf.Sign(_player.Rb.linearVelocity.x);
             // Threshold 1을 기준으로 정규화
             _player.AnimController.SetFloat(EAnimationFloat.MoveSpeed, normalizedSpeed * _moveMultiplier);
         }

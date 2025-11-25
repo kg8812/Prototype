@@ -47,8 +47,7 @@ namespace Apis
 
         public override Accessory CreateRandom()
         {
-            var list = accDict.Values.Where(x => DataAccess.Codex.IsOpen(CodexData.CodexType.Item, x.ItemId))
-                .ToList();
+            var list = accDict.Values.ToList();
             int rand = Random.Range(0, list.Count);
             Accessory acc = pool.Get(list[rand].name);
             acc.Init();

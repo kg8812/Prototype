@@ -50,7 +50,7 @@ public class SuperJump : PlatformObject
                 {
                     y = -speed > 0 ? -speed : 0;
                 }
-                x.velocity = new Vector2(x.velocity.x, y * correctionRatio / 100f);
+                x.linearVelocity = new Vector2(x.linearVelocity.x, y * correctionRatio / 100f);
                 x.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
                 removes.Add(x);
             }
@@ -105,7 +105,7 @@ public class SuperJump : PlatformObject
             Rigidbody2D target = other.transform.GetComponentInParentAndChild<Rigidbody2D>();
             if (target == null) return;
             
-            ySpeeds.TryAdd(target, target.velocity.y);
+            ySpeeds.TryAdd(target, target.linearVelocity.y);
         }
     }
 

@@ -38,7 +38,7 @@ namespace Apis.BehaviourTreeTool
         void Jump()
         {
             _actor.Rb.DOKill();
-            _actor.Rb.velocity = Vector2.zero;
+            _actor.Rb.linearVelocity = Vector2.zero;
             var tweens = mover.ActorMovement.DoJumpTween(jumpTime, jumpPower, distance, isBackDash);
 
             xTween = tweens.Item1;
@@ -56,7 +56,7 @@ namespace Apis.BehaviourTreeTool
             yTween.SetAutoKill(true);
             yTween.onKill += () =>
             {
-                _actor.Rb.velocity = Vector2.zero;
+                _actor.Rb.linearVelocity = Vector2.zero;
                 success = true;
                 _actor.animator.SetTrigger("DashEnd");
                 if (isSkip) isFinished = true;

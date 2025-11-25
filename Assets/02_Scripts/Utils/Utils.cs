@@ -11,7 +11,6 @@ using EventData;
 using Managers;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Timeline;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
@@ -62,15 +61,8 @@ namespace Default
                 ActorStatType.Atk => "공격력",
                 ActorStatType.MoveSpeed => "이동속도",
                 ActorStatType.AtkSpeed => "공격속도",
-                ActorStatType.DmgReduce => "피해 감소량",
                 ActorStatType.Def => "방어력",
-                ActorStatType.Mental => "정신력",
                 ActorStatType.MaxHp => "체력",
-                ActorStatType.CritProb => "치명타 확률",
-                ActorStatType.CritDmg => "치명타 데미지",
-                ActorStatType.CDReduction => "결속력",
-                ActorStatType.GoldRate => "원념 추가 획득량",
-                ActorStatType.ExtraDmg => "추가 데미지",
                 _ => ""
             };
         }
@@ -203,17 +195,6 @@ namespace Default
             }
         }
 
-        public static List<IOnHit> GetTargetsInDisplay(LayerMask mask)
-        {
-            var cam = CameraManager.instance.PlayerCam;
-            Vector2 midPoint = cam.transform.position;
-            float distance = Mathf.Abs(cam.transform.position.z);
-            float height = 2 * Mathf.Tan(cam.m_Lens.FieldOfView * 0.5f * Mathf.Deg2Rad) * distance;
-            float width = height * cam.m_Lens.Aspect;
-            var colliders = Physics2D.OverlapBoxAll(midPoint, new Vector2(width, height), 0, mask);
-            return colliders.DistinctTargets();
-        }
-
         public static List<T> GetRandomElements<T>(List<T> originalList, int count)
         {
             List<T> shuffledList = new List<T>(originalList);
@@ -301,25 +282,6 @@ namespace Default
                 float currAngle = (i - half) * angle;
                 projectiles[i].Rotate(currAngle);
             }
-        }
-
-        public static void AttackAllScreen(IAttackable attacker, AttackEventData atkData, LayerMask targetLayer)
-        {
-            var cam = CameraManager.instance.PlayerCam;
-            float height = cam.m_Lens.OrthographicSize * 2;
-            float width = height * cam.m_Lens.Aspect;
-            Vector2 screenSize = new Vector2(width, height);
-
-            Vector2 pos = cam.transform.position;
-            var targets = attacker.gameObject.GetTargetsInBox(screenSize, targetLayer);
-            IEventUser user = attacker.gameObject.GetComponent<IEventUser>();
-            targets.ForEach(x =>
-            {
-                attacker.Attack(new EventParameters(user, x)
-                {
-                    atkData = atkData
-                });
-            });
         }
 
         public static void ActionOnPlayerReady(UnityAction<Player> action)

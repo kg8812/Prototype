@@ -9,7 +9,6 @@ namespace Apis
     public abstract class PlayerActiveSkill : ActiveSkill , IPlayerSkill
     {
         public Player Player => user as Player;
-        protected virtual TagManager.SkillTreeTag Tag => TagManager.SkillTreeTag.None;
         protected virtual float TagIncrement => 0;
 
         private PlayerSkillAttachment _attachment;
@@ -28,7 +27,7 @@ namespace Apis
             {
                 RemoveAttachment(_attachment);
             }
-            _attachment = new(Tag,TagIncrement);
+            _attachment = new();
             AddAttachment(_attachment);
         }
 

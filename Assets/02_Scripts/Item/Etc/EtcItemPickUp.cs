@@ -26,6 +26,5 @@ public class EtcItemPickUp : DropItem
         }
         InvenManager.instance.GuitarInven.Add(item,GuitarInvenType.Growth);
         Destroy(gameObject);
-        GameManager.UI.CreateUI("UI_ItemPopup", UIType.Main).GetComponent<UI_ItemPopUp>().Init(item);
     }
 }

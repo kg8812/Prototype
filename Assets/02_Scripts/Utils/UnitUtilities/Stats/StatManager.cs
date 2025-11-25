@@ -103,13 +103,7 @@ namespace Apis
 
     public class PlayerStatManager : StatManager
     {
-        public override BaseStat BaseStat
-        {
-            get
-            {
-                return _baseStat + GameManager.Save.currentSlotData?.GrowthSaveData?.Player?.baseStat;
-            }
-        }
+        public override BaseStat BaseStat => _baseStat;
 
         public PlayerStatManager(StatManager other) : base(other)
         {

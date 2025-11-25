@@ -38,8 +38,7 @@ namespace Apis
         }
         public float Calculate(IOnHit target)
         {
-            return (_atkItem.Atk + _user.Finesse * _atkItem.FinesseFactor / 100f +
-                   _user.Body * _atkItem.BodyFactor / 100f + _user.Spirit * _atkItem.SpiritFactor / 100f) * DmgRatio / 100f;
+            return (_atkItem.Atk + _user.Atk) * DmgRatio / 100f;
         }
     }
 

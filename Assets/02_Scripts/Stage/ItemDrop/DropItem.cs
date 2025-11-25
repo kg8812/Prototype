@@ -8,7 +8,7 @@ namespace Apis
 {
     public enum DropItemType
     {
-        Gold, Accessory, ActiveSkill, Weapon, Germ
+        Accessory, ActiveSkill, Weapon
     }
     public abstract class DropItem : MonoBehaviour , IOnInteract
     {
@@ -41,7 +41,7 @@ namespace Apis
             Init();
             float vx = Random.Range(-2f, 2f);
             float vy = Random.Range(2f, 4f);
-            rigid.velocity = new Vector2(vx, vy);
+            rigid.linearVelocity = new Vector2(vx, vy);
 
             // 드롭아이템 통일 스폰 물리 효과
             Invoke(nameof(Droped), 1f);

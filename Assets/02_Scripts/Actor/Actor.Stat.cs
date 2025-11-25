@@ -66,7 +66,6 @@ public partial class Actor : IStatUser,IBarrierUser
             if (value > curHp)
             {
                 float heal = value - curHp;
-                heal *= 1 + HealRate / 100;
                 HealText?.Show(heal,Position);
                 curHp = Math.Min(curHp + heal, MaxHp);
                 EventManager.ExecuteEvent(EventType.OnHpHeal,new EventParameters(this));
@@ -109,26 +108,10 @@ public partial class Actor : IStatUser,IBarrierUser
     public virtual float MoveSpeed => StatManager.GetFinalStat(ActorStatType.MoveSpeed);
     public virtual float AtkSpeed => StatManager.GetFinalStat(ActorStatType.AtkSpeed);
 
-    public virtual float DmgReduce => StatManager.GetFinalStat(ActorStatType.DmgReduce);
-    public virtual float ExtraDmg => StatManager.GetFinalStat(ActorStatType.ExtraDmg);
     public virtual float Def => StatManager.GetFinalStat(ActorStatType.Def);
-    public virtual float Mentality => StatManager.GetFinalStat(ActorStatType.Mental);
 
     public virtual float CritProb => StatManager.GetFinalStat(ActorStatType.CritProb);
     public virtual float CritDmg => StatManager.GetFinalStat(ActorStatType.CritDmg);
-
-    public virtual float CDReduction => StatManager.GetFinalStat(ActorStatType.CDReduction);
-    public virtual float GoldRate => StatManager.GetFinalStat(ActorStatType.GoldRate);
-
-    public virtual float HealRate => StatManager.GetFinalStat(ActorStatType.HealRate);
-
-    public virtual float ShieldRate => StatManager.GetFinalStat(ActorStatType.ShieldRate);
-
-    public virtual float CritHit => StatManager.GetFinalStat(ActorStatType.CritHit);
-
-    public virtual float Body => StatManager.GetFinalStat(ActorStatType.Body);
-    public virtual float Spirit => StatManager.GetFinalStat(ActorStatType.Spirit);
-    public virtual float Finesse => StatManager.GetFinalStat(ActorStatType.Finesse);
 
     public void AddStat(ActorStatType statType, float amount, ValueType type)
     {

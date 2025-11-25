@@ -16,19 +16,10 @@ public class DefaultController : IController
 {
     public void KeyControl()
     {
-        if (InputManager.GetKeyDown(KeySettingManager.GetGameKeyCode(Define.GameKey.Escape)) && !GameManager.instance.playerDied)
-        {
-            // 이거만 예외처리.
-            GameManager.UI.CreateUI("UI_MenuPopup", UIType.Popup);
-        }
     }
 
     public void GamePadControl()
     {
-        if (InputManager.GetButtonDown(KeySettingManager.GetGameButton(Define.GameKey.Escape))&& !GameManager.instance.playerDied)
-        {
-            GameManager.UI.CreateUI("UI_MenuPopup", UIType.Popup);
-        }
     }
 }
 

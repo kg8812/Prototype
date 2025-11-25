@@ -123,12 +123,12 @@ namespace NewNewInvenSpace
             if (item != null && item is IAttackItem attackItem)
             {
                 attackItem.AtkSlotIndex = index;
-                attackItem.SetIcon(UI_MainHud.Instance.atkItemIcons[index]);
-                UI_MainHud.Instance.atkItemIcons[index].SetItem(attackItem);
+                // attackItem.SetIcon(UI_MainHud.Instance.atkItemIcons[index]);
+                // UI_MainHud.Instance.atkItemIcons[index].SetItem(attackItem);
             }
             else
             {
-                UI_MainHud.Instance.atkItemIcons[index].SetItem(null);
+                //UI_MainHud.Instance.atkItemIcons[index].SetItem(null);
             }
         }
         
@@ -147,8 +147,8 @@ namespace NewNewInvenSpace
             if (item != null && item is IAttackItem attackItem)
             {
                 // GameManager.instance.Player.UnEquip(weapon);
-                UI_AtkItemIcon icon = UI_MainHud.Instance.atkItemIcons[attackItem.AtkSlotIndex];
-                icon.SetItem(null);
+                //UI_AtkItemIcon icon = UI_MainHud.Instance.atkItemIcons[attackItem.AtkSlotIndex];
+                //icon.SetItem(null);
                 attackItem.UnEquip();
                 attackItem.SetIcon(null);
             }

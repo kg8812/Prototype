@@ -149,6 +149,14 @@ public class Define
 
     #endregion
 
+    #region 애니메이션
+
+    public class PlayerAnimations
+    {
+        public const string BaseController = "PlayerBaseController";
+        public const string Overrider = "PlayerOverrider";
+    }
+    #endregion
     #endregion
 }
 
@@ -168,7 +176,8 @@ public enum ActorStatType // 스탯 종류
     AtkSpeed,
     MoveSpeed,
     MaxHp,
-    CDReduction,
+    CritProb,
+    CritDmg,
 }
 
 public enum EventType // 효과 적용 조건
@@ -228,19 +237,13 @@ public enum EventType // 효과 적용 조건
     OnChargeCancel, // 차징 캔슬 시
     OnCastingCancel, // 캐스팅 캔슬 시
     OnLanding, // 바닥 착지 시
-    OnAirEnter, // 공중 진입 시
     OnIdle, // idle state 진입 시
     OnStop, // 이동 멈출 시
     OnEventState, // EventState 전환 시
     OnIdleMotion,
-    OnTurn,
     OnKnockbackComplete,
-    OnClimbStart,
-    OnClimbMotionStart,
-    OnClimbEnd,
     OnAnyState,
-    OnCutSceneEnd,
-    OnDrillComplete,
+    OnAirEnter,
 }
 
 #region 버프,디버프 관련
@@ -351,49 +354,20 @@ public static class NextState
         {
             EPlayerState.Idle => new[]
             {
-                EPlayerState.AirIdle, EPlayerState.Move, EPlayerState.Jump, EPlayerState.Attack, EPlayerState.Dash,
-                EPlayerState.Heal, EPlayerState.Skill, EPlayerState.Crouch, EPlayerState.Drop, EPlayerState.Heal
-            },
-            EPlayerState.AirIdle => new[]
-            {
-                EPlayerState.Idle, EPlayerState.AirMove, EPlayerState.Jump, EPlayerState.Attack, EPlayerState.Dash,
-                EPlayerState.Skill, EPlayerState.Climb
+                EPlayerState.Move, EPlayerState.Jump, EPlayerState.Attack, EPlayerState.Dash,
+                EPlayerState.Skill,
             },
             EPlayerState.Move => new[]
             {
-                EPlayerState.AirIdle, EPlayerState.AirMove, EPlayerState.Jump, EPlayerState.Attack, EPlayerState.Dash,
-                EPlayerState.Heal, EPlayerState.Skill, EPlayerState.Stop, EPlayerState.Drop, EPlayerState.Heal
+                EPlayerState.Jump, EPlayerState.Attack, EPlayerState.Dash,
+                EPlayerState.Skill,
             },
-            EPlayerState.AirMove => new[]
-            {
-                EPlayerState.AirIdle, EPlayerState.Move, EPlayerState.Jump, EPlayerState.Attack, EPlayerState.Dash,
-                EPlayerState.Skill, EPlayerState.Stop, EPlayerState.Climb
-            },
-            EPlayerState.Crouch => new[]
-                { EPlayerState.Idle, EPlayerState.Drop, EPlayerState.Move, EPlayerState.Heal, EPlayerState.Jump },
-            EPlayerState.Dash => new[] { EPlayerState.Jump, EPlayerState.Climb },
-            EPlayerState.DashLanding => new[] { EPlayerState.Jump },
-            EPlayerState.Stop => new[] { EPlayerState.Attack },
-            EPlayerState.AttackWaiting => new[] { EPlayerState.Dash },
-            EPlayerState.AirAttackWaiting => new[] { EPlayerState.Dash },
+            EPlayerState.Dash => new[] { EPlayerState.Jump,},
             EPlayerState.Run => new[]
             {
-                EPlayerState.Run, EPlayerState.AirIdle, EPlayerState.AirMove, EPlayerState.Jump, EPlayerState.Attack,
-                EPlayerState.Dash, EPlayerState.Heal, EPlayerState.Skill, EPlayerState.Stop, EPlayerState.Drop,
-                EPlayerState.Heal, EPlayerState.Move
+                EPlayerState.Run, EPlayerState.Jump, EPlayerState.Attack,
+                EPlayerState.Dash, EPlayerState.Skill, EPlayerState.Move
             },
-            EPlayerState.AirRun => new[]
-            {
-                EPlayerState.Run, EPlayerState.AirIdle, EPlayerState.Move, EPlayerState.Jump, EPlayerState.Attack,
-                EPlayerState.Dash, EPlayerState.Skill, EPlayerState.Stop, EPlayerState.Climb
-            },
-            EPlayerState.IceDrillCharge => new[]
-            {
-                EPlayerState.IceDrillCharge, EPlayerState.AirIdle, EPlayerState.AirMove, EPlayerState.Jump,
-                EPlayerState.Attack, EPlayerState.Heal, EPlayerState.Skill, EPlayerState.Stop, EPlayerState.Drop,
-                EPlayerState.Heal, EPlayerState.Move
-            },
-            // EPlayerState.Damaged => new[] { EPlayerState.Attack, EPlayerState.Skill },
             _ => null
         };
     }

@@ -78,12 +78,6 @@ namespace Apis
                 float value = stats?.Stat != null
                     ? (baseCd - stats.Stat.baseCd) / (1 + stats.Stat.baseCdRatio / 100)
                     : baseCd;
-                
-                if (statUser != null)
-                {
-                    value = FormulaConfig.CalculateCD(statUser.StatManager.GetFinalStat(ActorStatType.CDReduction),
-                        value);
-                }
 
                 return Mathf.Clamp(value, 0.1f, value);
             }
@@ -321,17 +315,7 @@ namespace Apis
         {
             isStop = true;
         }
-
-        public float CalculateDmg()
-        {
-            if (user is Actor _user)
-            {
-                return Atk + _user.Finesse * FinesseFactor / 100f +
-                        _user.Body * BodyFactor / 100f + _user.Spirit * SpiritFactor / 100f;
-            }
-
-            return Atk;
-        }
+        
         protected virtual void UpdateEvent(EventParameters parameters)
         {
             if (isStop) return;

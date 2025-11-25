@@ -22,7 +22,6 @@ namespace Apis.CommonMonster2
             _cM.Rb.bodyType = RigidbodyType2D.Static;
             _cM.Collider.enabled = false;
             _cM.HitCollider.enabled = false;
-            _cM.CloseHpBar();
 
             for (int i = _cM.Projectiles.Count - 1; i >= 0; i--)
             {
@@ -32,10 +31,6 @@ namespace Apis.CommonMonster2
             
 
             GameManager.instance.BattleStateClass.RemoveRecogMonster(_cM);
-            if (_cM.MonsterData.monsterType != MonsterType.Common)
-            {
-                GameManager.instance.BattleStateClass.RemoveMonsterForHpBar(_cM);
-            }
         }
 
         public void Update()

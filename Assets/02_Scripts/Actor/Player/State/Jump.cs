@@ -5,7 +5,7 @@ using UnityEngine;
 namespace PlayerState {
     public class Jump : EventState, IAnimate
     {
-        public override EPlayerState NextState { get => _player.IsRun ? EPlayerState.AirRun : EPlayerState.AirIdle; set{} }
+        public override EPlayerState NextState { get => EPlayerState.Idle; set{} }
 
         public override bool EscapeCondition()
         {

@@ -6,16 +6,7 @@ namespace Apis.CommonMonster2
 {
     public enum MonsterState
     {
-        None,
-        Idle,
-        Patrol,
-        Move,
-        Turn,
-        Delay,
-        Jump,
-        Attack,
-        CC,
-        Death,
+        Idle,Death
     }
 
     public partial class CommonMonster2
@@ -48,19 +39,11 @@ namespace Apis.CommonMonster2
         {
             _mStates = new Dictionary<MonsterState, IState<CommonMonster2>>();
 
-            CurState = MonsterState.None;
-            _mStates.Add(MonsterState.None, new SMNone());
+            CurState = MonsterState.Idle;
             _mStates.Add(MonsterState.Idle, new SMIdle());
-            _mStates.Add(MonsterState.Patrol, new SMPatrol());
-            _mStates.Add(MonsterState.Move, new SMMove());
-            _mStates.Add(MonsterState.Turn, new SMTurn());
-            _mStates.Add(MonsterState.Delay, new SMDelay());
-            _mStates.Add(MonsterState.Jump, new SMJump());
-            _mStates.Add(MonsterState.Attack, new SMAttack());
-            _mStates.Add(MonsterState.CC, new SMCC());
             _mStates.Add(MonsterState.Death, new SMDeath());
             
-            _mState = new StateMachine<CommonMonster2>(this, _mStates[MonsterState.None]);
+            _mState = new StateMachine<CommonMonster2>(this, _mStates[MonsterState.Idle]);
         }
         
         protected override void Update()
@@ -86,7 +69,7 @@ namespace Apis.CommonMonster2
             // 일반몬스터는 죽음 상태 -> 아무 상태가 불가능 (초기화 제외)
             if (CurState == MonsterState.Death) return false;
 
-            if (toState != MonsterState.Death && CurState == MonsterState.CC &&
+            if (toState != MonsterState.Death &&
                 SubBuffCount(SubBuffType.Debuff_Stun) > 0)
             {
                 return false;
@@ -125,11 +108,6 @@ namespace Apis.CommonMonster2
         {
             base.IdleOn();
             TryChangeMonsterState(MonsterState.Idle);
-        }
-
-        public void DelayOn()
-        {
-            TryChangeMonsterState(MonsterState.Delay);
         }
     }
 }

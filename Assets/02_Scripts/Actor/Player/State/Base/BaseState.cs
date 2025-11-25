@@ -46,7 +46,6 @@ namespace PlayerState
                     _player.onAir = false;
                     _player.CoyoteCurrentJump.Value = 0;
                     _player.AnimController.SetBool(EAnimationBool.OnAir, false);
-                    _player.Effector.CreateFootPrint();
                 }
             }   
             else

@@ -13,7 +13,7 @@ namespace Apis.BehaviourTreeTool
 
             if (_actor.Rb.bodyType == RigidbodyType2D.Dynamic)
             {
-                _actor.Rb.velocity = Vector2.zero;
+                _actor.Rb.linearVelocity = Vector2.zero;
             }
         }
 

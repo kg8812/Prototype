@@ -19,7 +19,6 @@ public class Initializer : SerializedMonoBehaviour
         Screen.SetResolution(1920,1080,true);
         Addressables.InitializeAsync();
         GameManager.Item.LoadItems();
-        Map.instance.DataInit();
     }
 
     private void Start()

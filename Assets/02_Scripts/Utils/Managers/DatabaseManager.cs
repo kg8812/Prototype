@@ -95,18 +95,14 @@ namespace Apis.Managers
 
         public void Load()
         {
-            
-            
             if(isInit) return;
             
             // 랭귀지쪽에서 먼저 처리 함.
-            new LanguageManager().ProcessDataLoad();
             var types = typeof(Database).Assembly.GetTypes().Where(v => v.IsSubclassOf(typeof(Database)));           
 
             foreach (var type in types)
             {
-                if(type != typeof(LanguageManager))
-                    (Activator.CreateInstance(type) as Database)?.ProcessDataLoad();
+                (Activator.CreateInstance(type) as Database)?.ProcessDataLoad();
             }
         }
         public Dictionary<string, T> GetDataTable<T>(DataTableType dataTableType)

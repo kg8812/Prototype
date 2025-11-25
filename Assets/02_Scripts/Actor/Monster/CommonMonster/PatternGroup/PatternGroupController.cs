@@ -32,7 +32,7 @@ namespace Apis.CommonMonster2
                 }
                 else
                 {
-                    return FormulaConfig.CalculateCD(_monster ? _monster.CDReduction : 0, coolTime);
+                    return coolTime;
                 }
             }
         }

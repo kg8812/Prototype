@@ -108,7 +108,6 @@ namespace Apis
             {
                 if (skill.EnterSkillState)
                 {
-                    player.SetState(EPlayerState.Charging);
                     player.animator.SetInteger("ChargingType",skill.chargeType);
                     player.animator.ResetTrigger("ChargeEnd");
                     player.animator.SetTrigger("Charge");
@@ -263,7 +262,6 @@ namespace Apis
             skill.Icon.ChangeType(new UI_AtkItemIcon.CastingUpdate(skill.Icon));
             if (skill.user is Player player)
             {
-                player.SetState(EPlayerState.Casting);
                 player.animator.ResetTrigger("ChargeEnd");
                 player.animator.SetTrigger("Casting");
                 player.animator.SetInteger("ChargingType",skill.CastType);

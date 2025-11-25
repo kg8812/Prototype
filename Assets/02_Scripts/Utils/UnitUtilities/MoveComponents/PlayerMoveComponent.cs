@@ -23,14 +23,12 @@ public class PlayerMoveComponent : UnitMoveComponent
     public override void MoveCCOn()
     {
         base.MoveCCOn();
-        player.ClimbOff();
     }
 
     public override void MoveCCOff()
     {
         base.MoveCCOff();
-        player.ClimbOn();
-        player.SetState(EPlayerState.Stop);
+        player.SetState(EPlayerState.Idle);
     }
 
     public override void Stop()

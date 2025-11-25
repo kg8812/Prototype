@@ -334,7 +334,6 @@ namespace Apis
         protected override void Awake()
         {
             base.Awake();
-            if(DataAccess.TaskData.IsDone(taskIndex)) gameObject.SetActive(false);
             
             animator = Utils.GetComponentInParentAndChild<Animator>(gameObject);
             treeRunner = GetComponent<BehaviourTreeRunner>();
@@ -361,7 +360,6 @@ namespace Apis
                 }
             });
             SetState(isTest ? BossState.Move : BossState.Wait);
-            MonsterData = new MonsterDataType(100, MonsterType.Boss, name, 1, 1, 1, MaxGroggyGauge, GroggyRecovery, new[] { 0.5f, 1f }, false, true, true, new [] { 0.5f, 1f }, 1001,50);
             SetAttackPatterns();
         }
 

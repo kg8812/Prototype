@@ -45,16 +45,8 @@ public class SkillDecorator : ISkill
 
 public class PlayerSkillAttachment : ISkill
 {
-    private TagManager.SkillTreeTag tagType;
-    private float increment;
 
     private SkillStat _stat;
-    
-    public PlayerSkillAttachment(TagManager.SkillTreeTag tagType,float increment)
-    {
-        this.tagType = tagType;
-        this.increment = increment;
-    }
 
     public SkillStat Stat
     {
@@ -62,7 +54,6 @@ public class PlayerSkillAttachment : ISkill
         {
             _stat ??= new();
 
-            _stat.dmgRatio = GameManager.Tag.GetTagCount(tagType) * increment;
             return _stat;
         }
     }

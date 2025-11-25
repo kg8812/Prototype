@@ -42,12 +42,4 @@ public class ItemStorage
         }
         storage.Clear();
     }
-
-    public void Print()
-    {
-        foreach (var item in storage)
-        {
-            Debug.Log($"{parent.name}-{StrUtil.GetEquipmentName(item.ItemId)}");
-        }
-    }
 }

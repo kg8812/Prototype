@@ -20,9 +20,7 @@ namespace Apis
         public Factory_Acc Acc { get; private set; } // 악세 팩토리
         public Factory_Weapon Weapon { get; private set; } // 무기 팩토리
         public Factory_ActiveSkillItem ActiveSkillItem { get; private set; }
-        public Factory_Gold Gold { get; private set; } // 골드 팩토리
         public Factory_Etc Etc { get; private set; } // 기타 팩토리
-        public Factory_Germ Germ { get; private set; }
 
         // public ItemStorage Storage; // 아이템 보관소 (스킬로 인한 무기 교체 등 인벤토리 외 위치에 보관이 필요할 떄 사용)
         // inven용 item저장이라 invenmanager.instance.Storage로 이전.
@@ -46,8 +44,6 @@ namespace Apis
                 Default.ResourceUtil.Load<ActiveSkillItem>("ActiveSkillItem"),
             };
             
-            var golds = Default.ResourceUtil.LoadAll<Gold_Drop>("Prefabs/Items/Gold");
-            var germs = Default.ResourceUtil.LoadAll<Germ>("Prefabs/Items/Germ");
             var etcs = Default.ResourceUtil.LoadAll<EtcItem>("EtcItems");
             AccPickUp = new Factory_AccPickUp(new[]
                 { Default.ResourceUtil.Load<Acc_PickUp>("Prefabs/Items/Accessory/AccPickUp") });
@@ -58,26 +54,16 @@ namespace Apis
             foreach (var x in accs)
             {
                 x.Init();
-                if (x.Data.unlock)
-                {
-                    DataAccess.Codex.UnLock(CodexData.CodexType.Item, x.ItemId);
-                }
             }
 
             foreach (var x in weapons)
             {
                 x.Init();
-                if (x.Data.unlock)
-                {
-                    DataAccess.Codex.UnLock(CodexData.CodexType.Item, x.ItemId);
-                }
             }
             Acc = new Factory_Acc(accs);
             Weapon = new Factory_Weapon(weapons);
             // TODO: skill list
             ActiveSkillItem = new Factory_ActiveSkillItem(activeSkills, activeSkillItem);
-            Gold = new Factory_Gold(golds);
-            Germ = new Factory_Germ(germs);
             Etc = new Factory_Etc(etcs);
         }
         public List<Weapon> WeaponList => Weapon.WpDict.Values.ToList();

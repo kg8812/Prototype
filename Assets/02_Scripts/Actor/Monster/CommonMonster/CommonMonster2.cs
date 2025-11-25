@@ -41,7 +41,6 @@ namespace Apis.CommonMonster2
         private bool CanMoveStop { get; set; } = true;
 
         private Transform _playerTrans;
-        private UI_SemiHpBar _hpBar;
 
 
         #region Init
@@ -70,7 +69,6 @@ namespace Apis.CommonMonster2
         public override void Init(MonsterDataType monsterDataType)
         {
             base.Init(monsterDataType);
-            GetHpBar();
             foreach (var ca in colliderAttack)
             {
                 ca.Init(this, new AtkBase(this, ca.projectileInfo.dmg));
@@ -85,9 +83,8 @@ namespace Apis.CommonMonster2
 
         public override void OnReturn()
         {
-            ChangeMonsterState(MonsterState.None);
+            ChangeMonsterState(MonsterState.Idle);
             base.OnReturn();
-            CloseHpBar();
         }
 
         #endregion
@@ -158,44 +155,6 @@ namespace Apis.CommonMonster2
                     localScale.y, 
                     localScale.z
                 );
-        }
-
-        #endregion
-        
-        
-
-        #region HpBar
-
-        public void GetHpBar()
-        {
-            if (_hpBar != null)
-            {
-                ResetHpBar();
-                return;
-            }
-            _hpBar = GameManager.UI.CreateUI("UI_SemiHpBar", UIType.Ingame, withoutActivation:true) as UI_SemiHpBar;
-            if (_hpBar == null)
-            {
-                Debug.LogError("알수 없는 오류: common monster hp bar 생성 실패");
-                return;
-            }
-            _hpBar.InitActor(this);
-            _hpBar.SetTrans(transform);
-            _hpBar.TryActivated();
-
-            ResetHpBar();
-        }
-
-        private void ResetHpBar()
-        {
-            _hpBar.ChangeGroggyBarImg(CurGroggyGauge);
-        }
-
-        public void CloseHpBar()
-        {
-            if (_hpBar == null) return;
-            GameManager.UI.CloseUI(_hpBar);
-            _hpBar = null;
         }
 
         #endregion

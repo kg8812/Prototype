@@ -14,41 +14,30 @@ using Spine.Unity;
 
 public enum EPlayerState
 {
-    Attack,
-    Skill,
-    Charging,
-    Casting,
-    Dash,
-    DashLanding,
     Idle,
     Move,
+    Run,
     Jump,
-    Crouch,
-    Heal,
-    Climb,
-    Drop,
-    Dead,
+    Fall,
+    Attack,
+    Skill,
+    Dash,
     Damaged,
-    CutScene,
-    AirIdle,
-    AirMove,
-    Stop,
-    AirAttackWaiting,
-    AttackWaiting,
-    HealEnd,
+    Dead,
+    Interact,
     KnockBack,
     KnockBackEnd,
-    Run,
-    AirRun,
-    Interact,
-    IceDrillCharge,
-    IceDrillExecute,
 }
 
+public enum PlayerType
+{
+    Player1,
+    
+}
 public partial class Player : IDashUser , IMovable , IPlayer
 {
-    [Title("플레이어")]
-    [HideInInspector] public PlayerType playerType;
+    [Title("플레이어")] [SerializeField] private PlayerType _playerType;
+    public PlayerType playerType => _playerType;
     List<Collider2D> _interactionColliders = new List<Collider2D>();
     public Transform transForCamGroup;
 
@@ -75,11 +64,6 @@ public partial class Player : IDashUser , IMovable , IPlayer
 
     public ProjectileInfo atkInfo;
 
-    private PlayerStateMonitor stateMonitor;
-
-    [SerializeField] private PlayerCutsceneSkeleton cutsceneSkeleton;
-    public PlayerCutsceneSkeleton CutsceneSkeleton => cutsceneSkeleton;
-
     [LabelText("크리스탈 offset")] public Vector2 nunnaCrystalOffset;
     private PetFollower nunnaCrystal;
    
@@ -101,7 +85,6 @@ public partial class Player : IDashUser , IMovable , IPlayer
     public override void IdleOn()
     {
         if(!onAir) SetState(EPlayerState.Idle);
-        else SetState(EPlayerState.AirIdle);
     }
     
     public void UsePotion()
@@ -155,15 +138,12 @@ public partial class Player : IDashUser , IMovable , IPlayer
         attackStrategy = new PlayerWeaponAttack(this);
         controller = GetComponent<ActorController>();
         playerCollisionCollider = transform.GetChild(5).GetComponent<CapsuleCollider2D>();
-        stateMonitor = transform.GetComponentInChildren<PlayerStateMonitor>();
         // animator = transform.GetChild(0).GetComponent<Animator>();
-        climbDetector = transform.GetChild(1).GetComponent<ClimbDetector>();
         Rb = GetComponent<Rigidbody2D>();
         
         BonusStatEvent += () => InvenManager.instance.Acc.BonusStat;
         attackColliders = GetComponentsInChildren<AttackObject>(true);
         name = "Player";
-        _overrider = animator.GetComponent<AnimatorOverrider>();
 
         effector = new PlayerEffector(this);
 
@@ -189,7 +169,6 @@ public partial class Player : IDashUser , IMovable , IPlayer
         
         int index = animator.GetLayerIndex("BeastLayer");
         animator.SetLayerWeight(index,0);
-        BlockSkillChange = false;
         CoolDown = new(this);
         CoyoteCurrentJump = new(jumpCoyoteTime, 0);
         maxDropVel = initMaxDropVel;
@@ -247,16 +226,6 @@ public partial class Player : IDashUser , IMovable , IPlayer
             passiveSkill.Init();
             passiveSkill.Equip(this);
             _basePassiveSkill = passiveSkill;
-        }
-
-        if (!DataAccess.TaskData.IsDone(102))
-        {
-            ChangeActiveSkill(null);
-        }
-
-        if (!DataAccess.TaskData.IsDone(103))
-        {
-            ChangePassiveSkill(null);
         }
         
         GameManager.instance.OnPlayerDestroy.RemoveListener(UnEquipSkills);
@@ -445,7 +414,6 @@ public partial class Player : IDashUser , IMovable , IPlayer
         {
             Rb.linearVelocity = new Vector2(0,Rb.linearVelocity.y);
             base.SetDirection(input);
-            StateEvent.ExecuteEventOnce(EventType.OnTurn, null);
             AnimController.SetTrigger(EAnimationTrigger.Turn);
         }
         controller.BufferSetDirection(input);

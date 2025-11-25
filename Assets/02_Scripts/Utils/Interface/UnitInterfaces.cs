@@ -33,14 +33,14 @@ namespace Apis
             get{
                 /* parent가 없는 경우 -> Rb 속도가 AbsVel */
                 if(transform.parent == null)
-                    return Rb.velocity;
+                    return Rb.linearVelocity;
             
                 /* movingObj 위에 있는 경우 moving Obj의 속도 합산 */
                 if (MoveComponent.OnMovingObj != null)
-                    return Rb.velocity + MoveComponent.OnMovingObj.Velocity;
+                    return Rb.linearVelocity + MoveComponent.OnMovingObj.Velocity;
 
                 /* 기타 예외 처리 필요하면 추가 */
-                return Rb.velocity;
+                return Rb.linearVelocity;
             }
         }
 
@@ -109,7 +109,6 @@ namespace Apis
         float OnHit(EventParameters parameters);
         public float MaxHp { get; }
         public float CurHp { get; set; }
-        public float CritHit { get; }
         public bool IsDead { get; }
         public bool HitImmune { get;}
         public bool IsAffectedByCC { get; }

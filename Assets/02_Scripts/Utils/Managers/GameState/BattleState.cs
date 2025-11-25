@@ -22,9 +22,7 @@ namespace GameStateSpace
             _guids.Add(StateCond.PlayerDeffued, Guid.Empty);
 
             InitMonsterRecog();
-            InitArena();
             InitPlayerHit();
-            InitPlayerDebuffed();
         }
 
         #region condition on off
@@ -121,26 +119,6 @@ namespace GameStateSpace
         #endregion
 
 
-        #region 아레나 진입
-        
-        private bool _isEnterArena;
-        
-        private void InitArena()
-        {
-            _isEnterArena = false;
-            GameManager.instance.whenArenaStateChanged.AddListener(value =>
-            {
-                _isEnterArena = value;
-                if(value)
-                    TryOnWithCondition(StateCond.Arena);
-                else
-                    TryOffWithCondition(StateCond.Arena);
-            });
-        }
-
-        #endregion
-
-
         #region 플레이어 피격
         
         private bool _isPlayerHit;
@@ -184,60 +162,8 @@ namespace GameStateSpace
         }
 
         #endregion
-
-
-        #region 플레이어 도트 데미지
-
-        private bool _isPlayerDebuffed;
-
-        private void InitPlayerDebuffed()
-        {
-            _isPlayerDebuffed = false;
-            GameManager.instance.InitWithPlayer(p =>
-            {
-                p.AddEvent(EventType.OnSubBuffTaken, info =>
-                {
-                    if(info?.buffData.takenSubBuff is Debuff_DotDmg && info.buffData.takenSubBuff.target.CompareTag("Enemy"))
-                    {
-                        ChangePlayerDebuffed(true);
-                    }
-                });
-                p.AddEvent(EventType.OnSubBuffRemove, info =>
-                {
-                    if (info?.buffData.removedSubBuff is Debuff_DotDmg && info.buffData.removedSubBuff.target.CompareTag("Enemy"))
-                    {
-                        bool isFound = false;
-
-                        p.SubBuffManager.Traverse(subBuff =>
-                        {
-                            if (subBuff is Debuff_DotDmg && subBuff.buff.buffActor.CompareTag("Enemy"))
-                            {
-                                isFound = true;
-                            }
-                        });
-                        ChangePlayerDebuffed(isFound);
-                    }
-               
-                });
-            });
-        }
-        private void ChangePlayerDebuffed(bool value)
-        {
-            if (value == _isPlayerDebuffed) return;
-
-            if (value)
-            {
-                _isPlayerDebuffed = true;
-                TryOnWithCondition(StateCond.PlayerDeffued);
-            }
-            else
-            {
-                _isPlayerDebuffed = false;
-                TryOffWithCondition(StateCond.PlayerDeffued);
-            }
-        }
-
-        #endregion
+        
+        
         #endregion
         
     }

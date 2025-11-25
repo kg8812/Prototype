@@ -8,7 +8,7 @@ public class KnockBackEnd : EventState, IAnimate, IInterruptable
     public override EPlayerState NextState { get => EPlayerState.Idle; set{} }
     public float InterruptTime { get => _player.KnockbackEndCancelTime; set{} }
 
-    public EPlayerState[] InteruptableStates => new EPlayerState[] { EPlayerState.Attack, EPlayerState.Skill, EPlayerState.Jump, EPlayerState.Dash, EPlayerState.Crouch, EPlayerState.Move, EPlayerState.AirMove };
+    public EPlayerState[] InteruptableStates => new EPlayerState[] { EPlayerState.Attack, EPlayerState.Skill, EPlayerState.Jump, EPlayerState.Dash, EPlayerState.Move,};
 
     public override bool EscapeCondition()
     {

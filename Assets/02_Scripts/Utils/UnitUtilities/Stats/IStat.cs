@@ -11,22 +11,7 @@ namespace Apis
             { ActorStatType.Def, false },
             { ActorStatType.AtkSpeed, true },
             { ActorStatType.MoveSpeed, true },
-            { ActorStatType.CritProb, true },
-            { ActorStatType.CritDmg, true },
-            { ActorStatType.CDReduction, false },
-            { ActorStatType.Mental, false },
             { ActorStatType.MaxHp, true },
-            { ActorStatType.DmgReduce, false },
-            { ActorStatType.ExtraDmg, false },
-            { ActorStatType.GoldRate, false },
-            { ActorStatType.HealRate, false },
-            { ActorStatType.ShieldRate, false },
-            { ActorStatType.CritHit, false },
-            { ActorStatType.Body, true },
-            { ActorStatType.Spirit, true },
-            { ActorStatType.Finesse, true },
-            { ActorStatType.CastingSpeed ,false},
-            { ActorStatType.CastingDmg ,false}
         };
 
         public ActorStatType Type { get; }

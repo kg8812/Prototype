@@ -70,7 +70,7 @@ namespace Apis
                 _ => null
             };
 
-            if (strategy != null) barrier = strategy.Calculate(this) * (1 + actor.ShieldRate / 100);
+            if (strategy != null) barrier = strategy.Calculate(this);
         }
 
         public override void OnAdd()

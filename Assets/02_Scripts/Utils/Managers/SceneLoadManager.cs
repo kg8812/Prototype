@@ -49,7 +49,6 @@ namespace Apis.Managers
 
             SceneManager.activeSceneChanged += Fading;
             SceneManager.activeSceneChanged += OnSceneLoaded;
-            SceneManager.activeSceneChanged += GameManager.SectorMag.UnLoadAllSectors;
             WhenSceneLoaded.AddListener(_ => SceneLoaded());
             CurSceneData = GetNextSceneData("Init");
         }
@@ -102,10 +101,6 @@ namespace Apis.Managers
                     LoadingSceneManager.LoadStage(sceneName);
                 }, () =>
                 {
-                    if (GameManager.Scene.IsSector(sceneName))
-                    {
-                        GameManager.SectorMag.IsFirstSector = true;
-                    }
                 }, isFadeIn:IsFading(CurSceneData), isFadeOut:false);
             }
             else
@@ -113,10 +108,6 @@ namespace Apis.Managers
                 SceneData nextData = GetNextSceneData(sceneName);
                 FadeManager.instance.Fading(() =>
                 {
-                    if (IsSector(sceneName))
-                    {
-                        GameManager.SectorMag.IsFirstSector = true;
-                    }
                     WhenSceneLoadBegin.Invoke(CurSceneData);
                     CurSceneData = nextData;
                     if (GameManager.instance.Player != null)

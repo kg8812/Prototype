@@ -36,7 +36,7 @@ namespace Apis.BehaviourTreeTool
             if (_actor is not IMovable mover) return;
             
             mover.Rb.DOKill();
-            mover.Rb.velocity = Vector3.zero;
+            mover.Rb.linearVelocity = Vector3.zero;
             
             tweener = mover.ActorMovement.DashTemp(time, distance, isBackDash).SetAutoKill(true).SetEase(Ease.Linear);
             _actor.ExecuteEvent(EventType.OnDash, new EventParameters(_actor));

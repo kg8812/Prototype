@@ -7,9 +7,9 @@ using UnityEngine;
 namespace PlayerState {
     public class Dash : EventState, IInterruptable, IAnimate
     {
-        public override EPlayerState NextState { get => EPlayerState.Stop; set{ } }
+        public override EPlayerState NextState { get => EPlayerState.Idle; set{ } }
         public float InterruptTime { get => _player.DashDelayCancelTime; set {} }
-        public EPlayerState[] InteruptableStates { get => new[] { EPlayerState.Move, EPlayerState.AirMove, EPlayerState.Attack, EPlayerState.Skill, EPlayerState.Crouch, EPlayerState.Dash, EPlayerState.Run }; set { } }
+        public EPlayerState[] InteruptableStates => new[] { EPlayerState.Move, EPlayerState.Attack, EPlayerState.Skill, EPlayerState.Dash, EPlayerState.Run };
         private Player.IPlayerDash dashStrategy;
         private Tween dashTweener;
         private bool exitFlag;
@@ -23,8 +23,8 @@ namespace PlayerState {
             _player.StateEvent.ExecuteEvent(EventType.OnDash, null);
 
             // y방향 속도 죽이기, 아닌 경우 대쉬 종료 후 위로 튀는 현상
-            bufferSpeed = new Vector2(_player.Rb.velocity.x, 0);
-            _player.Rb.velocity = bufferSpeed;
+            bufferSpeed = new Vector2(_player.Rb.linearVelocity.x, 0);
+            _player.Rb.linearVelocity = bufferSpeed;
 
             dashStrategy = _player.DashStrategy;
 
@@ -50,7 +50,6 @@ namespace PlayerState {
             _player.CoolDown.StartCd(EPlayerCd.DashToJump, _player.DashToJumpDelay);
 
             _player.StateEvent.AddEvent(EventType.OnLanding, (e) => _player.AirDashed = 0);
-            _player.StateEvent.AddEvent(EventType.OnEventState, (e) => { if(_player.CurrentState != EPlayerState.DashLanding) _player.CoolDown.StopCd(EPlayerCd.Dash); });
 
             _player.Controller.SetCommandState(Command.ECommandType.Dash);
         }
@@ -65,7 +64,7 @@ namespace PlayerState {
             
             _player.IsDash = false;
 
-            _player.Rb.velocity = bufferSpeed;  // 대쉬 이전 속도 유지
+            _player.Rb.linearVelocity = bufferSpeed;  // 대쉬 이전 속도 유지
 
             _player.CoolDown.StopCd(EPlayerCd.DashToAttack);
             _player.CoolDown.StopCd(EPlayerCd.DashToJump);
@@ -87,58 +86,6 @@ namespace PlayerState {
         public void OnExitAnimate()
         {
             _player.AnimController.SetBool(EAnimationBool.IsDash, false);
-        }
-    }
-
-
-    public class DashLanding : EventState, IInterruptable, IAnimate
-    {
-        private bool exitFlag = false;
-        private Tweener exitTweener;
-        public override EPlayerState NextState { get => EPlayerState.Stop; set{} }
-
-        public float InterruptTime { get => _player.DashDelayCancelTime; set {} }
-        public EPlayerState[] InteruptableStates { get => new[] { EPlayerState.Move, EPlayerState.Attack, EPlayerState.Skill, EPlayerState.Crouch, EPlayerState.Dash, EPlayerState.Run }; set { } }
-
-        public override void OnEnter(Player t)
-        {
-            base.OnEnter(t);
-            if(_player.onAir) 
-            {
-                // _player.SetState(EPlayerState.AirIdle);
-                exitFlag = true;
-                AddAbleState(EPlayerState.Run);
-                return;
-            }
-
-            exitFlag = false;
-
-            exitTweener = _player.DashLanding(_player.DashLandingTime, _player.DashDelayDistance, _player.DashDelaySpeedGraph);
-            exitTweener.onComplete += () => exitFlag = true;
-
-            _player.Controller.SetCommandState(Command.ECommandType.Dash);
-        }
-
-        public override bool EscapeCondition()
-        {
-            return exitFlag;
-        }
-
-        public override void OnExit()
-        {
-            base.OnExit();
-
-            exitTweener?.Kill();
-
-            _player.Controller.SetCommandState(Command.ECommandType.None);
-        }
-
-        public void OnEnterAnimate()
-        {
-        }
-
-        public void OnExitAnimate()
-        {
         }
     }
 }

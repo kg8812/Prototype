@@ -66,12 +66,8 @@ namespace Apis.CommonMonster2
         }
         
         
-        private void SceneLoadBegin(SceneData _)
+        private void SceneLoadBegin(SceneData _) // 씬 로딩될 때 (체력바등 남는 데이터 제거해야됨)
         {
-            if (gameObject.activeSelf)
-            {
-                CloseHpBar();
-            }
         }
     }
 }

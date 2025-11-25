@@ -74,6 +74,9 @@ namespace Save.Schema
             { Define.GameKey.Down, Gamepad.current.leftStick.down },
             { Define.GameKey.Up, Gamepad.current.leftStick.up },
             { Define.GameKey.Jump, Gamepad.current.buttonSouth },
+            { Define.GameKey.ActiveSkill, Gamepad.current.leftTrigger },
+            {Define.GameKey.Attack,Gamepad.current.buttonWest},
+            
         };
 
         private UnityEvent _onKeyChange;
@@ -97,6 +100,8 @@ namespace Save.Schema
                 { Define.GameKey.Down, KeyCode.DownArrow },
                 { Define.GameKey.Up, KeyCode.UpArrow },
                 { Define.GameKey.Jump, KeyCode.Space },
+                { Define.GameKey.ActiveSkill, KeyCode.D },
+                { Define.GameKey.Attack, KeyCode.Z },
             };
         }
 
@@ -398,6 +403,8 @@ namespace Save.Schema
                     (Define.GameKey.Down, KeyCode.S),
                     (Define.GameKey.Up, KeyCode.W),
                     (Define.GameKey.Jump, KeyCode.Space),
+                    (Define.GameKey.ActiveSkill, KeyCode.R),
+                    (Define.GameKey.Attack, KeyCode.Mouse0),
                 };
             }
 
@@ -408,6 +415,8 @@ namespace Save.Schema
                 (Define.GameKey.Down, KeyCode.DownArrow),
                 (Define.GameKey.Up, KeyCode.UpArrow),
                 (Define.GameKey.Jump, KeyCode.Space),
+                (Define.GameKey.ActiveSkill, KeyCode.D),
+                (Define.GameKey.Attack, KeyCode.Z),
             };
         }
     }

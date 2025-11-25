@@ -36,7 +36,7 @@ namespace Apis
         public virtual void Stop()
         {
             fired = false;
-            rigid.velocity = Vector2.zero;
+            rigid.linearVelocity = Vector2.zero;
             if (timeUse)
             {
                 Sequence stopSeq = DOTween.Sequence();
@@ -139,18 +139,18 @@ namespace Apis
                 Vector2 pos = rigid.position;
 
                 Vector2 dir = ((Vector2)_attacker.Position - pos).normalized;
-                rigid.velocity = dir * speed2;
+                rigid.linearVelocity = dir * speed2;
 
                 while (distance > 0.1f)
                 {
                     distance = Vector2.Distance(_attacker.Position, rigid.position);
                     pos = rigid.position;
                     
-                    float mag = rigid.velocity.magnitude;
+                    float mag = rigid.linearVelocity.magnitude;
                     dir = ((Vector2)_attacker.Position - pos).normalized;
-                    rigid.velocity = dir * mag;
-                    rigid.velocity += GetAccelerationVector();
-                    float angle = Mathf.Atan2(rigid.velocity.y, rigid.velocity.x) * Mathf.Rad2Deg;
+                    rigid.linearVelocity = dir * mag;
+                    rigid.linearVelocity += GetAccelerationVector();
+                    float angle = Mathf.Atan2(rigid.linearVelocity.y, rigid.linearVelocity.x) * Mathf.Rad2Deg;
                     ThisTrans.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
                     
                     yield return new WaitForFixedUpdate();

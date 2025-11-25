@@ -21,19 +21,6 @@ public partial class GameManager
 
     public static Guid PlayerExistSceneStageGuid;
 
-    [HideInInspector] public Action _onRest;
-    
-    
-    public event Action OnRest
-    {
-        add
-        {
-            _onRest -= value;
-            _onRest += value;
-        }
-        remove => _onRest -= value;
-    }
-
     [HideInInspector] public Action<int> levelChange;
     [HideInInspector] public Action<int> expChange;
     int level = 1;

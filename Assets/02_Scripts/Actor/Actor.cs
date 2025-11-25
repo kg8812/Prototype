@@ -136,9 +136,6 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
 
         parameters.hitData.dmg *= 1 - (1 - FormulaConfig.defConstant / (FormulaConfig.defConstant + Def));
 
-        parameters.hitData.dmg -= Mentality;
-        parameters.hitData.dmg *= (100 - DmgReduce) / 100;
-        
         parameters.hitData.dmg = Mathf.RoundToInt(parameters.hitData.dmg);
 
         ExecuteEvent(EventType.OnHit, parameters);
@@ -252,7 +249,7 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
     {
         if (maxVelocity > 0)
         {
-            Rb.velocity = Vector2.ClampMagnitude(Rb.velocity, maxVelocity);
+            Rb.linearVelocity = Vector2.ClampMagnitude(Rb.linearVelocity, maxVelocity);
         }
     }
 
@@ -309,8 +306,6 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
         float random = Random.Range(0, 100f);
         float prob = CritProb;
        
-        prob += eventParameters.target.CritHit;
-        
         if (random < prob || eventParameters.atkData.isfixedCrit)
         {
             eventParameters.atkData.dmg *= CritDmg * 0.01f;
@@ -331,13 +326,6 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
                 ExecuteEvent(EventType.OnBackAttack, eventParameters);
             }
         }
-        eventParameters.atkData.dmg *= 1 + ExtraDmg / 100;
-        
-
-        // if (eventParameters.knockBackData.knockBackForce > 0)
-        // {
-        //     eventParameters.atkData.isHitReaction = true;
-        // }
 
         eventParameters.hitData.dmg = eventParameters.atkData.dmg;
         

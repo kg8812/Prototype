@@ -27,14 +27,6 @@ namespace Apis.SkillTrees
             {
                 if (tree.PlayerType != GameManager.instance.Player.playerType) return;
 
-                if (!equippedIndex.Contains(index))
-                {
-                    foreach (var skillTreeTag in tree.Tags)
-                    {
-                        GameManager.Tag.AddTag(skillTreeTag);
-                    }
-                }
-
                 if (GameManager.instance.Player.ActiveSkill is PlayerActiveSkill active)
                 {
                     active.Accept(tree,level);
@@ -52,14 +44,6 @@ namespace Apis.SkillTrees
         {
             if (skillTrees.TryGetValue(index, out var tree) && equippedIndex.Contains(index))
             {
-                if (equippedIndex.Contains(index))
-                {
-                    foreach (var skillTreeTag in tree.Tags)
-                    {
-                        GameManager.Tag.MinusTag(skillTreeTag);
-                    }
-                }
-
                 tree.DeActivate();
 
                 equippedIndex.Remove(index);

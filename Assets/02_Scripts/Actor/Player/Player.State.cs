@@ -40,8 +40,6 @@ public partial class Player : Actor
     public bool IsClimb { get; set; }
     public bool IsMove { get; set; }
     public bool IsDash { get; set; }
-    public bool IsRun { get; set;}
-    public bool IsIceDrill { get; set; }
 
     public bool OnAttack { get; set; }
     public bool OnFinalAttack { get; set; }
@@ -50,7 +48,6 @@ public partial class Player : Actor
 
     public int AirDashed { get; set; }
     public bool IsReadyIdle { get; set; }
-    private ClimbDetector climbDetector;
     public uint MaxAirDash = 1;
 
     public bool isInteractable { get; set; }
@@ -67,11 +64,9 @@ public partial class Player : Actor
     {
         MoveComponent.MoveOn();
         SetAbleState(EPlayerState.Move, true);
-        SetAbleState(EPlayerState.AirMove, true);
 
         if(_playerStateMachine?.CurrentState is BaseState s){
             s.AbleStates.Add(EPlayerState.Move);
-            s.AbleStates.Add(EPlayerState.AirMove);
         }
     }
 
@@ -79,7 +74,6 @@ public partial class Player : Actor
     {
         MoveComponent.MoveOff();
         SetAbleState(EPlayerState.Move, false);
-        SetAbleState(EPlayerState.AirMove, false);
     }
 
     public void MoveCCOn()
@@ -104,15 +98,6 @@ public partial class Player : Actor
         MoveComponent.JumpOff();
         SetAbleState(EPlayerState.Jump, false);
     }
-    public void ClimbOn()
-    {
-        climbDetector.OnClimbAble();
-    }
-
-    public void ClimbOff()
-    {
-        climbDetector.OffClimbAble();
-    }
 
     public virtual void DashOff()
     {
@@ -127,22 +112,9 @@ public partial class Player : Actor
             s.AbleStates.Add(EPlayerState.Dash);
     }
 
-    public void Crouch()
-    {
-        MoveComponent.ActorMovement.Crouch();
-        isCrouch = true;
-    }
-
-    public void StandUp()
-    {
-        ActorMovement.StandUp();
-        isCrouch = false;
-    }
-
     public void BlockIdle(bool isBlock = true)
     {
         SetAbleState(EPlayerState.Idle, isBlock);
-        SetAbleState(EPlayerState.AirIdle, isBlock);
     }
 
     IEnumerator PlayerWaitCoroutine(UnityAction action)
@@ -152,16 +124,6 @@ public partial class Player : Actor
             return !IsMove && !onAir && !OnAttack && !IsDash && !IsCrouch && !IsClimb && IsReadyIdle;
         });
         action.Invoke();
-    }
-
-    public void CutSceneStart()
-    {
-        GameManager.instance.StartCoroutineWrapper(PlayerWaitCoroutine(()=>SetState(EPlayerState.CutScene)));
-    }
-
-    public void CutSceneEnd()
-    {
-        IdleOn();
     }
 
     // 강제 상태 전환 포함 control on-off: 플레이어 밖에서 쓰는 경우에 로직 정확히 몰라서 그냥 유지지
@@ -249,10 +211,10 @@ public partial class Player : Actor
     private Tweener dashLandingTweener;
     public Tweener DashLanding(float time, float distance, DG.Tweening.Ease graph)
     {
-        Vector2 tempSpeed = Rb.velocity;
-        Rb.velocity = Vector2.zero;
+        Vector2 tempSpeed = Rb.linearVelocity;
+        Rb.linearVelocity = Vector2.zero;
         dashLandingTweener = ActorMovement.DashTemp(time, distance, false, graph);
-        dashLandingTweener.onComplete += () => Rb.velocity = tempSpeed; 
+        dashLandingTweener.onComplete += () => Rb.linearVelocity = tempSpeed; 
         return dashLandingTweener;
     }
 
@@ -286,7 +248,6 @@ public partial class Player : Actor
         if (_playerStateDictionary.TryGetValue(state, out outState))
         {
             if(_playerStateMachine.CurrentState != outState){
-                stateMonitor.SetText(state);
                 _CurrentState = state;
                 if(StateLog) Debug.Log(state);
             }
@@ -310,30 +271,12 @@ public partial class Player : Actor
         _playerStateDictionary.Add(EPlayerState.Jump, new Jump());
         _playerStateDictionary.Add(EPlayerState.Dash, new Dash());
         _playerStateDictionary.Add(EPlayerState.Attack, new Attack());
-        _playerStateDictionary.Add(EPlayerState.Crouch, new Crouch());
-        _playerStateDictionary.Add(EPlayerState.Heal, new Heal());
-        _playerStateDictionary.Add(EPlayerState.Climb, new Climb());
-        _playerStateDictionary.Add(EPlayerState.Drop, new Drop());
         _playerStateDictionary.Add(EPlayerState.Damaged, new Damaged());
         _playerStateDictionary.Add(EPlayerState.Dead, new Dead());
         _playerStateDictionary.Add(EPlayerState.Skill,new PlayerState.Skill());
-        _playerStateDictionary.Add(EPlayerState.DashLanding, new DashLanding());
-        _playerStateDictionary.Add(EPlayerState.Charging,new Charging());
-        _playerStateDictionary.Add(EPlayerState.Casting,new Casting());
-        _playerStateDictionary.Add(EPlayerState.CutScene,new CutScene());
-        _playerStateDictionary.Add(EPlayerState.AirIdle,new AirIdle());
-        _playerStateDictionary.Add(EPlayerState.AirMove,new AirMove());
-        _playerStateDictionary.Add(EPlayerState.Stop,new Stop());
-        _playerStateDictionary.Add(EPlayerState.AirAttackWaiting, new AirAttackWaiting());
-        _playerStateDictionary.Add(EPlayerState.AttackWaiting, new AttackWaiting());
-        _playerStateDictionary.Add(EPlayerState.HealEnd, new HealEnd());
         _playerStateDictionary.Add(EPlayerState.KnockBack, new KnockBack());
         _playerStateDictionary.Add(EPlayerState.KnockBackEnd, new KnockBackEnd());
-        _playerStateDictionary.Add(EPlayerState.Run, new Run());
-        _playerStateDictionary.Add(EPlayerState.AirRun, new AirRun());
         _playerStateDictionary.Add(EPlayerState.Interact, new Interact());
-        _playerStateDictionary.Add(EPlayerState.IceDrillCharge, new IceDrillCharge());
-        _playerStateDictionary.Add(EPlayerState.IceDrillExecute, new IceDrillExecute());
     }
 
     private void StateInit()
@@ -351,7 +294,6 @@ public partial class Player : Actor
         OnFinalAttack = false;
         IsSkill = false;
         OnFinalSkill = false;
-        IsRun = false;
         isInteractable = true;
 
         foreach (var state in Enum.GetValues(typeof(EPlayerState)))
@@ -398,7 +340,7 @@ public partial class Player : Actor
         ResetGravity();
         GravityOn();
         StateInit();
-        SetState(EPlayerState.Stop);
+        SetState(EPlayerState.Idle);
         AnimController.SetTrigger(EAnimationTrigger.IdleOn);
     }
 }

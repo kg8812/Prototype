@@ -73,7 +73,7 @@ namespace Apis.CommonMonster2
             {
                 if (_curProj.TryGetComponent<Rigidbody2D>(out var rigid))
                 {
-                    rigid.velocity = Vector2.zero;
+                    rigid.linearVelocity = Vector2.zero;
                 }
                 monster.Projectiles.Add(_curProj);
                 void RemoveProjectile(EventParameters _)

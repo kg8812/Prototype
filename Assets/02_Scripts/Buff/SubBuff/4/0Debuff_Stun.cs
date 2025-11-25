@@ -28,7 +28,6 @@ namespace Apis
         protected override void OnTypeAdd()
         {
             base.OnTypeAdd();
-            SpawnEffect(Define.EtcEffects.BlackOut,actor.topPivot);
         }
 
         protected override void OnTypeRemove()

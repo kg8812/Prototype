@@ -41,8 +41,7 @@ namespace Apis
             if (_dropItemsPerGroup.TryGetValue(dropGroupIndex, out List<DropItemTypeInGroup> value))
             {
                 var chanceList = Default.Utils.GetChanceList<DropItemTypeInGroup>(value).Where(x =>
-                    x.dropItemType - 1 is not ((int)DropItemType.Accessory or (int)DropItemType.Weapon) ||
-                    DataAccess.Codex.IsOpen(CodexData.CodexType.Item, x.dropItemIndex)).ToList();
+                    x.dropItemType - 1 is not ((int)DropItemType.Accessory or (int)DropItemType.Weapon)).ToList();
                 //var chanceList = GGDok.Utils.GetChanceList<DropItemTypeInGroup>(value);
 
                 int randInd = Random.Range(0, chanceList.Count);

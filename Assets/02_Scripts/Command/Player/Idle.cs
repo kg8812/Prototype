@@ -11,15 +11,12 @@ namespace Command
             // if(go.IsBlockIdle) return;
             if(!InvokeCondition(go)) return;
             
-            if(go.onAir)
-                go.SetState(EPlayerState.AirIdle);
-            else
-                go.SetState(EPlayerState.Idle);
+            go.SetState(EPlayerState.Idle);
         }
 
         public override bool InvokeCondition(Player go)
         {
-            return go.GetAbleState(EPlayerState.Idle) || go.GetAbleState(EPlayerState.AirIdle);
+            return go.GetAbleState(EPlayerState.Idle);
         }
     }
 }

@@ -34,7 +34,7 @@ public class BlackHole : MonoBehaviour
             direction.Normalize();
             if (Vector2.Distance(position, transform.position) > 0.5f)
             {
-                targets[i].velocity = Vector2.Lerp(targets[i].velocity, direction * maxSpeed,
+                targets[i].linearVelocity = Vector2.Lerp(targets[i].linearVelocity, direction * maxSpeed,
                     Time.fixedDeltaTime * pullForce);
             }
         }

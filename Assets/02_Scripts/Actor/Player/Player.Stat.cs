@@ -86,14 +86,10 @@ public partial class Player
     
     private BonusStat _levelStat;
     
-    BonusStat LevelBonusStat()
+    BonusStat LevelBonusStat() //레벨업시 스탯 변경
     {
         _levelStat ??= new();
         _levelStat.Reset();
-
-        _levelStat.Stats[ActorStatType.Finesse].Value = UnitDatas[playerType].finesse * GameManager.instance.Level - 1;
-        _levelStat.Stats[ActorStatType.Body].Value = UnitDatas[playerType].body * GameManager.instance.Level - 1;
-        _levelStat.Stats[ActorStatType.Spirit].Value = UnitDatas[playerType].spirit * GameManager.instance.Level - 1;
 
         return _levelStat;
     }
@@ -152,22 +148,15 @@ public partial class Player
         UpdatePlayerStat(_unitData);
         _overrider?.Init(this);
         UpdateSkills();
-        AttackItemManager.ApplyPreset((int)playerType);
     }
 
     public void UpdatePlayerStat(UnitData _unitData)
     {
         playerStat = new(_unitData.playerStat);
-        if (GameManager.Save.currentSlotData != null)
-        {
-            playerStat.JumpMax += GameManager.Save.currentSlotData.GrowthSaveData.Player.playerStat.jumpMax;
-            playerStat.maxPotionCapacity += GameManager.Save.currentSlotData.GrowthSaveData.Player.playerStat.potionCount;
-        }
     }
 
     public void UpdatePlayerStat()
     {
-        UpdatePlayerStat(UnitDatas[playerType]);
     }
 #region 입력 버퍼
     [TabGroup("기획쪽 수정 변수들/group1", "조작감")]

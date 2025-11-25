@@ -42,15 +42,3 @@ public class StateInfo
 
     }
 }
-
-public class CutsceneInfo : StateInfo
-{
-    public PlayerTimelineDummy Dummy;
-}
-
-public class ClimbInfo : StateInfo
-{
-    public Vector2 endPos;
-    public EClimbType type;
-    public Collider2D hit;
-}

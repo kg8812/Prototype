@@ -50,14 +50,6 @@ namespace Managers
             _saveData[SaveType.Persistent]
                 .AddData(PersistentDataKeys.GetKey(PersistentDataKeys.DataTypes.Setting), new SettingData());
             _saveData[SaveType.Persistent]
-                .AddData(PersistentDataKeys.GetKey(PersistentDataKeys.DataTypes.CollectionOpened),
-                    new CollectionOpenSaveData());
-            _saveData[SaveType.Persistent]
-                .AddData(PersistentDataKeys.GetKey(PersistentDataKeys.DataTypes.CutSceneOpened),
-                    new CutSceneSaveData());
-            _saveData[SaveType.Persistent]
-                .AddData(PersistentDataKeys.GetKey(PersistentDataKeys.DataTypes.TipOpened), new TipSaveData());
-            _saveData[SaveType.Persistent]
                 .AddData(PersistentDataKeys.GetKey(PersistentDataKeys.DataTypes.GameData), new GameSaveData());
         }
 
@@ -65,23 +57,6 @@ namespace Managers
         {
             _saveData[SaveType.Slot].AddData(SlotDataKeys.GetKey(SlotDataKeys.DataTypes.SlotInfo, slotId),
                 new SlotInfoSaveData());
-            _saveData[SaveType.Slot].AddData(SlotDataKeys.GetKey(SlotDataKeys.DataTypes.Growth, slotId),
-                new PermanentGrowthSaveData());
-            _saveData[SaveType.Slot].AddData(SlotDataKeys.GetKey(SlotDataKeys.DataTypes.NPC, slotId),
-                new NPCSaveData());
-            _saveData[SaveType.Slot].AddData(SlotDataKeys.GetKey(SlotDataKeys.DataTypes.Lobby, slotId),
-                new LobbySaveData());
-            _saveData[SaveType.Slot].AddData(SlotDataKeys.GetKey(SlotDataKeys.DataTypes.Sector, slotId),
-                new SectorSaveData());
-            _saveData[SaveType.Slot].AddData(SlotDataKeys.GetKey(SlotDataKeys.DataTypes.Task, slotId),
-                new TaskSaveData());
-            _saveData[SaveType.Slot].AddData(SlotDataKeys.GetKey(SlotDataKeys.DataTypes.Map, slotId),
-                new MapSaveData());
-            
-            // 플레이어 관련 데이터 로딩이 제일 마지막에 되어야해서 TempSaveData는 맨 마지막에 와야함
-            // TempSaveData 내부에 플레이어 관련 데이터와 플레이어 생성 로직이 작성되어있음
-            _saveData[SaveType.Slot].AddData(SlotDataKeys.GetKey(SlotDataKeys.DataTypes.Temp, slotId),
-                new TempSaveData());
         }
         
         public ISaveData GetData(PersistentDataKeys.DataTypes type)

@@ -41,7 +41,6 @@ namespace Apis
             // DataAccess.Codex.UnLock(CodexData.CodexType.Item,item.Index);
             OnCollect.Invoke(this);
             GameManager.Item.ActiveSkillPickUp.Return(this);
-            GameManager.UI.CreateUI("UI_ItemPopup", Apis.UIType.Main).GetComponent<UI_ItemPopUp>().Init(item);
         }       
 
         public void CreateNew(int skillItem)

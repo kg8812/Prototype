@@ -18,12 +18,7 @@ public class AnimatorOverrider : MonoBehaviour
 
     public static Dictionary<PlayerType, AnimatorOverrideController> PlayerOverriders => _playerOverriders ??= new()
     {
-        { PlayerType.Ine ,Instantiate(ResourceUtil.Load<AnimatorOverrideController>(Define.Animations.IneOverrider))},
-        { PlayerType.Jingburger ,Instantiate(ResourceUtil.Load<AnimatorOverrideController>(Define.Animations.JingburgerOverrider))},
-        { PlayerType.Lilpa ,Instantiate(ResourceUtil.Load<AnimatorOverrideController>(Define.Animations.LilpaOverrider))},
-        { PlayerType.Jururu ,Instantiate(ResourceUtil.Load<AnimatorOverrideController>(Define.Animations.JururuOverrider))},
-        { PlayerType.Gosegu ,Instantiate(ResourceUtil.Load<AnimatorOverrideController>(Define.Animations.GoseguOverrider))},
-        { PlayerType.Viichan ,Instantiate(ResourceUtil.Load<AnimatorOverrideController>(Define.Animations.ViichanOverrider))},
+        { PlayerType.Player1 ,Instantiate(ResourceUtil.Load<AnimatorOverrideController>(Define.PlayerAnimations.Overrider))},
     };
     public void SetPlayerAnimations(PlayerType type)
     {

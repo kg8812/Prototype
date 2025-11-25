@@ -9,7 +9,6 @@ namespace Apis.DataType
     {
         public int index;
         public PlayerType playerType;
-        public TagManager.SkillTreeTag[] tags;
         
         public SkillTree.TreeTypeEnum treeType;
         public SkillTree.SlotTypeEnum slotType;

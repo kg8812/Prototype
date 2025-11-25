@@ -17,7 +17,7 @@ namespace Scenes.Lobby
         private void PlayerSpawn()
         {
             GameManager.instance.ControllingEntity.transform.position = transform.position;
-            GameManager.instance.ControllingEntity.Rb.velocity = Vector2.zero;
+            GameManager.instance.ControllingEntity.Rb.linearVelocity = Vector2.zero;
         }
     }
 }

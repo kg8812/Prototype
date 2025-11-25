@@ -98,8 +98,7 @@ namespace Apis
 
         public int AtkSlotIndex { get; set; }
         public virtual float Atk => _config.BonusStat.Stats[ActorStatType.Atk].Value * (1 + _config.BonusStat.Stats[ActorStatType.Atk].Ratio / 100f);
-        public virtual float Dmg => Atk + ((Player != null )? (Player.Finesse * FinesseFactor / 100 + Player.Body * BodyFactor / 100 +
-                                                            Player.Spirit * SpiritFactor / 100) : 0);
+        public virtual float Dmg => Atk;
         public Player Player => GameManager.instance.Player;
         
         private IWeaponAttack _iAttack;
@@ -345,7 +344,6 @@ namespace Apis
                 x.ActiveRenderer(true);
                 x.Condition = 1;
             }
-            Player.SetWeaponSpriteAttacher(this);
             Player._overrider.SetAnimation(MotionIndex,Player);
             Player.animator.SetInteger("AttackType", AtkMotionType);
             if (IsFollow)

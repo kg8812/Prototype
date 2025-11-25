@@ -29,52 +29,6 @@ public partial class Player
     public Transform ineBookPos;
     Bone weaponBone;
     public Bone WeaponBone => weaponBone ??= Mecanim.skeleton.FindBone("weapon");
-
-    private WeaponSpriteAttacher _attacher;
-
-    public WeaponSpriteAttacher Attacher
-    {
-        get
-        {
-            return _attacher ??= transform.GetComponentInParentAndChild<WeaponSpriteAttacher>();
-        }
-    }
-
-    private AtlasRegionAttacher _regionAttacher;
-
-    public AtlasRegionAttacher RegionAttacher =>
-        _regionAttacher ??= transform.GetComponentInParentAndChild<AtlasRegionAttacher>();
-
-    public bool BlockSkillChange = false;
-
-    public void SetWeaponSpriteAttacher(Weapon weapon)
-    {
-        if (weapon == null) return;
-        Attacher.RemoveAll();
-        RegionAttacher.RemoveAll();
-        
-        if (!weapon.isSpine)
-        {
-            Attacher.sprites = weapon.sprites;
-            Attacher.materials = weapon.materials;
-            Attacher.slots = weapon.slots;
-            
-            Attacher.Initialize();
-            Attacher.Attach();
-        }
-        else
-        {
-            RegionAttacher.atlasAsset = weapon.atlasAsset;
-            for (int i = 0; i < weapon.slots.Length; i++)
-            {
-                AtlasRegionAttacher.SlotRegionPair pair = new();
-                pair.slot = weapon.slots[i];
-                pair.region = weapon.atlasRegion[i];
-                _regionAttacher.attachments.Add(pair);
-            }
-            RegionAttacher.Apply(Mecanim);
-        }
-    }
     
     // 무조건 무기 공격을 하는것에서 AtkStrategy로 변경했음.
     // 비챤 야수모드처럼 다른 콤보공격을 해야하는 경우도 생겨서 필요한 변경사항
@@ -165,10 +119,5 @@ public partial class Player
     {
         EventParameters param = new(this);
         ExecuteEvent(EventType.OnWeaponSlash, param);
-    }
-
-    public void ApplyPlayerPreset()
-    {
-        InvenManager.instance.PresetManager.ApplyPreset((int)playerType);
     }
 }

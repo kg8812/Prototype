@@ -81,7 +81,7 @@ public class ForceActorMovement : ActorMovement
             /* 현재 이동 관련 속도 성분 계산 (공중의 경우 수평만, 경사에서는 경사 방향 속도도)*/
             float rad = pastAngle * Mathf.Deg2Rad;
             Vector2 proj = new(Mathf.Sin(rad) * (float)direction, Mathf.Cos(rad)); // pastAngle 방향 단위 벡터
-            float currentVel = Vector2.Dot(_mover.Rb.velocity, proj); // 성분 크기
+            float currentVel = Vector2.Dot(_mover.Rb.linearVelocity, proj); // 성분 크기
             float currentAbsVel = Vector2.Dot(_mover.AbsVelocity, proj); // 현재 속도 크기
             // Debug.Log($"abs: {currentAbsVel}, rel: {currentVel}");
 
@@ -106,17 +106,17 @@ public class ForceActorMovement : ActorMovement
                 if(IsStick){
                     // 지상이면 이전 속도 성분을 현재 진행 방향으로
                     var newVelDir = Quaternion.Euler(0, 0, currentAngle * -dir) * Vector2.up;
-                    _mover.Rb.velocity = newVelDir.normalized * currentVel;
+                    _mover.Rb.linearVelocity = newVelDir.normalized * currentVel;
                 }
                 pastAngle = currentAngle;
             }
-            Debug.DrawRay(collider.bounds.center, _mover.Rb.velocity * 0.5f, Color.cyan);
+            Debug.DrawRay(collider.bounds.center, _mover.Rb.linearVelocity * 0.5f, Color.cyan);
             // Debug.Break();
 
             //TODO: moving obj 위에 있는 경우 abs velocity 계산 필요
 
             /* Fnet = F0 - bv => v(t) = v0(1-exp(-t/b)): 종단속도 적용 */
-            float diff = Mathf.Sign(_mover.Rb.velocity.x) * Mathf.Sign((float)_dirUser.Direction);
+            float diff = Mathf.Sign(_mover.Rb.linearVelocity.x) * Mathf.Sign((float)_dirUser.Direction);
             force += 1/resistFactor * (maxSpeedRatio * maxSpeed - (currentVel * diff)) * forceDir;
 
             Debug.DrawRay(collider.bounds.center, force * 0.1f, Color.red);
@@ -126,7 +126,7 @@ public class ForceActorMovement : ActorMovement
 
     public new void Jump(float jumpforce)
     {
-        _mover.Rb.velocity = new Vector2(_mover.Rb.velocity.x, 0);
+        _mover.Rb.linearVelocity = new Vector2(_mover.Rb.linearVelocity.x, 0);
         _mover.Rb.AddForce(jumpforce * Vector2.up, ForceMode2D.Impulse);
     }
 
@@ -137,29 +137,29 @@ public class ForceActorMovement : ActorMovement
     /// <param name="endVel"> 종단속도</param>
     public void Drop(float resistFactor, float endVel)
     {
-        if (_mover.Rb.velocity.y > 0) return;
+        if (_mover.Rb.linearVelocity.y > 0) return;
         
         // 종단 속도 도달 시 등속 낙하
-        float resistForce = _mover.Rb.velocity.y * (_mover.Rb.mass * Physics2D.gravity.y * GravityScale)/endVel;
+        float resistForce = _mover.Rb.linearVelocity.y * (_mover.Rb.mass * Physics2D.gravity.y * GravityScale)/endVel;
         _mover.Rb.AddForce(resistForce * Vector2.up);
     }
 
     public void AirStop(float resistFactor)
     {
-        if(_mover.Rb.velocity.x == 0) return;
+        if(_mover.Rb.linearVelocity.x == 0) return;
 
-        _mover.Rb.AddForce(-_mover.Rb.velocity.x * resistFactor * Vector2.right);
+        _mover.Rb.AddForce(-_mover.Rb.linearVelocity.x * resistFactor * Vector2.right);
     }
 
     public void Friction(float frictionAmount)
     {
-        if(_mover.Rb.velocity.x == 0) return;
+        if(_mover.Rb.linearVelocity.x == 0) return;
 
         Vector2 castCenter = (Vector2)collider.bounds.center + Vector2.down * _height * 0.49f;
 
-        float amount = Mathf.Min(_mover.Rb.velocity.magnitude, frictionAmount);
+        float amount = Mathf.Min(_mover.Rb.linearVelocity.magnitude, frictionAmount);
 
-        amount *= Mathf.Sign(_mover.Rb.velocity.x);
+        amount *= Mathf.Sign(_mover.Rb.linearVelocity.x);
 
         RaycastHit2D hit = Physics2D.Raycast(castCenter, Vector2.down, 0.1f, LayerMasks.GroundAndPlatform);
 
@@ -178,7 +178,7 @@ public class ForceActorMovement : ActorMovement
     public void Dash(float velocity, float angle)
     {
         // 속도 초기화
-        _mover.Rb.velocity = Vector2.zero;
+        _mover.Rb.linearVelocity = Vector2.zero;
 
         Vector2 forceDir = Quaternion.Euler(0, 0, angle) * Vector2.right;
 
@@ -187,7 +187,7 @@ public class ForceActorMovement : ActorMovement
 
     public void Dash(float velocity, Vector2 direction)
     {
-        _mover.Rb.velocity = Vector2.zero;
+        _mover.Rb.linearVelocity = Vector2.zero;
 
         _mover.Rb.AddForce(direction.normalized * velocity, ForceMode2D.Impulse);
     }

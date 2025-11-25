@@ -20,7 +20,6 @@ public partial class GameManager
 
     private UnityEvent _whenReturnedToTitle;
     
-    [HideInInspector] public UnityEvent<bool> whenArenaStateChanged;
     public UnityEvent WhenReturnedToTitle => _whenReturnedToTitle ??= new();
 
     [FormerlySerializedAs("WhenConvenienceUnlock")] [HideInInspector] public UnityEvent WhenUnlock = new();
@@ -94,20 +93,12 @@ public partial class GameManager
 
     #endregion
 
-    
-
-    public void ToggleArena(bool isIn)
-    {
-        whenArenaStateChanged.Invoke(isIn);
-    }
-
     protected override void Awake()
     {
         base.Awake();
         _isQuitting = false;
         playerInit = new();
         playerRegistered = new();
-        whenArenaStateChanged = new();
         isInit = false;
         // player = FindObjectOfType<Player>();
         Data.Load();
@@ -121,7 +112,6 @@ public partial class GameManager
         // Scene.WhenSceneLoaded.AddListener(_ => SaveSlot());
         
         Scene.WhenSceneLoaded.AddListener(PlayerToggleWhenSceneChanged);
-        Sector.WhenSectorEnter += ShowStageInfo;
     }
 
     private void Update()
@@ -192,19 +182,6 @@ public partial class GameManager
                 CameraManager.instance.ResetPlayerCamToggle(false);
             }
             
-        }
-    }
-
-    private void ShowStageInfo(Sector sector)
-    {
-        //UI_StageInfo newInfo = UI.CreateUI("UI_StageInfo", UIType.Main) as UI_StageInfo;
-        //newInfo.Show("임시방편 텍스트");
-    }
-
-    public void SaveSlot()
-    {
-        if (Scene.CurSceneData.isPlayerMustExist && Player != null)
-        {
         }
     }
 }

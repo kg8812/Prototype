@@ -5,8 +5,6 @@ namespace Apis
 {
     public class DropItemFactoryManager : SingletonPersistent<DropItemFactoryManager>
     {
-        public float goldDropRatio = 1f;
-        
         public List<DropItem> GetDropItemById(int dropItemType, int dropItemIndex, int amount)
         {
             // 고쳐야함
@@ -15,12 +13,6 @@ namespace Apis
             switch ((DropItemType)(dropItemType))
             {
                 // accessory
-                case DropItemType.Gold:
-                    foreach (var items in GameManager.Item.Gold.CreateNews(dropItemIndex, amount))
-                    {
-                        dropItem.Add(items);
-                    }
-                    break;
                 case DropItemType.Accessory:
                     foreach (var items in GameManager.Item.AccPickUp.CreateNews(dropItemIndex, amount))
                     {
@@ -35,13 +27,6 @@ namespace Apis
                     break;
                 case DropItemType.Weapon:
                     foreach (var items in GameManager.Item.WeaponPickUp.CreateNews(dropItemIndex, amount))
-                    {
-                        dropItem.Add(items);
-                    }
-                    break;
-                
-                case DropItemType.Germ:
-                    foreach (var items in GameManager.Item.Germ.CreateNews(dropItemIndex, amount))
                     {
                         dropItem.Add(items);
                     }

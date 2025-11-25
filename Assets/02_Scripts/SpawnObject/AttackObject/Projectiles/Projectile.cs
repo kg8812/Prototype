@@ -177,19 +177,18 @@ namespace Apis
             base.Init(atkObjectInfo);
             curDist = 0;
             fired = false;
-            rigid.velocity = Vector2.zero;
+            rigid.linearVelocity = Vector2.zero;
             rigid.gravityScale = 0;
             perPos = ThisTrans.position;
             realInitVelocity = firstVelocity;
             Collider.enabled = false;
 
             isDestroyed = false;
-            GameManager.SectorMag.ActivatedProjectiles.Add(this);
         }
 
         protected Vector2 GetAccelerationVector()
         {
-            Vector2 normalVel = rigid.velocity.normalized;
+            Vector2 normalVel = rigid.linearVelocity.normalized;
             return normalVel * (acceleration * Time.fixedDeltaTime);
         }
 
@@ -198,7 +197,7 @@ namespace Apis
             if (!fired && !isReturn) return;
             if (isRotateToVelocity)
             {
-                float angle = Mathf.Atan2(rigid.velocity.y, rigid.velocity.x) * Mathf.Rad2Deg;
+                float angle = Mathf.Atan2(rigid.linearVelocity.y, rigid.linearVelocity.x) * Mathf.Rad2Deg;
                 ThisTrans.rotation = Quaternion.AngleAxis(angle + (int)projDirection,
                     Vector3.forward);
             }
@@ -208,7 +207,7 @@ namespace Apis
                 Vector3 scale = ThisTrans.localScale;
                 scale.y = Mathf.Abs(scale.y);
 
-                ThisTrans.localScale = rigid.velocity.x >= 0 ? scale : new Vector3(scale.x, -scale.y, scale.z);
+                ThisTrans.localScale = rigid.linearVelocity.x >= 0 ? scale : new Vector3(scale.x, -scale.y, scale.z);
             }
         }
         private bool isDestroyed;
@@ -216,8 +215,8 @@ namespace Apis
         {
             if (!fired) return;
             
-            SetDirection(rigid.velocity.x > 0 ? EActorDirection.Right : EActorDirection.Left);
-            rigid.velocity += GetAccelerationVector();
+            SetDirection(rigid.linearVelocity.x > 0 ? EActorDirection.Right : EActorDirection.Left);
+            rigid.linearVelocity += GetAccelerationVector();
             if (IsCheckMaxDist && !Mathf.Approximately(maxDistance,0))
             {
                 var position = ThisTrans.position;
@@ -234,7 +233,7 @@ namespace Apis
 
             if (destroyWhenZero)
             {
-                if (Mathf.Approximately(Vector2.SqrMagnitude(rigid.velocity), 0))
+                if (Mathf.Approximately(Vector2.SqrMagnitude(rigid.linearVelocity), 0))
                 {
                     Destroy();
                     fired = false;
@@ -259,7 +258,7 @@ namespace Apis
 
         void SetVelocityToActorDirection()
         {
-            rigid.velocity = new Vector2(Mathf.Abs(rigid.velocity.x) * (_direction != null ?(int)_direction.Direction : 1), rigid.velocity.y);
+            rigid.linearVelocity = new Vector2(Mathf.Abs(rigid.linearVelocity.x) * (_direction != null ?(int)_direction.Direction : 1), rigid.linearVelocity.y);
         }
 
         /// <summary>
@@ -284,7 +283,7 @@ namespace Apis
         /// 방향 = 속도vector 여부를 키면 작동하지 않습니다.
         public void Rotate(float angle)
         {
-            rigid.velocity = Quaternion.AngleAxis(angle, Vector3.forward) * rigid.velocity;
+            rigid.linearVelocity = Quaternion.AngleAxis(angle, Vector3.forward) * rigid.linearVelocity;
         }
 
         public void RotateBeforeFire(float angle)
@@ -300,7 +299,7 @@ namespace Apis
             groggyRatio = 100;
             SetFirstVelocity();
             FireInit();
-            rigid.velocity = realInitVelocity;
+            rigid.linearVelocity = realInitVelocity;
             if (rotateWithPlayerX)
             {
                 SetVelocityToActorDirection();
@@ -334,13 +333,13 @@ namespace Apis
                     Destroy();
                     break;
                 case ProjectileConflictType.Reflect:
-                    RaycastHit2D hit = Physics2D.Raycast(transform.position, rigid.velocity, reflectionCheckDist,
+                    RaycastHit2D hit = Physics2D.Raycast(transform.position, rigid.linearVelocity, reflectionCheckDist,
                         layerMasks);
                     if (hit.collider != null)
                     {
                         Vector2 normal = hit.normal;
-                        float dotProduct = Vector2.Dot(rigid.velocity, normal);
-                        rigid.velocity -= 2f * dotProduct * normal;
+                        float dotProduct = Vector2.Dot(rigid.linearVelocity, normal);
+                        rigid.linearVelocity -= 2f * dotProduct * normal;
                     }
                     break;
                 case ProjectileConflictType.Penetrate:
@@ -354,7 +353,7 @@ namespace Apis
                     transform.localScale *= (1 + penetrationRadius / 100f);
                     break;
                 case ProjectileConflictType.Stop:
-                    rigid.velocity = Vector2.zero;
+                    rigid.linearVelocity = Vector2.zero;
                     break;
             }
         }
@@ -377,14 +376,13 @@ namespace Apis
         {
             if (isDestroyed) return;
             base.Destroy();
-            rigid.velocity = Vector2.zero;
+            rigid.linearVelocity = Vector2.zero;
             //transform.localPosition = Vector2.zero;
             isDestroyed = true;
             extensions.ForEach(x =>
             {
                 x?.Destroy();
             });
-            GameManager.SectorMag.ActivatedProjectiles.Remove(this);
         }
         
         public EActorDirection Direction { get; set; }

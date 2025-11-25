@@ -43,21 +43,6 @@ public partial class Player : IActiveSkillUser , IPassiveSkillUser
         }
         remove => _onPassiveSkillChange -= value;
     }
-    public void SpawnGrab(float moveTime, float distance, float dmg)
-    {
-        grab = GameManager.Factory.Get<Grab>(FactoryManager.FactoryType.AttackObject,
-            Define.PlayerSkillObjects.ViichanGrab, Position);
-        grab.Init(this,new FixedAmount(dmg));
-        grab.MoveToPos(Position + Vector3.right * ((int)Direction * distance),moveTime,null);
-    }
-
-    public void PullGrab(float time)
-    {
-        grab?.MoveToPos(Position + Vector3.right * ((int)Direction * 0.5f),time, x =>
-        {
-            x.Destroy();
-        });
-    }
 
     private ActiveSkill _baseActiveSkill;
     private PassiveSkill _basePassiveSkill;

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace PlayerState {
     public class Attack : EventState, IAnimate
     {
-        public override EPlayerState NextState { get => _player.onAir ? EPlayerState.AirAttackWaiting : EPlayerState.AttackWaiting; set {} }
+        public override EPlayerState NextState { get => EPlayerState.Idle; set {} }
 
         private bool escapeFlag;    
         public override void OnEnter(Player t)
@@ -65,9 +65,8 @@ namespace PlayerState {
         private void Cancel(EventParameters e){
             var currentState  =_player.GetState();
             Debug.Log("Cancel");
-            if(currentState == EPlayerState.AirAttackWaiting || currentState == EPlayerState.AttackWaiting) return;
 
-            _player.SetState(EPlayerState.Stop);
+            _player.SetState(EPlayerState.Idle);
 
             _player.ResetGravity();
         } 

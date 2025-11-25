@@ -8,7 +8,7 @@ using UnityEngine.Tilemaps;
 namespace PlayerState {
     public class Interact : EventState, IAnimate
     {
-        public override EPlayerState NextState { get => EPlayerState.Stop; set {} }
+        public override EPlayerState NextState { get => EPlayerState.Idle; set {} }
         public override void OnEnter(Player t)
         {
             base.OnEnter(t);

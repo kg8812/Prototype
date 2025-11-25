@@ -16,7 +16,6 @@ namespace Apis.DataType
         public float attackPower;
         public int baseGroggyPower;
         public string iconPath;
-        public Define.WeaponType weaponType;
         // public int price;
         public bool unlock;
     }

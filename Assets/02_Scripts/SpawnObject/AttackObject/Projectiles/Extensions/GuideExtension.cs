@@ -70,12 +70,12 @@ namespace Apis
         {
             if (ReferenceEquals(target, null)) return;
             _followVec = TargetPos - (Vector2)projectile.transform.position;
-            _curVec = projectile.rigid.velocity;
+            _curVec = projectile.rigid.linearVelocity;
             _toVec =
                 Vector2.Lerp(_curVec.normalized, _followVec.normalized, followPower * Time.fixedDeltaTime).normalized *
-                projectile.rigid.velocity.magnitude;
+                projectile.rigid.linearVelocity.magnitude;
 
-            projectile.rigid.velocity = _toVec;
+            projectile.rigid.linearVelocity = _toVec;
         }
 
         private void FindTarget()
@@ -84,7 +84,7 @@ namespace Apis
             if (_foundedCols > 0)
             {
                 // velocity가 0이라면 각도 판별 못함
-                if (targetFoundAngle != 0 && projectile.rigid.velocity != Vector2.zero)
+                if (targetFoundAngle != 0 && projectile.rigid.linearVelocity != Vector2.zero)
                 {
                     _exceptedCols = 0;
                     // 각도에 안맞는 애들은 제외
@@ -93,7 +93,7 @@ namespace Apis
                         _position = _tempCols[_i].offset + (Vector2)_tempCols[_i].transform.position;
                         _dir = _position - (Vector2)projectile.transform.position;
 
-                        if (!Utils.CheckAngle(projectile.rigid.velocity, _dir, targetFoundAngle))
+                        if (!Utils.CheckAngle(projectile.rigid.linearVelocity, _dir, targetFoundAngle))
                         {
                             _exceptedCols++;
                             _tempCols[_i] = null;
@@ -138,7 +138,7 @@ namespace Apis
         protected bool CheckTargetInRange()
         {
             _dir = TargetPos - (Vector2)projectile.transform.position;
-            return followRangeSqr >= _dir.sqrMagnitude && Utils.CheckAngle(projectile.rigid.velocity, _dir, targetFoundAngle);
+            return followRangeSqr >= _dir.sqrMagnitude && Utils.CheckAngle(projectile.rigid.linearVelocity, _dir, targetFoundAngle);
         }
 
         void FixedUpdate()

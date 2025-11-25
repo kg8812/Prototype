@@ -40,7 +40,7 @@ public class MonsterMoveComponent : UnitMoveComponent
         {
             yield return null;
             // magnitude가 맞긴하지만 어차피 적은거 판정이라 최적화 면에서 x, y 따로 계산
-            if (Mathf.Abs(monster.Rb.velocity.x) <= minXY && Mathf.Abs(monster.Rb.velocity.y) <= minXY)
+            if (Mathf.Abs(monster.Rb.linearVelocity.x) <= minXY && Mathf.Abs(monster.Rb.linearVelocity.y) <= minXY)
             {
                 onEnd?.Invoke();
                 break;

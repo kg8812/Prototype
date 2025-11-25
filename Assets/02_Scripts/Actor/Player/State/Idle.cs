@@ -10,8 +10,6 @@ namespace PlayerState {
         {
             base.OnEnter(t);
             _player.StateEvent.ExecuteEventOnce(EventType.OnIdle, null);
-
-            _player.StateEvent.AddEvent(EventType.OnAirEnter, OnAir);
         }
 
         public override void FixedUpdate()
@@ -30,10 +28,7 @@ namespace PlayerState {
         {
             base.OnExit();
 
-            _player.StateEvent.RemoveEvent(EventType.OnAirEnter, OnAir);
         }
-
-        private void OnAir(EventParameters e) => _player.SetState(EPlayerState.AirIdle);
 
         public void OnEnterAnimate()
         {
