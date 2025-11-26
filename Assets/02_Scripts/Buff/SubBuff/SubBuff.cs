@@ -85,8 +85,7 @@ namespace Apis
         protected void SpawnEffect(string address, Vector2 offset)
         {
             GameObject effect = GameManager.Factory.Get(FactoryManager.FactoryType.Effect, address, actor.Position);
-            var follower = SpineUtils.AddCustomBoneFollower(actor.Mecanim,"center",effect);
-            follower.offset = offset;
+            
             effect.transform.SetParent(actor.transform);
             effect.gameObject.name = Type.ToString();
         }

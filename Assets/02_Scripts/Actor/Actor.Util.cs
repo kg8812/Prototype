@@ -6,22 +6,6 @@ using UnityEngine;
 
 public partial class Actor
 {
-    public virtual void OnDrawGizmos()
-    {
-        if (pivot != Vector3.zero)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawSphere(transform.position + pivot, 0.2f);
-        }
-
-        if (topPivot != Vector3.zero)
-        {
-            Gizmos.color = Color.blue;
-            Gizmos.DrawCube(transform.position + pivot + topPivot,new Vector2(0.3f,0.15f));
-        }
-        
-    }
-
     private Guid _guid;
     [Button("무적 On/Off")]
     public void Invincibility(bool on)

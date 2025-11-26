@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using UnityEngine.Events;
 
 namespace Apis
@@ -76,7 +77,7 @@ namespace Apis
             }
         }
 
-        public SubBuff AddSubBuff(SubBuffType Type,Actor target)
+        public SubBuff AddSubBuff(SubBuffType Type,GameObject target)
         {
             SubBuff sub;
             if (subBuffs.ContainsKey(Type))

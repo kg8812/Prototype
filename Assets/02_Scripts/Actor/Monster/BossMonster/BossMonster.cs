@@ -429,18 +429,6 @@ namespace Apis
                 value.End();
             }
         }
-        public override void OnDrawGizmos()
-        {
-            base.OnDrawGizmos();
-#if UNITY_EDITOR
-
-            foreach (var (rad, color) in radiusList)
-            {
-                Handles.color = color;
-                Handles.DrawWireDisc(Position, Vector3.back, rad);
-            }
-#endif
-        }
 
         public override void IdleOn()
         {
@@ -609,25 +597,7 @@ namespace Apis
             int idx = type > 0 ? index * 100 + type : index;
             StartAtkPattern(idx);
         }
-
-        public void MoveToPlayerInRootMotion(float meleeDistance,float minDistance,float maxDistance)
-        {
-            float playerX = GameManager.instance.ControllingEntity.Position.x;
-            float x = Position.x;
-
-            float moveDist;
-            if (x < playerX && Direction == EActorDirection.Right || x > playerX && Direction == EActorDirection.Left)
-            {
-                float endX = x > playerX ? playerX + meleeDistance : playerX - meleeDistance;
-                moveDist = Mathf.Clamp(Mathf.Abs(endX - x), minDistance, maxDistance) * -1;
-            }
-            else
-            {
-                moveDist = minDistance * -1;
-            }
-            
-            RootMotion.rootMotionTranslateXPerY = moveDist;
-        }
+        
         public Tween MoveToPlayer(float meleeDistance,float minDistance,float maxDistance,float duration,Ease ease)
         {
             Rb.DOKill();

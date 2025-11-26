@@ -45,21 +45,5 @@ namespace Apis
         {
             ableAttack = false;
         }
-        
-        public override void TurnFrozenOn()
-        {
-            base.TurnFrozenOn();
-            meshRenderer.GetPropertyBlock(propBlock);
-            propBlock.SetInt("_IsIcy",1);
-            meshRenderer.SetPropertyBlock(propBlock);
-        }
-
-        public override void TurnFrozenOff()
-        {
-            base.TurnFrozenOff();
-            meshRenderer.GetPropertyBlock(propBlock);
-            propBlock.SetInt("_IsIcy",0);
-            meshRenderer.SetPropertyBlock(propBlock);
-        }
     }
 }

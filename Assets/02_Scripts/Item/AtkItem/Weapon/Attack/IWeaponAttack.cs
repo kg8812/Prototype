@@ -394,7 +394,7 @@ protected Action<Projectile,int,int> BeforeGroundFire;
 
         protected override Vector2 GetProjPos(int idx)
         {
-            return player.Position + player.topPivot + Vector3.up * 0.5f * idx;
+            return player.Position + player.ActorRenderer.TopPivot + Vector3.up * 0.5f * idx;
         }
     }
     public class OrbAtk : IWeaponAttack // 터뜨리기 공격

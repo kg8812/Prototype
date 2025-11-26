@@ -59,11 +59,11 @@ public partial class Player
 
     private void Shake(float duration)
     {
-        meshRenderer.GetPropertyBlock(propBlock);
+        actorRenderer.MeshRenderer.GetPropertyBlock(propBlock);
         propBlock.SetFloat("_HitEffectDistance", shakeFrequency);
         propBlock.SetFloat("_HitEffectDistancePow", shakeIntensity);
         propBlock.SetFloat("_IsHit", 1);
-        meshRenderer.SetPropertyBlock(propBlock);
+        actorRenderer.MeshRenderer.SetPropertyBlock(propBlock);
 
         shakeSeq = DOTween.Sequence()
                     .SetAutoKill(true)
@@ -72,10 +72,10 @@ public partial class Player
         
         float powerStart = shakeIntensity;
         shakeSeq.OnUpdate(() =>{
-            meshRenderer.GetPropertyBlock(propBlock);
+            actorRenderer.MeshRenderer.GetPropertyBlock(propBlock);
             float power = Mathf.Lerp(powerStart, 0.01f, Time.fixedDeltaTime);
             propBlock.SetFloat("_HitEffectDistancePow", power);
-            meshRenderer.SetPropertyBlock(propBlock);
+            actorRenderer.MeshRenderer.SetPropertyBlock(propBlock);
             powerStart = power;
         });
 
@@ -89,10 +89,10 @@ public partial class Player
 
     private void Blink(float duration)
     {
-        meshRenderer.GetPropertyBlock(propBlock);
+        actorRenderer.MeshRenderer.GetPropertyBlock(propBlock);
         propBlock.SetFloat("_InvincibleWaveSpeed", blinkFrequency);
         propBlock.SetFloat("_InvincibleSwitch", 1);
-        meshRenderer.SetPropertyBlock(propBlock);
+        actorRenderer.MeshRenderer.SetPropertyBlock(propBlock);
 
         blinkSeq = DOTween.Sequence()
                     .SetAutoKill(true)
@@ -117,18 +117,18 @@ public partial class Player
     {
         shakeSeq?.Kill(); 
 
-        meshRenderer.GetPropertyBlock(propBlock);
+        actorRenderer.MeshRenderer.GetPropertyBlock(propBlock);
         propBlock.SetFloat("_IsHit", 0);
-        meshRenderer.SetPropertyBlock(propBlock);
+        actorRenderer.MeshRenderer.SetPropertyBlock(propBlock);
     }
 
     private void StopBlinkEffect()
     {
         blinkSeq?.Kill(); 
 
-        meshRenderer.GetPropertyBlock(propBlock);
+        actorRenderer.MeshRenderer.GetPropertyBlock(propBlock);
         propBlock.SetFloat("_InvincibleSwitch", 0);
-        meshRenderer.SetPropertyBlock(propBlock);
+        actorRenderer.MeshRenderer.SetPropertyBlock(propBlock);
     }
 
     public void LookAtHitDirection(EventParameters eventParameters)

@@ -10,7 +10,7 @@ using Spine.Unity.Examples;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public partial class Player
+public partial class Player : IMecanimUser
 {
     public struct WeaponAtkInfo
     {
@@ -27,9 +27,19 @@ public partial class Player
 
     public Transform orbPos;
     public Transform ineBookPos;
-    Bone weaponBone;
-    public Bone WeaponBone => weaponBone ??= Mecanim.skeleton.FindBone("weapon");
+
+    private SpineRenderer _spineRender;
+    private SpineRenderer spineRender => _spineRender ??= ActorRenderer as SpineRenderer;
     
+    Bone weaponBone;
+    public Bone WeaponBone
+    {
+        get
+        {
+            return weaponBone ??= (actorRenderer as SpineRenderer)?.Mecanim.skeleton.FindBone("weapon");
+        }
+    }
+
     // 무조건 무기 공격을 하는것에서 AtkStrategy로 변경했음.
     // 비챤 야수모드처럼 다른 콤보공격을 해야하는 경우도 생겨서 필요한 변경사항
     
@@ -119,5 +129,17 @@ public partial class Player
     {
         EventParameters param = new(this);
         ExecuteEvent(EventType.OnWeaponSlash, param);
+    }
+
+    public Transform SkeletonTrans
+    {
+        get => spineRender.SkeletonTrans;
+        set => spineRender.SkeletonTrans = value;
+    }
+
+    public SkeletonMecanim Mecanim
+    {
+        get => spineRender.Mecanim;
+        set => spineRender.Mecanim = value;
     }
 }

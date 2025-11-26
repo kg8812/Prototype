@@ -6,35 +6,29 @@ using DG.Tweening;
 using EventData;
 using Managers;
 using Sirenix.OdinInspector;
-using Spine;
-using Spine.Unity;
 using UnityEngine;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAttackable , IDirection,IMecanimUser,IAnimator
+public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAttackable , IDirection, IAnimator
 {
-    public Guid Guid;
     private Collider2D hitCollider;
     public virtual Collider2D HitCollider => hitCollider;
 
     public Rigidbody2D Rb { get; protected set; }
     EActorDirection _direction = EActorDirection.Right;
     public virtual Animator animator { get; set; }
-    private SkeletonMecanimRootMotion _rootMotion;
-
-    public SkeletonMecanimRootMotion RootMotion =>
-        _rootMotion ??= transform.GetComponentInParentAndChild<SkeletonMecanimRootMotion>();
 
     Transform _thisTrans;
     public Transform thisTrans => _thisTrans ??= transform;
-    public Transform SkeletonTrans { get; set; }
-    public SkeletonMecanim Mecanim { get; set; }
-
+   
     protected MaterialPropertyBlock _propBlock;
     protected MaterialPropertyBlock propBlock => _propBlock ??= new();
-
+    
+    protected IActorRenderer actorRenderer;
+    public IActorRenderer ActorRenderer => actorRenderer ??= GetComponent<IActorRenderer>();
+    
     public Collider2D Collider
     {
         get
@@ -88,35 +82,15 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
     }
     
     int layer;
-    [Tooltip("캐릭터 가운데 위치 값")]
-    public Vector3 pivot;
-
-    [FormerlySerializedAs("topPos")] [LabelText("상단 위치")] public Vector3 topPivot;
+    
     [LabelText("최대 속도")] public float maxVelocity;
-    [LabelText("카메라 weight")] public float camWeight = 1f;
-    [LabelText("카메라 radius")] public float camRadius = 1f;
 
-    public Vector3 TopPivot
-    {
-        get => topPivot;
-        set => topPivot = value;
-    }
-    private Bone centerBone;
+
     public virtual Vector3 Position
     {
-        get
-        {
-            centerBone?.UpdateWorldTransform();
-            return centerBone?.GetWorldPosition(SkeletonTrans) ?? transform.position + pivot;
-        }
-        set
-        {
-            if (centerBone != null)
-            {
-                pivot = centerBone.GetWorldPosition(Mecanim.transform) - transform.position;
-            }
-            transform.position = value - pivot;
-        }
+        get => actorRenderer.GetPosition();
+
+        set => actorRenderer.SetPosition(value);
     }
 
     public virtual float OnHit(EventParameters parameters)
@@ -162,8 +136,7 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
 
     protected virtual void OnHitReaction(EventParameters eventParameters)
     {
-        // isHitReaction에 상관하지 않고 점멸효과 발생
-        // InvokeBlink();
+        // 피격시 효과
     }
 
     public virtual KnockBackData GetKnockBackData(EventParameters parameters)
@@ -184,20 +157,7 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
         Rb = GetComponent<Rigidbody2D>();
 
         layer = gameObject.layer;
-        
-        meshRenderer = null;
-        Mecanim = GetComponentInChildren<SkeletonMecanim>();
-
-        if (Mecanim != null)
-        {
-            SkeletonTrans = Mecanim.transform;
-            centerBone = Mecanim.Skeleton.FindBone("ctrl");
-        }
-
-        if (SkeletonTrans != null)
-        {
-            meshRenderer = SkeletonTrans.GetComponent<MeshRenderer>();
-        }
+        actorRenderer = GetComponent<IActorRenderer>();
         
         IsDead = false;
         EventChildren.ForEach(x => x.Init(this));

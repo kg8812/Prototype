@@ -8,7 +8,6 @@ using Sirenix.OdinInspector;
 
 public abstract partial class Actor
 {
-    protected MeshRenderer meshRenderer;
 
     Tweener blinkTweener;
     private IEnumerator _blinkCoroutine;
@@ -70,16 +69,14 @@ public abstract partial class Actor
     public UnityEvent OnAppear => _onAppear ??= new();
     public void Hide()
     {
-        if(!meshRenderer.enabled) return;
-        meshRenderer.enabled = false;
+        actorRenderer.Hide();
         
         OnHide.Invoke();
     }
 
     public void Appear()
     {
-        if(meshRenderer.enabled) return;
-        meshRenderer.enabled = true;
+        actorRenderer.Appear();
         OnAppear.Invoke();
     }
 }

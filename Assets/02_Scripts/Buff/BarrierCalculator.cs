@@ -49,7 +49,7 @@ public class BarrierCalculator
         {
             if (dmg <= 0) return;
         
-            if(x is Buff_Barrier barrier)
+            if(x is BarrierBase barrier)
             {
                 if(barrier.Barrier > dmg)
                 {

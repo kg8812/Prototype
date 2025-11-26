@@ -1,9 +1,5 @@
 using System;
 using Apis;
-using System.Collections.Generic;
-using Apis.DataType;
-using EventData;
-using UnityEngine;
 
 public partial class Actor : IBuffUser
 {
@@ -15,7 +11,7 @@ public partial class Actor : IBuffUser
     {
         if (IsDead) return;
 
-        SubBuffManager.AddBuff(user,buff, subBuff);
+        ((IBuffUser)this).AddSubBuff(user, buff, subBuff);
     }
 
     
@@ -23,7 +19,7 @@ public partial class Actor : IBuffUser
     {
         if (IsDead) return;
         
-        SubBuffManager.AddSubBuff(type, user as Actor);
+        ((IBuffUser)this).AddSubBuff(user, type);
     }
 
     /// <summary>
@@ -38,15 +34,7 @@ public partial class Actor : IBuffUser
     public virtual void EndStun()
     {
     }
-
-    public virtual void TurnFrozenOn()
-    {
-    }
-
-    public virtual void TurnFrozenOff()
-    {
-    }
-
+    
     /// <summary>
     /// 액터에서 입력된 효과가 부여한 특정 버프를 제거합니다.
     /// </summary>
@@ -54,7 +42,7 @@ public partial class Actor : IBuffUser
     /// <param name="subBuff">제거할 버프</param>
     public void RemoveSubBuff(Buff buff, SubBuff subBuff)
     {
-        SubBuffManager.RemoveSubBuff(buff, subBuff);
+        ((IBuffUser)this).RemoveSubBuff(buff, subBuff);
     }
 
     /// <summary>
@@ -63,7 +51,7 @@ public partial class Actor : IBuffUser
     /// <param name="buff">효과</param>
     public void RemoveSubBuff(Buff buff)
     {
-        SubBuffManager.RemoveSubBuff(buff);
+        ((IBuffUser)this).RemoveSubBuff(buff);
     }
 
     /// <summary>
@@ -72,7 +60,7 @@ public partial class Actor : IBuffUser
     /// <param name="buff">제거할 효과</param>
     public void RemoveBuff(Buff buff)
     {
-        SubBuffManager.RemoveBuff(buff);
+        ((IBuffUser)this).RemoveBuff(buff);
     }
 
     /// <summary>
@@ -81,7 +69,7 @@ public partial class Actor : IBuffUser
     /// <param name="type">버프 타입</param>
     public void RemoveType(SubBuffType type)
     {
-        SubBuffManager.RemoveType(type);
+        ((IBuffUser)this).RemoveType(type);
     }
 
     /// <summary>
@@ -91,7 +79,7 @@ public partial class Actor : IBuffUser
     /// <param name="stack">제거할 개수</param>
     public void RemoveType(SubBuffType type, int stack)
     {
-        SubBuffManager.RemoveType(type, stack);
+        ((IBuffUser)this).RemoveType(type, stack);
     }
 
     /// <summary>
@@ -99,7 +87,7 @@ public partial class Actor : IBuffUser
     /// </summary>
     public void RemoveAllBuff()
     {
-        SubBuffManager.Collector.Clear();
+        ((IBuffUser)this).RemoveAllBuff();
     }
 
     /// <summary>
@@ -109,7 +97,7 @@ public partial class Actor : IBuffUser
     /// <returns></returns>
     public bool Contains(SubBuffType type)
     {
-        return SubBuffManager.Contains(type);
+        return ((IBuffUser)this).Contains(type);
     }
 
     /// <summary>
@@ -119,7 +107,7 @@ public partial class Actor : IBuffUser
     /// <returns></returns>
     public int SubBuffCount(SubBuffType type)
     {
-        return SubBuffManager.Count(type);
+        return ((IBuffUser)this).SubBuffCount(type);
     }
 
     /// <summary>
@@ -128,7 +116,7 @@ public partial class Actor : IBuffUser
     /// <param name="type"></param>
     public Guid AddSubBuffTypeImmune(SubBuffType type)
     {
-        return SubBuffManager.AddImmune(type);
+        return ((IBuffUser)this).AddSubBuffTypeImmune(type);
     }
 
     /// <summary>
@@ -138,6 +126,6 @@ public partial class Actor : IBuffUser
     /// <param name="guid">면역 부여할 때 반환된 guid</param>
     public void RemoveSubBuffTypeImmune(SubBuffType type,Guid guid)
     {
-        SubBuffManager.RemoveImmune(type,guid);
+        ((IBuffUser)this).RemoveSubBuffTypeImmune(type, guid);
     }
 }

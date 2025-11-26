@@ -55,10 +55,10 @@ namespace Apis
         /// 특정 효과로 액터에 버프를 추가합니다.
         /// 버프의 수치를(데미지,지속시간 등) 공용이 아닌 다른 수치로 사용하고 싶을 때 사용합니다.
         /// </summary>
-        /// <param name="user"> 버프를 부여한 Actor (몬스터일 시, 웬만하면 플레이어)</param>
+        /// <param name="target"> 버프를 부여한 유닛, null 처리해도됨</param>
         /// <param name="buff"> 이 버프를 부여하는 효과</param>
         /// <param name="subBuff"> 추가할 버프</param>
-        public void AddBuff(IEventUser user,Buff buff, SubBuff subBuff)
+        public void AddBuff(IEventUser target,Buff buff, SubBuff subBuff)
         {
             if (subBuff == null || buff == null) return;
             if (IsImmune(subBuff.Type)) return;
@@ -68,21 +68,21 @@ namespace Apis
                 activatedSubBuff = subBuff,
                 takenSubBuff = subBuff,
             };
-            EventParameters parameters = new(user, User)
+            EventParameters parameters = new(target, User)
             {
                 buffData = buffData
             };
 
-            if (user != null)
+            if (target != null)
             {
-                subBuff.target = user.gameObject;
+                subBuff.target = target.gameObject;
             }
 
             Collector.AddBuff(buff, subBuff);
         
-            user?.EventManager.ExecuteEvent(EventType.OnSubBuffApply, parameters);
+            target?.EventManager.ExecuteEvent(EventType.OnSubBuffApply, parameters);
 
-            parameters = new(User, user?.gameObject.GetComponent<IOnHit>())
+            parameters = new(User, target?.gameObject.GetComponent<IOnHit>())
             {
                 buffData = buffData
             };
@@ -94,13 +94,13 @@ namespace Apis
         /// 수치는 SubBuffOptionTable에 입력된 공용 수치를 사용합니다.
         /// 공용 수치는 Type마다 공유합니다.
         /// </summary>
-        /// <param name="user">버프를 부여한 Actor (몬스터일 시, 웬만하면 플레이어)</param>
+        /// <param name="target">버프를 부여한 유닛, null 처리해도됨</param>
         /// <param name="type">버프 타입</param>
-        public void AddSubBuff(SubBuffType type,Actor target)
+        public void AddSubBuff(SubBuffType type,IEventUser target)
         {
             if (IsImmune(type)) return;
         
-            SubBuff sub = Collector.AddSubBuff(type,target);
+            SubBuff sub = Collector.AddSubBuff(type,target?.gameObject);
 
             BuffEventData buffData = new()
             {
@@ -116,7 +116,7 @@ namespace Apis
             
             target.EventManager.ExecuteEvent(EventType.OnSubBuffApply, parameters);
 
-            parameters = new(User, target)
+            parameters = new(User, target as IOnHit)
             {
                 buffData = buffData
             };

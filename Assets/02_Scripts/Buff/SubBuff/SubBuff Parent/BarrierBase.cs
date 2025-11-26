@@ -12,40 +12,11 @@ namespace Apis
             float Calculate(BarrierBase sub);
         }
 
-        private class MaxHpBase : IStrategy
-        {
-            public float Calculate(BarrierBase sub)
-            {
-                return sub.actor.MaxHp / 100 * sub.buff.BuffPower[0];
-            }
-        }
-
         private class FixedAmount : IStrategy
         {
             public float Calculate(BarrierBase sub)
             {
                 return sub.amount[0];
-            }
-        }
-
-        private class AtkBase : IStrategy
-        {
-            public float Calculate(BarrierBase sub)
-            {
-                return sub.buff.buffActor.Atk * (1 + sub.amount[0] / 100);
-            }
-        }
-
-        private class RepairBase : IStrategy
-        {
-            public float Calculate(BarrierBase sub)
-            {
-                if (sub.buff.buffActor is Player player)
-                {
-                    return player.CalculateRepair() * sub.amount[0] / 100;
-                }
-
-                return 0;
             }
         }
 
@@ -63,10 +34,7 @@ namespace Apis
         {
             IStrategy strategy = buff.ApplyStrategy switch
             {
-                0 => new MaxHpBase(),
-                1 => new FixedAmount(),
-                2 => new AtkBase(),
-                3 => new RepairBase(),
+                0 => new FixedAmount(),
                 _ => null
             };
 
@@ -76,13 +44,20 @@ namespace Apis
         public override void OnAdd()
         {
             base.OnAdd();
-            actor.ExecuteEvent(EventType.OnBarrierChange, null);
+
+            if (actor is IEventUser eventUser)
+            {
+                eventUser.EventManager.ExecuteEvent(EventType.OnBarrierChange, null);
+            }
         }
 
         public override void OnRemove()
         {
             base.OnRemove();
-            actor.ExecuteEvent(EventType.OnBarrierChange, null);
+            if (actor is IEventUser eventUser)
+            {
+                eventUser.EventManager.ExecuteEvent(EventType.OnBarrierChange, null);
+            }
         }
     }
 }

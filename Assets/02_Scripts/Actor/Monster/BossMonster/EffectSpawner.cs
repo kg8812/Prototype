@@ -82,9 +82,9 @@ namespace Apis
             if (_user == null) return null;
             var vfx = SpawnObject(address, _user.Position, setEffectParent, disappearWhenHide);
 
-            if (vfx != null)
+            if (vfx != null && _user.ActorRenderer is SpineRenderer spineRenderer)
             {
-                SpineUtils.AddBoneFollower(_user.Mecanim, boneName, vfx.gameObject);
+                SpineUtils.AddBoneFollower(spineRenderer.Mecanim, boneName, vfx.gameObject);
             }
 
             return vfx;
@@ -95,9 +95,9 @@ namespace Apis
             if (_user == null) return null;
 
             var vfx = SpawnObject(address, _user.Position, setEffectParent, disappearWhenHide);
-            if (vfx != null)
+            if (vfx != null &&  _user.ActorRenderer is SpineRenderer spineRenderer)
             {
-                var follower = SpineUtils.AddCustomBoneFollower(_user.Mecanim, boneName, vfx.gameObject);
+                var follower = SpineUtils.AddCustomBoneFollower(spineRenderer.Mecanim, boneName, vfx.gameObject);
                 follower.offset = offset;
             }
 
@@ -116,9 +116,9 @@ namespace Apis
 
             var vfx = SpawnObject(address, _user.Position, setEffectParent, disappearWhenHide);
 
-            if (vfx != null)
+            if (vfx != null &&  _user.ActorRenderer is SpineRenderer spineRenderer)
             {
-                SpineUtils.AddCustomBoneFollower(_user.Mecanim, boneName, vfx.gameObject);
+                SpineUtils.AddCustomBoneFollower(spineRenderer.Mecanim, boneName, vfx.gameObject);
                 vfx.OnDestroyed.AddListener(afterDestroy);
             }
 

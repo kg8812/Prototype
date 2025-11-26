@@ -165,13 +165,13 @@ namespace Apis
             AddSub(subBuff);
         }
 
-        public SubBuff Add(Actor target)
+        public SubBuff Add(GameObject target)
         {
             _stackStrategy.CurTime = _duration;
             SubBuff sub = SubBuffResources.Get(dummyBuff);
             if (sub == null) return null;
             sub.Actor = actor;
-            sub.target = target?.gameObject;
+            sub.target = target;
             AddSub(sub);
             
             return sub;

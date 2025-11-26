@@ -108,7 +108,6 @@ namespace Apis
             InteractCheckEvent += Check;
             
             AddEvent(EventType.OnHpDown, LastHit);
-            ClearShaderOnDeath();
 
             // 현재는 모든 피해(CurHP가 줄어드는 Event)에 대하여 Groggy Gauge Recover 작동하도록 해둠.
             // off라면 나중에 event 말고 onhit에서 호춣하는 방식으로 수정
@@ -124,7 +123,6 @@ namespace Apis
             CurHp = MaxHp;
             Rb.gravityScale = MonsterData.isFlying ? 0 : MoveComponent.ActorMovement.GravityScale;
             IsDead = false;
-            ClearShaderOnDeath();
             ResetTextVariables();
             
             // groggy 리셋
@@ -140,7 +138,6 @@ namespace Apis
             // onoff 리셋
             MoveCCOff();
             AttackOn();
-            TurnFrozenOff();
             
             
             // animator 리셋
@@ -227,8 +224,6 @@ namespace Apis
         {
             base.OnHitReaction(eventParameters);
             
-            ShaderOnHit();
-           
             // TODO: 여기에 피격 이펙트 넣을지, hit 자체에 넣을지
             KnockBackData knockBackData = GetKnockBackData(eventParameters);
             

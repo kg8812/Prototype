@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using Apis;
 using Default;
 using Spine.Unity;
@@ -28,7 +26,6 @@ public class BossAttackBehaviour : StateMachineBehaviour
         if (boss != null)
         {
             boss.treeRunner.Alert("AttackEnd");
-            boss.RootMotion.enabled = false;
             boss.EndAttack(patternNumber);
             boss.currentAtkPattern = 0;
         }

@@ -28,10 +28,10 @@ namespace Apis
                 text = GameManager.Factory.Get<SpriteRenderer>(FactoryManager.FactoryType.Normal, "InteractionText");
                 
                 text.transform.SetParent(transform);
-                if (TryGetComponent(out Actor actor))
+                if (TryGetComponent(out SpineRenderer actor))
                 {
                     var boneFollower = SpineUtils.AddCustomBoneFollower(actor.Mecanim, "center", text.gameObject);
-                    boneFollower.offset = actor.topPivot;
+                    boneFollower.offset = actor.TopPivot;
                 }
                 else
                 {
