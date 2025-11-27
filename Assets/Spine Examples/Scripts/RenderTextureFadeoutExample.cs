@@ -33,60 +33,70 @@
 
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Events;
 
-namespace Spine.Unity.Examples {
-	public class RenderTextureFadeoutExample : MonoBehaviour {
+namespace Spine.Unity.Examples
+{
+    public class RenderTextureFadeoutExample : MonoBehaviour
+    {
+        public SkeletonRenderTextureFadeout renderTextureFadeout;
+        public SkeletonRenderTextureFadeout renderTextureFadeoutCanvas;
+        public SkeletonRenderer normalSkeletonRenderer;
 
-		public SkeletonRenderTextureFadeout renderTextureFadeout;
-		public SkeletonRenderTextureFadeout renderTextureFadeoutCanvas;
-		public SkeletonRenderer normalSkeletonRenderer;
+        private readonly float fadeoutSeconds = 2.0f;
+        private float fadeoutSecondsRemaining;
 
-		float fadeoutSeconds = 2.0f;
-		float fadeoutSecondsRemaining;
+        private IEnumerator Start()
+        {
+            while (true)
+            {
+                StartFadeoutBad();
+                StartFadeoutGood(renderTextureFadeout);
+                StartFadeoutGood(renderTextureFadeoutCanvas);
+                yield return new WaitForSeconds(fadeoutSeconds + 1.0f);
+            }
+        }
 
-		IEnumerator Start () {
-			while (true) {
-				StartFadeoutBad();
-				StartFadeoutGood(renderTextureFadeout);
-				StartFadeoutGood(renderTextureFadeoutCanvas);
-				yield return new WaitForSeconds(fadeoutSeconds + 1.0f);
-			}
-		}
-		void Update () {
-			UpdateBadFadeOutAlpha();
-		}
+        private void Update()
+        {
+            UpdateBadFadeOutAlpha();
+        }
 
-		void UpdateBadFadeOutAlpha () {
-			if (fadeoutSecondsRemaining == 0)
-				return;
+        private void UpdateBadFadeOutAlpha()
+        {
+            if (fadeoutSecondsRemaining == 0)
+                return;
 
-			fadeoutSecondsRemaining -= Time.deltaTime;
-			if (fadeoutSecondsRemaining <= 0) {
-				fadeoutSecondsRemaining = 0;
-				return;
-			}
-			float fadeoutAlpha = fadeoutSecondsRemaining / fadeoutSeconds;
+            fadeoutSecondsRemaining -= Time.deltaTime;
+            if (fadeoutSecondsRemaining <= 0)
+            {
+                fadeoutSecondsRemaining = 0;
+                return;
+            }
 
-			// changing transparency at a MeshRenderer does not yield the desired effect
-			// due to overlapping attachment meshes.
-			normalSkeletonRenderer.Skeleton.SetColor(new Color(1, 1, 1, fadeoutAlpha));
-		}
+            var fadeoutAlpha = fadeoutSecondsRemaining / fadeoutSeconds;
 
-		void StartFadeoutBad () {
-			fadeoutSecondsRemaining = fadeoutSeconds;
-		}
+            // changing transparency at a MeshRenderer does not yield the desired effect
+            // due to overlapping attachment meshes.
+            normalSkeletonRenderer.Skeleton.SetColor(new Color(1, 1, 1, fadeoutAlpha));
+        }
 
-		void StartFadeoutGood (SkeletonRenderTextureFadeout fadeoutComponent) {
-			fadeoutComponent.gameObject.SetActive(true);
-			// enabling the SkeletonRenderTextureFadeout component starts the fadeout.
-			fadeoutComponent.enabled = true;
-			fadeoutComponent.OnFadeoutComplete -= DisableGameObject;
-			fadeoutComponent.OnFadeoutComplete += DisableGameObject;
-		}
+        private void StartFadeoutBad()
+        {
+            fadeoutSecondsRemaining = fadeoutSeconds;
+        }
 
-		void DisableGameObject (SkeletonRenderTextureFadeout target) {
-			target.gameObject.SetActive(false);
-		}
-	}
+        private void StartFadeoutGood(SkeletonRenderTextureFadeout fadeoutComponent)
+        {
+            fadeoutComponent.gameObject.SetActive(true);
+            // enabling the SkeletonRenderTextureFadeout component starts the fadeout.
+            fadeoutComponent.enabled = true;
+            fadeoutComponent.OnFadeoutComplete -= DisableGameObject;
+            fadeoutComponent.OnFadeoutComplete += DisableGameObject;
+        }
+
+        private void DisableGameObject(SkeletonRenderTextureFadeout target)
+        {
+            target.gameObject.SetActive(false);
+        }
+    }
 }

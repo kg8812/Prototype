@@ -36,186 +36,201 @@
 #endif
 
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
-using UnityEngine.Rendering;
 
-namespace Spine.Unity.Examples {
-
+namespace Spine.Unity.Examples
+{
 	/// <summary>
-	/// When enabled, this component renders a skeleton to a RenderTexture and
-	/// then draws this RenderTexture at a quad of the same size.
-	/// This allows changing transparency at a single quad, which produces a more
-	/// natural fadeout effect.
-	/// Note: It is recommended to keep this component disabled as much as possible
-	/// because of the additional rendering overhead. Only enable it when alpha blending is required.
+	///     When enabled, this component renders a skeleton to a RenderTexture and
+	///     then draws this RenderTexture at a quad of the same size.
+	///     This allows changing transparency at a single quad, which produces a more
+	///     natural fadeout effect.
+	///     Note: It is recommended to keep this component disabled as much as possible
+	///     because of the additional rendering overhead. Only enable it when alpha blending is required.
 	/// </summary>
 	[RequireComponent(typeof(SkeletonRenderer))]
-	public class SkeletonRenderTexture : SkeletonRenderTextureBase {
+    public class SkeletonRenderTexture : SkeletonRenderTextureBase
+    {
 #if HAS_GET_SHARED_MATERIALS
-		protected SkeletonRenderer skeletonRenderer;
-		protected MeshRenderer meshRenderer;
-		protected MeshFilter meshFilter;
-		protected MeshRenderer quadMeshRenderer;
-		protected MeshFilter quadMeshFilter;
+        protected SkeletonRenderer skeletonRenderer;
+        protected MeshRenderer meshRenderer;
+        protected MeshFilter meshFilter;
+        protected MeshRenderer quadMeshRenderer;
+        protected MeshFilter quadMeshFilter;
 
-		private MaterialPropertyBlock propertyBlock;
-		private readonly List<Material> materials = new List<Material>();
-		protected override void Awake () {
-			base.Awake();
-			meshRenderer = this.GetComponent<MeshRenderer>();
-			meshFilter = this.GetComponent<MeshFilter>();
-			skeletonRenderer = this.GetComponent<SkeletonRenderer>();
-			if (targetCamera == null)
-				targetCamera = Camera.main;
+        private MaterialPropertyBlock propertyBlock;
+        private readonly List<Material> materials = new();
 
-			propertyBlock = new MaterialPropertyBlock();
-			CreateQuadChild();
-		}
+        protected override void Awake()
+        {
+            base.Awake();
+            meshRenderer = GetComponent<MeshRenderer>();
+            meshFilter = GetComponent<MeshFilter>();
+            skeletonRenderer = GetComponent<SkeletonRenderer>();
+            if (targetCamera == null)
+                targetCamera = Camera.main;
+
+            propertyBlock = new MaterialPropertyBlock();
+            CreateQuadChild();
+        }
 
 #if UNITY_EDITOR
-		protected void Reset () {
-			string[] folders = { "Assets", "Packages" };
-			string[] assets = UnityEditor.AssetDatabase.FindAssets("t:material RenderQuadMaterial", folders);
-			if (assets.Length > 0) {
-				string materialPath = UnityEditor.AssetDatabase.GUIDToAssetPath(assets[0]);
-				quadMaterial = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(materialPath);
-			}
-		}
+        protected void Reset()
+        {
+            string[] folders = { "Assets", "Packages" };
+            var assets = AssetDatabase.FindAssets("t:material RenderQuadMaterial", folders);
+            if (assets.Length > 0)
+            {
+                var materialPath = AssetDatabase.GUIDToAssetPath(assets[0]);
+                quadMaterial = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+            }
+        }
 #endif
 
-		void CreateQuadChild () {
-			quad = new GameObject(this.name + " RenderTexture", typeof(MeshRenderer), typeof(MeshFilter));
-			quad.transform.SetParent(this.transform.parent, false);
-			quad.layer = meshRenderer.gameObject.layer;
-			quadMeshRenderer = quad.GetComponent<MeshRenderer>();
-			quadMeshFilter = quad.GetComponent<MeshFilter>();
+        private void CreateQuadChild()
+        {
+            quad = new GameObject(name + " RenderTexture", typeof(MeshRenderer), typeof(MeshFilter));
+            quad.transform.SetParent(transform.parent, false);
+            quad.layer = meshRenderer.gameObject.layer;
+            quadMeshRenderer = quad.GetComponent<MeshRenderer>();
+            quadMeshFilter = quad.GetComponent<MeshFilter>();
 
-			quadMeshRenderer.sortingOrder = meshRenderer.sortingOrder;
-			quadMeshRenderer.sortingLayerID = meshRenderer.sortingLayerID;
+            quadMeshRenderer.sortingOrder = meshRenderer.sortingOrder;
+            quadMeshRenderer.sortingLayerID = meshRenderer.sortingLayerID;
 
-			quadMesh = new Mesh();
-			quadMesh.MarkDynamic();
-			quadMesh.name = "RenderTexture Quad";
-			quadMesh.hideFlags = HideFlags.DontSaveInBuild | HideFlags.DontSaveInEditor;
+            quadMesh = new Mesh();
+            quadMesh.MarkDynamic();
+            quadMesh.name = "RenderTexture Quad";
+            quadMesh.hideFlags = HideFlags.DontSaveInBuild | HideFlags.DontSaveInEditor;
 
-			if (quadMaterial != null)
-				quadMeshRenderer.material = new Material(quadMaterial);
-			else
-				quadMeshRenderer.material = new Material(Shader.Find("Spine/RenderQuad"));
-		}
+            if (quadMaterial != null)
+                quadMeshRenderer.material = new Material(quadMaterial);
+            else
+                quadMeshRenderer.material = new Material(Shader.Find("Spine/RenderQuad"));
+        }
 
-		void OnEnable () {
-			skeletonRenderer.OnMeshAndMaterialsUpdated += RenderOntoQuad;
+        private void OnEnable()
+        {
+            skeletonRenderer.OnMeshAndMaterialsUpdated += RenderOntoQuad;
 #if HAS_FORCE_RENDER_OFF
-			meshRenderer.forceRenderingOff = true;
+            meshRenderer.forceRenderingOff = true;
 #else
 			Debug.LogError("This component requires Unity 2019.3 or newer for meshRenderer.forceRenderingOff. " +
 				"Otherwise you will see the mesh rendered twice.");
 #endif
-			if (quadMeshRenderer)
-				quadMeshRenderer.gameObject.SetActive(true);
-		}
+            if (quadMeshRenderer)
+                quadMeshRenderer.gameObject.SetActive(true);
+        }
 
-		void OnDisable () {
-			skeletonRenderer.OnMeshAndMaterialsUpdated -= RenderOntoQuad;
+        private void OnDisable()
+        {
+            skeletonRenderer.OnMeshAndMaterialsUpdated -= RenderOntoQuad;
 #if HAS_FORCE_RENDER_OFF
-			meshRenderer.forceRenderingOff = false;
+            meshRenderer.forceRenderingOff = false;
 #endif
-			if (quadMeshRenderer)
-				quadMeshRenderer.gameObject.SetActive(false);
-			if (renderTexture)
-				RenderTexture.ReleaseTemporary(renderTexture);
-			allocatedRenderTextureSize = Vector2Int.zero;
-		}
+            if (quadMeshRenderer)
+                quadMeshRenderer.gameObject.SetActive(false);
+            if (renderTexture)
+                RenderTexture.ReleaseTemporary(renderTexture);
+            allocatedRenderTextureSize = Vector2Int.zero;
+        }
 
-		void RenderOntoQuad (SkeletonRenderer skeletonRenderer) {
-			if (meshFilter == null)
-				meshFilter = this.GetComponent<MeshFilter>();
-			Vector3 size = meshFilter.sharedMesh.bounds.size;
-			if (size.x == 0f || size.y == 0f) {
-				AssignNullMeshAtQuad();
-				return;
-			}
-			PrepareForMesh();
-			RenderToRenderTexture();
-			AssignAtQuad();
-		}
+        private void RenderOntoQuad(SkeletonRenderer skeletonRenderer)
+        {
+            if (meshFilter == null)
+                meshFilter = GetComponent<MeshFilter>();
+            var size = meshFilter.sharedMesh.bounds.size;
+            if (size.x == 0f || size.y == 0f)
+            {
+                AssignNullMeshAtQuad();
+                return;
+            }
 
-		protected void PrepareForMesh () {
-			// We need to get the min/max of all four corners, rotation of the skeleton
-			// in combination with perspective projection otherwise might lead to incorrect
-			// screen space min/max.
-			Bounds boundsLocalSpace = meshFilter.sharedMesh.bounds;
-			Vector3 localCorner0 = boundsLocalSpace.min;
-			Vector3 localCorner3 = boundsLocalSpace.max;
-			Vector3 localCorner1 = new Vector3(localCorner0.x, localCorner3.y, localCorner0.z);
-			Vector3 localCorner2 = new Vector3(localCorner3.x, localCorner0.y, localCorner3.z);
+            PrepareForMesh();
+            RenderToRenderTexture();
+            AssignAtQuad();
+        }
 
-			Vector3 worldCorner0 = transform.TransformPoint(localCorner0);
-			Vector3 worldCorner1 = transform.TransformPoint(localCorner1);
-			Vector3 worldCorner2 = transform.TransformPoint(localCorner2);
-			Vector3 worldCorner3 = transform.TransformPoint(localCorner3);
+        protected void PrepareForMesh()
+        {
+            // We need to get the min/max of all four corners, rotation of the skeleton
+            // in combination with perspective projection otherwise might lead to incorrect
+            // screen space min/max.
+            var boundsLocalSpace = meshFilter.sharedMesh.bounds;
+            var localCorner0 = boundsLocalSpace.min;
+            var localCorner3 = boundsLocalSpace.max;
+            var localCorner1 = new Vector3(localCorner0.x, localCorner3.y, localCorner0.z);
+            var localCorner2 = new Vector3(localCorner3.x, localCorner0.y, localCorner3.z);
 
-			Vector3 screenCorner0 = targetCamera.WorldToScreenPoint(worldCorner0);
-			Vector3 screenCorner1 = targetCamera.WorldToScreenPoint(worldCorner1);
-			Vector3 screenCorner2 = targetCamera.WorldToScreenPoint(worldCorner2);
-			Vector3 screenCorner3 = targetCamera.WorldToScreenPoint(worldCorner3);
+            var worldCorner0 = transform.TransformPoint(localCorner0);
+            var worldCorner1 = transform.TransformPoint(localCorner1);
+            var worldCorner2 = transform.TransformPoint(localCorner2);
+            var worldCorner3 = transform.TransformPoint(localCorner3);
 
-			// To avoid perspective distortion when rotated, we project all vertices
-			// onto a plane parallel to the view frustum near plane.
-			// Avoids the requirement of 'noperspective' vertex attribute interpolation modifier in shaders.
-			float averageScreenDepth = (screenCorner0.z + screenCorner1.z + screenCorner2.z + screenCorner3.z) / 4.0f;
-			screenCorner0.z = screenCorner1.z = screenCorner2.z = screenCorner3.z = averageScreenDepth;
-			worldCornerNoDistortion0 = targetCamera.ScreenToWorldPoint(screenCorner0);
-			worldCornerNoDistortion1 = targetCamera.ScreenToWorldPoint(screenCorner1);
-			worldCornerNoDistortion2 = targetCamera.ScreenToWorldPoint(screenCorner2);
-			worldCornerNoDistortion3 = targetCamera.ScreenToWorldPoint(screenCorner3);
+            var screenCorner0 = targetCamera.WorldToScreenPoint(worldCorner0);
+            var screenCorner1 = targetCamera.WorldToScreenPoint(worldCorner1);
+            var screenCorner2 = targetCamera.WorldToScreenPoint(worldCorner2);
+            var screenCorner3 = targetCamera.WorldToScreenPoint(worldCorner3);
 
-			Vector3 screenSpaceMin, screenSpaceMax;
-			PrepareTextureMapping(out screenSpaceMin, out screenSpaceMax,
-				screenCorner0, screenCorner1, screenCorner2, screenCorner3);
-			PrepareCommandBuffer(targetCamera, screenSpaceMin, screenSpaceMax);
-		}
+            // To avoid perspective distortion when rotated, we project all vertices
+            // onto a plane parallel to the view frustum near plane.
+            // Avoids the requirement of 'noperspective' vertex attribute interpolation modifier in shaders.
+            var averageScreenDepth = (screenCorner0.z + screenCorner1.z + screenCorner2.z + screenCorner3.z) / 4.0f;
+            screenCorner0.z = screenCorner1.z = screenCorner2.z = screenCorner3.z = averageScreenDepth;
+            worldCornerNoDistortion0 = targetCamera.ScreenToWorldPoint(screenCorner0);
+            worldCornerNoDistortion1 = targetCamera.ScreenToWorldPoint(screenCorner1);
+            worldCornerNoDistortion2 = targetCamera.ScreenToWorldPoint(screenCorner2);
+            worldCornerNoDistortion3 = targetCamera.ScreenToWorldPoint(screenCorner3);
 
-		protected void PrepareCommandBuffer (Camera targetCamera, Vector3 screenSpaceMin, Vector3 screenSpaceMax) {
-			commandBuffer.Clear();
-			commandBuffer.SetRenderTarget(renderTexture);
-			commandBuffer.ClearRenderTarget(true, true, Color.clear);
+            Vector3 screenSpaceMin, screenSpaceMax;
+            PrepareTextureMapping(out screenSpaceMin, out screenSpaceMax,
+                screenCorner0, screenCorner1, screenCorner2, screenCorner3);
+            PrepareCommandBuffer(targetCamera, screenSpaceMin, screenSpaceMax);
+        }
 
-			commandBuffer.SetViewMatrix(targetCamera.worldToCameraMatrix);
+        protected void PrepareCommandBuffer(Camera targetCamera, Vector3 screenSpaceMin, Vector3 screenSpaceMax)
+        {
+            commandBuffer.Clear();
+            commandBuffer.SetRenderTarget(renderTexture);
+            commandBuffer.ClearRenderTarget(true, true, Color.clear);
 
-			Matrix4x4 projectionMatrix = CalculateProjectionMatrix(targetCamera,
-				screenSpaceMin, screenSpaceMax, targetCamera.pixelRect.size);
-			commandBuffer.SetProjectionMatrix(projectionMatrix);
+            commandBuffer.SetViewMatrix(targetCamera.worldToCameraMatrix);
 
-			Vector2 targetViewportSize = new Vector2(
-				screenSpaceMax.x - screenSpaceMin.x,
-				screenSpaceMax.y - screenSpaceMin.y);
-			Rect viewportRect = new Rect(Vector2.zero, targetViewportSize * downScaleFactor);
-			commandBuffer.SetViewport(viewportRect);
-		}
+            var projectionMatrix = CalculateProjectionMatrix(targetCamera,
+                screenSpaceMin, screenSpaceMax, targetCamera.pixelRect.size);
+            commandBuffer.SetProjectionMatrix(projectionMatrix);
 
-		protected void RenderToRenderTexture () {
-			meshRenderer.GetPropertyBlock(propertyBlock);
-			meshRenderer.GetSharedMaterials(materials);
+            var targetViewportSize = new Vector2(
+                screenSpaceMax.x - screenSpaceMin.x,
+                screenSpaceMax.y - screenSpaceMin.y);
+            var viewportRect = new Rect(Vector2.zero, targetViewportSize * downScaleFactor);
+            commandBuffer.SetViewport(viewportRect);
+        }
 
-			for (int i = 0; i < materials.Count; i++) {
-				foreach (int shaderPass in shaderPasses)
-					commandBuffer.DrawMesh(meshFilter.sharedMesh, transform.localToWorldMatrix,
-						materials[i], meshRenderer.subMeshStartIndex + i, shaderPass, propertyBlock);
-			}
-			Graphics.ExecuteCommandBuffer(commandBuffer);
-		}
+        protected void RenderToRenderTexture()
+        {
+            meshRenderer.GetPropertyBlock(propertyBlock);
+            meshRenderer.GetSharedMaterials(materials);
 
-		protected override void AssignMeshAtRenderer () {
-			quadMeshFilter.mesh = quadMesh;
-			quadMeshRenderer.sharedMaterial.mainTexture = this.renderTexture;
-			quadMeshRenderer.sharedMaterial.color = color;
-		}
+            for (var i = 0; i < materials.Count; i++)
+                foreach (var shaderPass in shaderPasses)
+                    commandBuffer.DrawMesh(meshFilter.sharedMesh, transform.localToWorldMatrix,
+                        materials[i], meshRenderer.subMeshStartIndex + i, shaderPass, propertyBlock);
+            Graphics.ExecuteCommandBuffer(commandBuffer);
+        }
 
-		protected void AssignNullMeshAtQuad () {
-			quadMeshFilter.mesh = null;
-		}
+        protected override void AssignMeshAtRenderer()
+        {
+            quadMeshFilter.mesh = quadMesh;
+            quadMeshRenderer.sharedMaterial.mainTexture = renderTexture;
+            quadMeshRenderer.sharedMaterial.color = color;
+        }
+
+        protected void AssignNullMeshAtQuad()
+        {
+            quadMeshFilter.mesh = null;
+        }
 #endif
-	}
+    }
 }

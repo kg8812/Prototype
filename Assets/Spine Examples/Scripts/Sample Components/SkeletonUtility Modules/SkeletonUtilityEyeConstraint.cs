@@ -27,58 +27,62 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using System.Collections;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	public class SkeletonUtilityEyeConstraint : SkeletonUtilityConstraint {
-		public Transform[] eyes;
-		public float radius = 0.5f;
-		public Transform target;
-		public Vector3 targetPosition;
-		public float speed = 10;
-		Vector3[] origins;
-		Vector3 centerPoint;
+namespace Spine.Unity.Examples
+{
+    public class SkeletonUtilityEyeConstraint : SkeletonUtilityConstraint
+    {
+        public Transform[] eyes;
+        public float radius = 0.5f;
+        public Transform target;
+        public Vector3 targetPosition;
+        public float speed = 10;
+        private Vector3 centerPoint;
+        private Vector3[] origins;
 
-		protected override void OnEnable () {
-			if (!Application.isPlaying) return;
-			base.OnEnable();
+        protected override void OnEnable()
+        {
+            if (!Application.isPlaying) return;
+            base.OnEnable();
 
-			Bounds centerBounds = new Bounds(eyes[0].localPosition, Vector3.zero);
-			origins = new Vector3[eyes.Length];
-			for (int i = 0; i < eyes.Length; i++) {
-				origins[i] = eyes[i].localPosition;
-				centerBounds.Encapsulate(origins[i]);
-			}
+            var centerBounds = new Bounds(eyes[0].localPosition, Vector3.zero);
+            origins = new Vector3[eyes.Length];
+            for (var i = 0; i < eyes.Length; i++)
+            {
+                origins[i] = eyes[i].localPosition;
+                centerBounds.Encapsulate(origins[i]);
+            }
 
-			centerPoint = centerBounds.center;
-		}
+            centerPoint = centerBounds.center;
+        }
 
-		protected override void OnDisable () {
-			if (!Application.isPlaying) return;
+        protected override void OnDisable()
+        {
+            if (!Application.isPlaying) return;
 
-			for (int i = 0; i < eyes.Length; i++) {
-				eyes[i].localPosition = origins[i];
-			}
-			base.OnDisable();
-		}
+            for (var i = 0; i < eyes.Length; i++) eyes[i].localPosition = origins[i];
+            base.OnDisable();
+        }
 
-		public override void DoUpdate () {
-			if (target != null) targetPosition = target.position;
+        public override void DoUpdate()
+        {
+            if (target != null) targetPosition = target.position;
 
-			Vector3 goal = targetPosition;
-			Vector3 center = transform.TransformPoint(centerPoint);
-			Vector3 dir = goal - center;
+            var goal = targetPosition;
+            var center = transform.TransformPoint(centerPoint);
+            var dir = goal - center;
 
-			if (dir.magnitude > 1)
-				dir.Normalize();
+            if (dir.magnitude > 1)
+                dir.Normalize();
 
-			for (int i = 0; i < eyes.Length; i++) {
-				center = transform.TransformPoint(origins[i]);
-				eyes[i].position = Vector3.MoveTowards(eyes[i].position, center + (dir * radius * hierarchy.PositionScale),
-					speed * hierarchy.PositionScale * Time.deltaTime);
-			}
-
-		}
-	}
+            for (var i = 0; i < eyes.Length; i++)
+            {
+                center = transform.TransformPoint(origins[i]);
+                eyes[i].position = Vector3.MoveTowards(eyes[i].position,
+                    center + dir * radius * hierarchy.PositionScale,
+                    speed * hierarchy.PositionScale * Time.deltaTime);
+            }
+        }
+    }
 }

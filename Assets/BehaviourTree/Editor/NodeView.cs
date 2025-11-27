@@ -1,17 +1,18 @@
-using UnityEngine;
-using UnityEditor;
-using UnityEditor.UIElements;
-using UnityEditor.Experimental.GraphView;
 using System;
 using Apis.BehaviourTreeTool;
+using UnityEditor;
+using UnityEditor.Experimental.GraphView;
+using UnityEditor.UIElements;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 public class NodeView : Node
 {
-    public Action<NodeView> OnNodeSelected;
-    public TreeNode node;
     public Port input;
+    public TreeNode node;
+    public Action<NodeView> OnNodeSelected;
     public Port output;
+
     public NodeView(TreeNode node) : base("Assets/BehaviourTree/Editor/NodeView.uxml")
     {
         if (node == null) return;
@@ -19,7 +20,7 @@ public class NodeView : Node
         this.node = node;
         title = node.name;
 
-        this.viewDataKey = node.guid;
+        viewDataKey = node.guid;
         style.left = node.position.x;
         style.top = node.position.y;
 
@@ -27,47 +28,37 @@ public class NodeView : Node
         CreateOutputPorts();
         SetUpClasses();
 
-        Label descriptionLabel = this.Q<Label>("description");
+        var descriptionLabel = this.Q<Label>("description");
         descriptionLabel.bindingPath = "description";
         descriptionLabel.Bind(new SerializedObject(node));
     }
 
-    void SetUpClasses()
+    private void SetUpClasses()
     {
         if (node is ActionNode)
-        {
             AddToClassList("action");
-        }
         else if (node is CompositeNode)
-        {
             AddToClassList("composite");
-
-        }
         else if (node is DecoratorNode)
-        {
             AddToClassList("decorator");
-        }
-        else if (node is RootNode)
-        {
-            AddToClassList("root");
-        }
+        else if (node is RootNode) AddToClassList("root");
     }
 
     private void CreateInputPorts()
     {
-        if(node is ActionNode)
+        if (node is ActionNode)
         {
             input = InstantiatePort(Orientation.Vertical, Direction.Input, Port.Capacity.Single, typeof(bool));
         }
-        else if(node is CompositeNode)
+        else if (node is CompositeNode)
         {
             input = InstantiatePort(Orientation.Vertical, Direction.Input, Port.Capacity.Single, typeof(bool));
         }
-        else if(node is DecoratorNode)
+        else if (node is DecoratorNode)
         {
             input = InstantiatePort(Orientation.Vertical, Direction.Input, Port.Capacity.Single, typeof(bool));
         }
-        else if(node is RootNode)
+        else if (node is RootNode)
         {
         }
 
@@ -96,6 +87,7 @@ public class NodeView : Node
         {
             output = InstantiatePort(Orientation.Vertical, Direction.Output, Port.Capacity.Single, typeof(bool));
         }
+
         if (output != null)
         {
             output.portName = "";
@@ -117,18 +109,12 @@ public class NodeView : Node
     {
         base.OnSelected();
 
-        if(OnNodeSelected != null)
-        {
-            OnNodeSelected.Invoke(this);
-        }
+        if (OnNodeSelected != null) OnNodeSelected.Invoke(this);
     }
 
     public void SortChildren()
-    {       
-        if(node is CompositeNode composite)
-        {
-            composite.children.Sort(SortByHorizontalPosition);
-        }
+    {
+        if (node is CompositeNode composite) composite.children.Sort(SortByHorizontalPosition);
     }
 
     private int SortByHorizontalPosition(TreeNode left, TreeNode right)
@@ -143,14 +129,10 @@ public class NodeView : Node
         RemoveFromClassList("success");
 
         if (Application.isPlaying)
-        {
             switch (node.state)
             {
                 case TreeNode.State.Running:
-                    if (node.isStarted)
-                    {
-                        AddToClassList("running");
-                    }
+                    if (node.isStarted) AddToClassList("running");
                     break;
                 case TreeNode.State.Success:
                     AddToClassList("success");
@@ -158,9 +140,6 @@ public class NodeView : Node
                 case TreeNode.State.Failure:
                     AddToClassList("failure");
                     break;
-                
             }
-        }
     }
 }
-

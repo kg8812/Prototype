@@ -16,13 +16,13 @@ namespace Apis
 
         private void InitDropManager()
         {
-            Dictionary<int, List<DropItemTypeInGroup>> dropItemsPerGroup =
+            var dropItemsPerGroup =
                 new Dictionary<int, List<DropItemTypeInGroup>>();
 
-            foreach (KeyValuePair<string, DropGroupDataType> value in
+            foreach (var value in
                      GameManager.Data.GetDataTable<DropGroupDataType>(DataTableType.DropGroup))
             {
-                DropItemTypeInGroup dropItemInGroup = new DropItemTypeInGroup(value.Value.dropItemType,
+                var dropItemInGroup = new DropItemTypeInGroup(value.Value.dropItemType,
                     value.Value.dropItemIndex, value.Value.chance, value.Value.amount);
                 if (dropItemsPerGroup.ContainsKey(value.Value.dropGroup))
                 {
@@ -30,7 +30,7 @@ namespace Apis
                 }
                 else
                 {
-                    List<DropItemTypeInGroup> newDropGroup = new List<DropItemTypeInGroup>() { dropItemInGroup };
+                    var newDropGroup = new List<DropItemTypeInGroup> { dropItemInGroup };
                     dropItemsPerGroup.Add(value.Value.dropGroup, newDropGroup);
                 }
             }

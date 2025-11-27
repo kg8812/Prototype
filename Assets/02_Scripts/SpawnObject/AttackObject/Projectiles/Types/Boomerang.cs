@@ -1,5 +1,4 @@
 using System.Collections;
-using Apis;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -11,20 +10,31 @@ namespace Apis
     [RequireComponent(typeof(Rigidbody2D))]
     public class Boomerang : Projectile
     {
-        [TabGroup("부메랑 설정")]
-        [LabelText("돌아오는 속도")]
+        [TabGroup("부메랑 설정")] [LabelText("돌아오는 속도")]
         public float speed2;
 
         [FormerlySerializedAs("stopUse")] [TabGroup("부메랑 설정")] [LabelText("제한시간 사용여부")]
         public bool timeUse;
-        
-        [ShowIf("timeUse")]
-        [TabGroup("부메랑 설정")]
-        [LabelText("제한시간")]
+
+        [ShowIf("timeUse")] [TabGroup("부메랑 설정")] [LabelText("제한시간")]
         public float time;
 
         private UnityEvent<Boomerang> _onStop = new();
-        public UnityEvent<Boomerang> OnStop => _onStop ??= new();
+        protected bool isStop;
+        public UnityEvent<Boomerang> OnStop => _onStop ??= new UnityEvent<Boomerang>();
+
+        protected override void FixedUpdate()
+        {
+            if (isReturn) return;
+
+            base.FixedUpdate();
+        }
+
+        protected override void OnDisable()
+        {
+            base.OnDisable();
+            StopAllCoroutines();
+        }
 
         public override void Init(AttackObjectInfo atkObjectInfo)
         {
@@ -39,10 +49,11 @@ namespace Apis
             rigid.linearVelocity = Vector2.zero;
             if (timeUse)
             {
-                Sequence stopSeq = DOTween.Sequence();
+                var stopSeq = DOTween.Sequence();
                 stopSeq.SetDelay(time);
                 stopSeq.AppendCallback(ReturnToActor);
             }
+
             OnStop.Invoke(this);
             isStop = true;
             Collider.enabled = false;
@@ -54,65 +65,34 @@ namespace Apis
             isReturn = false;
             isStop = false;
         }
-        protected bool isStop;
-        
-        protected override void FixedUpdate()
-        {
-            if (isReturn) return;
-            
-            base.FixedUpdate();
-        }
 
         protected virtual void FirstAttackInvoke(EventParameters parameters)
         {
-            if (isAtk)
-            {
-                Attack(parameters);
-            }
+            if (isAtk) Attack(parameters);
         }
 
         protected virtual void ReturnAttackInvoke(EventParameters parameters)
         {
-            if (isAtk)
-            {
-                Attack(parameters);
-            }
+            if (isAtk) Attack(parameters);
         }
 
         protected override void AttackInvoke(EventParameters parameters)
         {
             if (!isReturn)
-            {
                 FirstAttackInvoke(parameters);
-            }
             else
-            {
-               ReturnAttackInvoke(parameters);
-            }
+                ReturnAttackInvoke(parameters);
 
-            if (!isStop)
-            {
-                OnObjectConflicted(targetConflictType, targetLayer);
-            }
-            ExecuteEvent(EventType.OnAttack,parameters);
+            if (!isStop) OnObjectConflicted(targetConflictType, targetLayer);
+            ExecuteEvent(EventType.OnAttack, parameters);
         }
 
         public override void Destroy()
         {
             if (isStop)
-            {
                 base.Destroy();
-            }
             else
-            {
                 Stop();
-            }
-        }
-
-        protected override void OnDisable()
-        {
-            base.OnDisable();
-            StopAllCoroutines();
         }
 
         public virtual void ReturnToActor()
@@ -123,11 +103,11 @@ namespace Apis
         protected override void OnObjectConflicted(ProjectileConflictType conflictType, LayerMask layerMasks)
         {
             if (isStop) return;
-            
+
             base.OnObjectConflicted(conflictType, layerMasks);
         }
 
-        IEnumerator ReturnToActorCoroutine()
+        private IEnumerator ReturnToActorCoroutine()
         {
             if (!isReturn)
             {
@@ -136,23 +116,23 @@ namespace Apis
                 fired = true;
                 isReturn = true;
                 var distance = Vector2.Distance(_attacker.Position, transform.position);
-                Vector2 pos = rigid.position;
+                var pos = rigid.position;
 
-                Vector2 dir = ((Vector2)_attacker.Position - pos).normalized;
+                var dir = ((Vector2)_attacker.Position - pos).normalized;
                 rigid.linearVelocity = dir * speed2;
 
                 while (distance > 0.1f)
                 {
                     distance = Vector2.Distance(_attacker.Position, rigid.position);
                     pos = rigid.position;
-                    
-                    float mag = rigid.linearVelocity.magnitude;
+
+                    var mag = rigid.linearVelocity.magnitude;
                     dir = ((Vector2)_attacker.Position - pos).normalized;
                     rigid.linearVelocity = dir * mag;
                     rigid.linearVelocity += GetAccelerationVector();
-                    float angle = Mathf.Atan2(rigid.linearVelocity.y, rigid.linearVelocity.x) * Mathf.Rad2Deg;
+                    var angle = Mathf.Atan2(rigid.linearVelocity.y, rigid.linearVelocity.x) * Mathf.Rad2Deg;
                     ThisTrans.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
-                    
+
                     yield return new WaitForFixedUpdate();
                 }
 

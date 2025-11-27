@@ -16,13 +16,16 @@ namespace Apis.BehaviourTreeTool
         }
 
         [HideInInspector] public State state;
-        [HideInInspector] public bool isStarted = false;
+        [HideInInspector] public bool isStarted;
         [HideInInspector] public string guid;
         [HideInInspector] public Vector2 position;
         [TextArea] public string description;
 
         [HideInInspector] public BlackBoard blackBoard;
-        [FormerlySerializedAs("actor")] [HideInInspector] public Actor _actor;
+
+        [FormerlySerializedAs("actor")] [HideInInspector]
+        public Actor _actor;
+
         [HideInInspector] public BehaviourTree tree;
         [HideInInspector] public UnityEvent<string> OnAlert = new();
 
@@ -33,33 +36,37 @@ namespace Apis.BehaviourTreeTool
                 OnStart();
                 isStarted = true;
             }
+
             state = OnUpdate();
             if (state == State.Failure || state == State.Success)
             {
                 OnStop();
                 isStarted = false;
             }
+
             return state;
         }
 
         public virtual void Init()
         {
-
         }
+
         public virtual TreeNode Clone()
         {
             return Instantiate(this);
         }
+
         public abstract void OnStart();
         public abstract void OnStop();
         public abstract State OnUpdate();
+
         public virtual void OnSkip()
         {
-
         }
+
         public virtual void SetActor(Actor actor)
         {
-            this._actor = actor;
+            _actor = actor;
         }
 
         public IEnumerator InvokeInTime(float time, UnityAction action)
@@ -67,6 +74,5 @@ namespace Apis.BehaviourTreeTool
             yield return new WaitForSeconds(time);
             action.Invoke();
         }
-        
     }
 }

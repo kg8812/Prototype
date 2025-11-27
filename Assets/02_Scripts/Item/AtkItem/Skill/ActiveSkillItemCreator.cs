@@ -1,13 +1,11 @@
-using System.Collections;
-using System.Collections.Generic;
 using Managers;
 using UnityEngine;
 
 public class ActiveSkillItemCreator : MonoBehaviour
 {
     public int skillId;
-    
-    void Update()
+
+    private void Update()
     {
         if (Input.GetKeyDown(KeyCode.K))
         {

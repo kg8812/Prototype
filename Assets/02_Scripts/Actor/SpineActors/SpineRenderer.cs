@@ -1,4 +1,3 @@
-using Apis;
 using Default;
 using Sirenix.OdinInspector;
 using Spine;
@@ -7,25 +6,24 @@ using UnityEngine;
 
 namespace Apis
 {
-    public abstract class SpineRenderer : MonoBehaviour,IActorRenderer, IMecanimUser
+    public abstract class SpineRenderer : MonoBehaviour, IActorRenderer, IMecanimUser
     {
-        private SkeletonMecanimRootMotion _rootMotion;
+        [Tooltip("캐릭터 가운데 위치 값")] [SerializeField]
+        private Vector3 pivot;
 
-        public SkeletonMecanimRootMotion RootMotion =>
-            _rootMotion ??= transform.GetComponentInParentAndChild<SkeletonMecanimRootMotion>();
-        
-        public SkeletonMecanim Mecanim { get; set; }
-        public Transform SkeletonTrans { get; set; }
+        [LabelText("상단 위치")] [SerializeField] private Vector3 topPivot;
+
+        private SkeletonMecanimRootMotion _rootMotion;
 
         private Bone centerBone;
 
-        MeshRenderer _meshRenderer;
-        public MeshRenderer MeshRenderer => _meshRenderer;
-        
+        public SkeletonMecanimRootMotion RootMotion =>
+            _rootMotion ??= transform.GetComponentInParentAndChild<SkeletonMecanimRootMotion>();
+
         protected virtual void Awake()
         {
             Mecanim = GetComponentInChildren<SkeletonMecanim>();
-            _meshRenderer = null;
+            MeshRenderer = null;
 
             if (Mecanim != null)
             {
@@ -33,19 +31,14 @@ namespace Apis
                 centerBone = Mecanim.Skeleton.FindBone("ctrl");
             }
 
-            if (SkeletonTrans != null)
-            {
-                _meshRenderer = SkeletonTrans.GetComponent<MeshRenderer>();
-            }
+            if (SkeletonTrans != null) MeshRenderer = SkeletonTrans.GetComponent<MeshRenderer>();
         }
 
-        [Tooltip("캐릭터 가운데 위치 값")]
-        [SerializeField] private Vector3 pivot;
-        [LabelText("상단 위치")] [SerializeField] private Vector3 topPivot;
+        public MeshRenderer MeshRenderer { get; private set; }
 
         public Vector3 Pivot => pivot;
         public Vector3 TopPivot => topPivot;
-        
+
         public Vector3 GetPosition()
         {
             centerBone?.UpdateWorldTransform();
@@ -54,28 +47,27 @@ namespace Apis
 
         public void SetPosition(Vector3 position)
         {
-            if (centerBone != null)
-            {
-                pivot = centerBone.GetWorldPosition(Mecanim.transform) - transform.position;
-            }
+            if (centerBone != null) pivot = centerBone.GetWorldPosition(Mecanim.transform) - transform.position;
             transform.position = position - pivot;
         }
 
         public void UpdateRenderer()
         {
         }
-        
+
         public void Hide()
         {
-            if(!_meshRenderer.enabled) return;
-            _meshRenderer.enabled = false;
-        
+            if (!MeshRenderer.enabled) return;
+            MeshRenderer.enabled = false;
         }
 
         public void Appear()
         {
-            if(_meshRenderer.enabled) return;
-            _meshRenderer.enabled = true;
+            if (MeshRenderer.enabled) return;
+            MeshRenderer.enabled = true;
         }
+
+        public SkeletonMecanim Mecanim { get; set; }
+        public Transform SkeletonTrans { get; set; }
     }
 }

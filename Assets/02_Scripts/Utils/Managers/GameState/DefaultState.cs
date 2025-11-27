@@ -1,11 +1,11 @@
 using System;
-using UnityEngine;
 
 namespace GameStateSpace
 {
     public class DefaultState : GameState
     {
         private Guid _pauseGuid;
+
         public override void OnEnterState()
         {
             _pauseGuid = GameManager.instance.RegisterPause();
@@ -15,6 +15,7 @@ namespace GameStateSpace
         {
             GameManager.instance.RemovePause(_pauseGuid);
         }
+
         public override void KeyBoardControlling()
         {
             base.KeyBoardControlling();

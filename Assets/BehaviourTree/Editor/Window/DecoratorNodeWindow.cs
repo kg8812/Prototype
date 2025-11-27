@@ -1,24 +1,14 @@
 using System;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
-using System.IO;
 
 public class DecoratorNodeWindow : EditorWindow
 {
-    string className = "";
-    string classOriginalName = "";
-    string scriptName = "NewScript";
+    private string className = "";
+    private string classOriginalName = "";
+    private string scriptName = "NewScript";
 
-    public void Init(string className)
-    {
-        this.className = className;
-        classOriginalName = className;
-        if (className.Contains("DecoratorNode"))
-        {
-            int idx = className.IndexOf("DecoratorNode", StringComparison.Ordinal);
-            this.className = className[..idx];
-        }
-    }
     private void OnGUI()
     {
         minSize = new Vector2(300, 200);
@@ -29,7 +19,7 @@ public class DecoratorNodeWindow : EditorWindow
 
         GUILayout.Space(20);
 
-        string path = "Assets/BehaviourTree/Scripts/DecoratorNodes/" + className;
+        var path = "Assets/BehaviourTree/Scripts/DecoratorNodes/" + className;
 
 
         if (GUILayout.Button("Create New Script"))
@@ -37,10 +27,10 @@ public class DecoratorNodeWindow : EditorWindow
             Debug.Log(className);
             if (!string.IsNullOrEmpty(scriptName))
             {
-                string templatePath = "Assets/BehaviourTree/Templates/DecoratorNodeTemplate.txt";
-                string scriptPath = path + "/" + scriptName + ".cs";
+                var templatePath = "Assets/BehaviourTree/Templates/DecoratorNodeTemplate.txt";
+                var scriptPath = path + "/" + scriptName + ".cs";
 
-                string template = File.ReadAllText(templatePath);
+                var template = File.ReadAllText(templatePath);
                 template = template.Replace("#Name#", scriptName);
                 template = template.Replace("#Name2#", classOriginalName);
                 File.WriteAllText(scriptPath, template);
@@ -53,6 +43,17 @@ public class DecoratorNodeWindow : EditorWindow
             }
 
             Close();
+        }
+    }
+
+    public void Init(string className)
+    {
+        this.className = className;
+        classOriginalName = className;
+        if (className.Contains("DecoratorNode"))
+        {
+            var idx = className.IndexOf("DecoratorNode", StringComparison.Ordinal);
+            this.className = className[..idx];
         }
     }
 }

@@ -7,18 +7,18 @@ namespace Apis
 {
     public abstract class IObjectFactory
     {
-        static AddressablePooling pool;
-        
+        private static AddressablePooling pool;
+
+        private readonly Dictionary<GameObject, Sequence> returnSequences = new();
+
         protected static AddressablePooling Pool
         {
             get
             {
-                pool ??= new ("Object");
+                pool ??= new AddressablePooling("Object");
                 return pool;
             }
         }
-
-        private readonly Dictionary<GameObject, Sequence> returnSequences = new();
 
         public abstract GameObject Get(string addressName, Vector2? pos = null);
 
@@ -30,16 +30,16 @@ namespace Apis
                 returnSequences.Remove(target);
             }
 
-            if (Mathf.Approximately(time,0))
+            if (Mathf.Approximately(time, 0))
             {
                 ReturnTarget(target);
                 return null;
             }
-            
-            Sequence seq = DOTween.Sequence();
 
-            returnSequences.Add(target,seq);
-            
+            var seq = DOTween.Sequence();
+
+            returnSequences.Add(target, seq);
+
             seq.AppendInterval(time);
             seq.AppendCallback(() =>
             {
@@ -50,13 +50,10 @@ namespace Apis
             return seq;
         }
 
-        void ReturnTarget(GameObject target)
+        private void ReturnTarget(GameObject target)
         {
-            if (target.TryGetComponent(out BoneFollower boneFollower))
-            {
-                Object.Destroy(boneFollower);
-            }
-            
+            if (target.TryGetComponent(out BoneFollower boneFollower)) Object.Destroy(boneFollower);
+
             Pool.Return(target);
         }
     }

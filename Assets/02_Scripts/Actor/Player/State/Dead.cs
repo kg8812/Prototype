@@ -1,13 +1,20 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using PlayerState;
-using UnityEngine;
 
-namespace PlayerState {
+namespace PlayerState
+{
     public class Dead : BaseState, IAnimate
     {
         private Guid guid;
+
+        public void OnEnterAnimate()
+        {
+            _player.AnimController.Trigger(EAnimationTrigger.Dead);
+        }
+
+        public void OnExitAnimate()
+        {
+        }
+
         public override void OnEnter(Player t)
         {
             base.OnEnter(t);
@@ -18,11 +25,6 @@ namespace PlayerState {
             _player.IsDead = true;
         }
 
-        public void OnEnterAnimate()
-        {
-            _player.AnimController.Trigger(EAnimationTrigger.Dead);
-        }
-
         public override void OnExit()
         {
             base.OnExit();
@@ -30,10 +32,6 @@ namespace PlayerState {
             _player.RemoveInvincibility(guid);
             GameManager.PlayerController = _player.GetComponent<ActorController>();
             GameManager.instance.playerDied = false;
-        }
-
-        public void OnExitAnimate()
-        {
         }
     }
 }

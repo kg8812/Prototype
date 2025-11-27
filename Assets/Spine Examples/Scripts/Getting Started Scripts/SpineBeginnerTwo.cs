@@ -27,83 +27,80 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using Spine.Unity;
 using System.Collections;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	public class SpineBeginnerTwo : MonoBehaviour {
+namespace Spine.Unity.Examples
+{
+    public class SpineBeginnerTwo : MonoBehaviour
+    {
+        public Skeleton skeleton;
 
-		#region Inspector
-		// [SpineAnimation] attribute allows an Inspector dropdown of Spine animation names coming form SkeletonAnimation.
-		[SpineAnimation]
-		public string runAnimationName;
+        private SkeletonAnimation skeletonAnimation;
 
-		[SpineAnimation]
-		public string idleAnimationName;
+        // Spine.AnimationState and Spine.Skeleton are not Unity-serialized objects. You will not see them as fields in the inspector.
+        public AnimationState spineAnimationState;
 
-		[SpineAnimation]
-		public string walkAnimationName;
+        private void Start()
+        {
+            // Make sure you get these AnimationState and Skeleton references in Start or Later.
+            // Getting and using them in Awake is not guaranteed by default execution order.
+            skeletonAnimation = GetComponent<SkeletonAnimation>();
+            spineAnimationState = skeletonAnimation.AnimationState;
+            skeleton = skeletonAnimation.Skeleton;
 
-		[SpineAnimation]
-		public string shootAnimationName;
+            StartCoroutine(DoDemoRoutine());
+        }
 
-		[Header("Transitions")]
-		[SpineAnimation]
-		public string idleTurnAnimationName;
+        /// This is an infinitely repeating Unity Coroutine. Read the Unity documentation on Coroutines to learn more.
+        private IEnumerator DoDemoRoutine()
+        {
+            while (true)
+            {
+                // SetAnimation is the basic way to set an animation.
+                // SetAnimation sets the animation and starts playing it from the beginning.
+                // Common Mistake: If you keep calling it in Update, it will keep showing the first pose of the animation, do don't do that.
 
-		[SpineAnimation]
-		public string runToIdleAnimationName;
+                spineAnimationState.SetAnimation(0, walkAnimationName, true);
+                yield return new WaitForSeconds(runWalkDuration);
 
-		public float runWalkDuration = 1.5f;
-		#endregion
+                spineAnimationState.SetAnimation(0, runAnimationName, true);
+                yield return new WaitForSeconds(runWalkDuration);
 
-		SkeletonAnimation skeletonAnimation;
+                // AddAnimation queues up an animation to play after the previous one ends.
+                spineAnimationState.SetAnimation(0, runToIdleAnimationName, false);
+                spineAnimationState.AddAnimation(0, idleAnimationName, true, 0);
+                yield return new WaitForSeconds(1f);
 
-		// Spine.AnimationState and Spine.Skeleton are not Unity-serialized objects. You will not see them as fields in the inspector.
-		public Spine.AnimationState spineAnimationState;
-		public Spine.Skeleton skeleton;
+                skeleton.ScaleX = -1; // skeleton allows you to flip the skeleton.
+                spineAnimationState.SetAnimation(0, idleTurnAnimationName, false);
+                spineAnimationState.AddAnimation(0, idleAnimationName, true, 0);
+                yield return new WaitForSeconds(0.5f);
+                skeleton.ScaleX = 1;
+                spineAnimationState.SetAnimation(0, idleTurnAnimationName, false);
+                spineAnimationState.AddAnimation(0, idleAnimationName, true, 0);
+                yield return new WaitForSeconds(0.5f);
+            }
+        }
 
-		void Start () {
-			// Make sure you get these AnimationState and Skeleton references in Start or Later.
-			// Getting and using them in Awake is not guaranteed by default execution order.
-			skeletonAnimation = GetComponent<SkeletonAnimation>();
-			spineAnimationState = skeletonAnimation.AnimationState;
-			skeleton = skeletonAnimation.Skeleton;
+        #region Inspector
 
-			StartCoroutine(DoDemoRoutine());
-		}
+        // [SpineAnimation] attribute allows an Inspector dropdown of Spine animation names coming form SkeletonAnimation.
+        [SpineAnimation] public string runAnimationName;
 
-		/// This is an infinitely repeating Unity Coroutine. Read the Unity documentation on Coroutines to learn more.
-		IEnumerator DoDemoRoutine () {
-			while (true) {
-				// SetAnimation is the basic way to set an animation.
-				// SetAnimation sets the animation and starts playing it from the beginning.
-				// Common Mistake: If you keep calling it in Update, it will keep showing the first pose of the animation, do don't do that.
+        [SpineAnimation] public string idleAnimationName;
 
-				spineAnimationState.SetAnimation(0, walkAnimationName, true);
-				yield return new WaitForSeconds(runWalkDuration);
+        [SpineAnimation] public string walkAnimationName;
 
-				spineAnimationState.SetAnimation(0, runAnimationName, true);
-				yield return new WaitForSeconds(runWalkDuration);
+        [SpineAnimation] public string shootAnimationName;
 
-				// AddAnimation queues up an animation to play after the previous one ends.
-				spineAnimationState.SetAnimation(0, runToIdleAnimationName, false);
-				spineAnimationState.AddAnimation(0, idleAnimationName, true, 0);
-				yield return new WaitForSeconds(1f);
+        [Header("Transitions")] [SpineAnimation]
+        public string idleTurnAnimationName;
 
-				skeleton.ScaleX = -1;       // skeleton allows you to flip the skeleton.
-				spineAnimationState.SetAnimation(0, idleTurnAnimationName, false);
-				spineAnimationState.AddAnimation(0, idleAnimationName, true, 0);
-				yield return new WaitForSeconds(0.5f);
-				skeleton.ScaleX = 1;
-				spineAnimationState.SetAnimation(0, idleTurnAnimationName, false);
-				spineAnimationState.AddAnimation(0, idleAnimationName, true, 0);
-				yield return new WaitForSeconds(0.5f);
+        [SpineAnimation] public string runToIdleAnimationName;
 
-			}
-		}
+        public float runWalkDuration = 1.5f;
 
-	}
-
+        #endregion
+    }
 }

@@ -1,28 +1,24 @@
-﻿using System;
-using Apis;
-using UnityEngine;
-using UnityEngine.Serialization;
+﻿using UnityEngine;
 
 namespace Apis
 {
     [RequireComponent(typeof(Actor))]
-    public class ActorEffect: MonoBehaviour
+    public class ActorEffect : MonoBehaviour
     {
-        private Actor _actor;
+        public enum EffectRotationType
+        {
+            Fixed, // 그냥 고정
+            ActorRotate, // actor 기준 방향 설정
+            PlayerRotate // player 기준 방향 설정
+        }
 
         [SerializeField] private EventType eventType;
 
         [SerializeField] private float size = 1f;
-        
-        public enum EffectRotationType
-        {
-            Fixed,          // 그냥 고정
-            ActorRotate,    // actor 기준 방향 설정
-            PlayerRotate    // player 기준 방향 설정
-        }
 
         public EffectRotationType rotationType;
         public string effectName;
+        private Actor _actor;
 
         private void Awake()
         {
@@ -46,7 +42,7 @@ namespace Apis
             if (effectName != null)
             {
                 var effect = _actor.EffectSpawner.Spawn(effectName, _actor.Position, false);
-                bool isRight = true;
+                var isRight = true;
                 switch (rotationType)
                 {
                     case EffectRotationType.ActorRotate:

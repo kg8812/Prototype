@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Apis;
 using DG.Tweening;
 using UnityEngine;
 
@@ -7,6 +6,12 @@ namespace Apis
 {
     public class FactoryManager
     {
+        public enum Direction
+        {
+            Vertical,
+            Horizontal
+        }
+
         public enum FactoryType
         {
             Normal,
@@ -15,11 +20,11 @@ namespace Apis
             Monster
         }
 
-        private IObjectFactory _factory = new ObjectFactory();
-
         public readonly Dictionary<GameObject, Sequence> destroyList = new();
 
         private Dictionary<FactoryType, IObjectFactory> _factories;
+
+        private IObjectFactory _factory = new ObjectFactory();
 
         private Dictionary<FactoryType, IObjectFactory> Factories
         {
@@ -27,7 +32,7 @@ namespace Apis
             {
                 if (_factories == null)
                 {
-                    _factories = new();
+                    _factories = new Dictionary<FactoryType, IObjectFactory>();
                     _factories.Add(FactoryType.Normal, new ObjectFactory());
                     _factories.Add(FactoryType.AttackObject, new AttackObjectFactory());
                     _factories.Add(FactoryType.Effect, new EffectFactory());
@@ -41,13 +46,10 @@ namespace Apis
         public Sequence Return(GameObject obj, float duration = 0, TweenCallback afterReturn = null)
         {
             if (obj == null) return null;
-            Sequence seq = _factory.Return(obj, duration);
+            var seq = _factory.Return(obj, duration);
             if (seq == null) return null;
 
-            if (afterReturn != null && seq.IsActive())
-            {
-                seq.onComplete += afterReturn;
-            }
+            if (afterReturn != null && seq.IsActive()) seq.onComplete += afterReturn;
 
             if (destroyList.TryAdd(obj, seq))
             {
@@ -58,7 +60,7 @@ namespace Apis
                 seq.Kill();
                 return seq;
             }
-            
+
             return seq;
         }
 
@@ -74,20 +76,15 @@ namespace Apis
             return _factory?.Get(address, pos).GetComponent<T>();
         }
 
-        public enum Direction
-        {
-            Vertical,
-            Horizontal
-        }
 
-       
-        public List<T> SpawnWithPadding<T>(FactoryType type, string address, Vector2 basePos, int spawnCount, Direction dir,
+        public List<T> SpawnWithPadding<T>(FactoryType type, string address, Vector2 basePos, int spawnCount,
+            Direction dir,
             float padding = 0.5f) where T : Component
         {
             List<T> objects = new();
-            for (int i = 1; i <= spawnCount; i++)
+            for (var i = 1; i <= spawnCount; i++)
             {
-                T obj = Get<T>(type, address,
+                var obj = Get<T>(type, address,
                     basePos + (dir == Direction.Horizontal ? Vector2.right : Vector2.up) *
                     (padding * Mathf.Pow(-1, i) * ((i + 1) / 2)));
                 objects.Add(obj);
@@ -96,18 +93,18 @@ namespace Apis
             return objects;
         }
 
-        public List<Projectile> SpawnProjectilesInCircle(string address, Vector2 basePos, int spawnCount,float radius)
+        public List<Projectile> SpawnProjectilesInCircle(string address, Vector2 basePos, int spawnCount, float radius)
         {
             List<Projectile> list = new();
             if (spawnCount == 0) return list;
-            float angle = 360f / spawnCount;
+            var angle = 360f / spawnCount;
 
-            for (int i = 0; i < spawnCount; i++)
+            for (var i = 0; i < spawnCount; i++)
             {
-                float rad = angle * i * Mathf.Deg2Rad;
-                float sin = Mathf.Sin(rad);
-                float cos = Mathf.Cos(rad);
-                Projectile projectile = Get<Projectile>(FactoryType.AttackObject, address,
+                var rad = angle * i * Mathf.Deg2Rad;
+                var sin = Mathf.Sin(rad);
+                var cos = Mathf.Cos(rad);
+                var projectile = Get<Projectile>(FactoryType.AttackObject, address,
                     basePos + new Vector2(sin, cos) * radius);
                 list.Add(projectile);
             }

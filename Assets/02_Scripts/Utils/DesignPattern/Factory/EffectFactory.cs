@@ -7,7 +7,7 @@ public class EffectFactory : IObjectFactory
 {
     public override GameObject Get(string addressName, Vector2? pos = null)
     {
-        GameObject obj = Pool.Get(addressName,pos);
+        var obj = Pool.Get(addressName, pos);
         if (obj == null) return null;
 
         obj.transform.rotation = quaternion.identity;

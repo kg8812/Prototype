@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -14,46 +13,12 @@ namespace Command
         public CommandInfo keyCommand = new();
 
         private ActorController _controller;
+
         public void Init(ActorController controller)
         {
             _controller = controller;
         }
-        [Serializable]
-        public class CommandInfo
-        {
-            public bool IsBufferAction;
-            [HideInInspector] public List<ActorCommand> Commands = new();
-            public UnityEvent pressedAction;
-            public ECommandType commandType;    // 버퍼 우선순위 처리 용
-            public float timeout;               // 버퍼 타임아웃 시간
 
-            public void Invoke(Actor actor)
-            {
-                Commands?.ForEach(x =>
-                {
-                    if (x == null) return;
-                    
-                    if (x.InvokeCondition(actor))
-                    {
-                        x.Invoke(actor);
-                    }
-                });
-            }
-
-            public override bool Equals(object obj)
-            {
-                if (obj is CommandInfo other)
-                {
-                    return this.commandType == other.commandType;
-                }
-                return false;
-            }
-
-            public override int GetHashCode()
-            {
-                return base.GetHashCode();
-            }
-        }
         public void SetDirectionToLeft()
         {
             _controller.BufferSetDirection(EActorDirection.Left);
@@ -62,6 +27,37 @@ namespace Command
         public void SetDirectionToRight()
         {
             _controller.BufferSetDirection(EActorDirection.Right);
+        }
+
+        [Serializable]
+        public class CommandInfo
+        {
+            public bool IsBufferAction;
+            [HideInInspector] public List<ActorCommand> Commands = new();
+            public UnityEvent pressedAction;
+            public ECommandType commandType; // 버퍼 우선순위 처리 용
+            public float timeout; // 버퍼 타임아웃 시간
+
+            public void Invoke(Actor actor)
+            {
+                Commands?.ForEach(x =>
+                {
+                    if (x == null) return;
+
+                    if (x.InvokeCondition(actor)) x.Invoke(actor);
+                });
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (obj is CommandInfo other) return commandType == other.commandType;
+                return false;
+            }
+
+            public override int GetHashCode()
+            {
+                return base.GetHashCode();
+            }
         }
     }
 }

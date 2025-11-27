@@ -8,7 +8,6 @@ namespace Apis
         // 이벤트 사용자
         public IEventManager EventManager { get; }
         List<IEventChild> EventChildren { get; }
-        
     }
 
     public interface IEventManager
@@ -19,6 +18,7 @@ namespace Apis
         public void ExecuteEvent(EventType type, EventParameters parameters); // 이벤트 실행
         public UnityEvent<EventParameters> GetEvent(EventType type); // 이벤트 가져오기
     }
+
     public interface IEventChild
     {
         public void Init(IEventUser user); // 이벤트 사용자 할당

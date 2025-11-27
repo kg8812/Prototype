@@ -27,62 +27,70 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using Spine.Unity;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-
+namespace Spine.Unity.Examples
+{
 	/// <summary>
-	/// Add this component to a Spine GameObject to apply a specific slot's Colors as MaterialProperties.
-	/// This allows you to apply the two color tint to the whole skeleton and not require the overhead of an extra vertex stream on the mesh.
+	///     Add this component to a Spine GameObject to apply a specific slot's Colors as MaterialProperties.
+	///     This allows you to apply the two color tint to the whole skeleton and not require the overhead of an extra vertex
+	///     stream on the mesh.
 	/// </summary>
-	public class SlotTintBlackFollower : MonoBehaviour {
-		#region Inspector
-		/// <summary>
-		/// Serialized name of the slot loaded at runtime. Change the slot field instead of this if you want to change the followed slot at runtime.</summary>
-		[SpineSlot]
-		[SerializeField]
-		protected string slotName;
+	public class SlotTintBlackFollower : MonoBehaviour
+    {
+        private int colorPropertyId, blackPropertyId;
+        private MaterialPropertyBlock mb;
+        private MeshRenderer mr;
 
-		[SerializeField]
-		protected string colorPropertyName = "_Color";
-		[SerializeField]
-		protected string blackPropertyName = "_Black";
-		#endregion
+        public Slot slot;
 
-		public Slot slot;
-		MeshRenderer mr;
-		MaterialPropertyBlock mb;
-		int colorPropertyId, blackPropertyId;
+        private void Start()
+        {
+            Initialize(false);
+        }
 
-		void Start () {
-			Initialize(false);
-		}
+        public void Update()
+        {
+            var s = slot;
+            if (s == null) return;
 
-		public void Initialize (bool overwrite) {
-			if (overwrite || mb == null) {
-				mb = new MaterialPropertyBlock();
-				mr = GetComponent<MeshRenderer>();
-				slot = GetComponent<ISkeletonComponent>().Skeleton.FindSlot(slotName);
+            mb.SetColor(colorPropertyId, s.GetColor());
+            mb.SetColor(blackPropertyId, s.GetColorTintBlack());
 
-				colorPropertyId = Shader.PropertyToID(colorPropertyName);
-				blackPropertyId = Shader.PropertyToID(blackPropertyName);
-			}
-		}
+            mr.SetPropertyBlock(mb);
+        }
 
-		public void Update () {
-			Slot s = slot;
-			if (s == null) return;
+        private void OnDisable()
+        {
+            mb.Clear();
+            mr.SetPropertyBlock(mb);
+        }
 
-			mb.SetColor(colorPropertyId, s.GetColor());
-			mb.SetColor(blackPropertyId, s.GetColorTintBlack());
+        public void Initialize(bool overwrite)
+        {
+            if (overwrite || mb == null)
+            {
+                mb = new MaterialPropertyBlock();
+                mr = GetComponent<MeshRenderer>();
+                slot = GetComponent<ISkeletonComponent>().Skeleton.FindSlot(slotName);
 
-			mr.SetPropertyBlock(mb);
-		}
+                colorPropertyId = Shader.PropertyToID(colorPropertyName);
+                blackPropertyId = Shader.PropertyToID(blackPropertyName);
+            }
+        }
 
-		void OnDisable () {
-			mb.Clear();
-			mr.SetPropertyBlock(mb);
-		}
-	}
+        #region Inspector
+
+        /// <summary>
+        ///     Serialized name of the slot loaded at runtime. Change the slot field instead of this if you want to change the
+        ///     followed slot at runtime.
+        /// </summary>
+        [SpineSlot] [SerializeField] protected string slotName;
+
+        [SerializeField] protected string colorPropertyName = "_Color";
+
+        [SerializeField] protected string blackPropertyName = "_Black";
+
+        #endregion
+    }
 }

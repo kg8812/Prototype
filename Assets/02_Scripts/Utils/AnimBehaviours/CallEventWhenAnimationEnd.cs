@@ -2,8 +2,13 @@
 
 public class CallEventWhenAnimationEnd : StateMachineBehaviour
 {
-    private bool eventCalled = false;
     public string eventName;
+    private bool eventCalled;
+
+    public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
+    {
+        eventCalled = false; // 다음 진입을 위해 초기화
+    }
 
     public override void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
@@ -15,10 +20,5 @@ public class CallEventWhenAnimationEnd : StateMachineBehaviour
             // 원하는 이벤트 호출
             animator.gameObject.SendMessage(eventName);
         }
-    }
-
-    public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
-    {
-        eventCalled = false; // 다음 진입을 위해 초기화
     }
 }

@@ -1,26 +1,16 @@
 ﻿using Apis.UI;
 using Save.Schema;
-using UnityEngine.UI;
 
 namespace Apis
 {
     public class GameSettingController : UISetting_Content
     {
-        enum Carousels
-        {
-            Language
-        }
-
-        enum Toggles
-        {
-            CameraShaking
-        }
         public override void Init()
         {
             base.Init();
             Bind<UIAsset_Carousel>(typeof(Carousels));
             Bind<UIAsset_Toggle>(typeof(Toggles));
-            
+
             Get<UIAsset_Carousel>((int)Carousels.Language).ValueChanged.AddListener(OnLanguageChanged);
             Get<UIAsset_Toggle>((int)Toggles.CameraShaking).OnValueChanged.AddListener(OnCamShakeChanged);
         }
@@ -51,8 +41,15 @@ namespace Apis
             // TODO
             UI_Setting.IsDirty = true;
         }
-        
-        
-        
+
+        private enum Carousels
+        {
+            Language
+        }
+
+        private enum Toggles
+        {
+            CameraShaking
+        }
     }
 }

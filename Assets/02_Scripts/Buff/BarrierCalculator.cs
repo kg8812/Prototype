@@ -1,16 +1,30 @@
 using Apis;
-using UnityEngine;
 
 public class BarrierCalculator
 {
-    float _barrier;
+    private float _barrier;
+    private readonly SubBuffManager buffManager;
 
-    private IEventManager user;
-    private SubBuffManager buffManager;
+    private readonly IEventManager user;
+
     public BarrierCalculator(IEventManager user, SubBuffManager buffManager)
     {
         this.user = user;
         this.buffManager = buffManager;
+    }
+
+    public float Barrier
+    {
+        get
+        {
+            float value = 0;
+
+            buffManager.Traverse(x =>
+            {
+                if (x is BarrierBase barrier) value += barrier.Barrier;
+            });
+            return _barrier + value;
+        }
     }
 
     public void Calculate(EventParameters parameters)
@@ -27,31 +41,22 @@ public class BarrierCalculator
             _barrier = 0;
         }
     }
+
     public void AddBarrier(float value)
     {
         _barrier += value;
-        user?.ExecuteEvent(EventType.OnBarrierChange,null);
+        user?.ExecuteEvent(EventType.OnBarrierChange, null);
     }
-    public float Barrier
-    {
-        get
-        {
-            float value = 0;
 
-            buffManager.Traverse(x => { if (x is BarrierBase barrier) value += barrier.Barrier; });
-            return _barrier + value;
-        }
-    }
-    
-    float MinusBarrier(float dmg)
+    private float MinusBarrier(float dmg)
     {
         buffManager.Traverse(x =>
         {
             if (dmg <= 0) return;
-        
-            if(x is BarrierBase barrier)
+
+            if (x is BarrierBase barrier)
             {
-                if(barrier.Barrier > dmg)
+                if (barrier.Barrier > dmg)
                 {
                     barrier.Barrier -= dmg;
                     dmg = 0;
@@ -64,9 +69,9 @@ public class BarrierCalculator
                 }
             }
         });
-        
+
         if (dmg <= 0) return dmg;
-        
+
         if (_barrier >= dmg)
         {
             _barrier -= dmg;

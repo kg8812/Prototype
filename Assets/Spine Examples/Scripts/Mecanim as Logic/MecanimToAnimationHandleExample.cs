@@ -27,25 +27,25 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
+namespace Spine.Unity.Examples
+{
+    // This StateMachineBehaviour handles sending the Mecanim state information to the component that handles playing the Spine animations.
+    public class MecanimToAnimationHandleExample : StateMachineBehaviour
+    {
+        private SkeletonAnimationHandleExample animationHandle;
+        private bool initialized;
 
-	// This StateMachineBehaviour handles sending the Mecanim state information to the component that handles playing the Spine animations.
-	public class MecanimToAnimationHandleExample : StateMachineBehaviour {
-		SkeletonAnimationHandleExample animationHandle;
-		bool initialized;
+        public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
+        {
+            if (!initialized)
+            {
+                animationHandle = animator.GetComponent<SkeletonAnimationHandleExample>();
+                initialized = true;
+            }
 
-		override public void OnStateEnter (Animator animator, AnimatorStateInfo stateInfo, int layerIndex) {
-			if (!initialized) {
-				animationHandle = animator.GetComponent<SkeletonAnimationHandleExample>();
-				initialized = true;
-			}
-
-			animationHandle.PlayAnimationForState(stateInfo.shortNameHash, layerIndex);
-		}
-	}
-
+            animationHandle.PlayAnimationForState(stateInfo.shortNameHash, layerIndex);
+        }
+    }
 }

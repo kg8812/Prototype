@@ -27,58 +27,57 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
+namespace Spine.Unity.Examples
+{
+    // This is a sample component for C# vertex effects for Spine rendering components.
+    // Using shaders and materials to control vertex properties is still more performant
+    // than using this API, but in cases where your vertex effect logic cannot be
+    // expressed as shader code, these vertex effects can be useful.
+    public class JitterEffectExample : MonoBehaviour
+    {
+        [Range(0f, 0.8f)] public float jitterMagnitude = 0.2f;
 
-	// This is a sample component for C# vertex effects for Spine rendering components.
-	// Using shaders and materials to control vertex properties is still more performant
-	// than using this API, but in cases where your vertex effect logic cannot be
-	// expressed as shader code, these vertex effects can be useful.
-	public class JitterEffectExample : MonoBehaviour {
+        private SkeletonRenderer skeletonRenderer;
 
-		[Range(0f, 0.8f)]
-		public float jitterMagnitude = 0.2f;
+        private void OnEnable()
+        {
+            skeletonRenderer = GetComponent<SkeletonRenderer>();
+            if (skeletonRenderer == null) return;
 
-		SkeletonRenderer skeletonRenderer;
+            // Use the OnPostProcessVertices callback to modify the vertices at the correct time.
+            skeletonRenderer.OnPostProcessVertices -= ProcessVertices;
+            skeletonRenderer.OnPostProcessVertices += ProcessVertices;
 
-		void OnEnable () {
-			skeletonRenderer = GetComponent<SkeletonRenderer>();
-			if (skeletonRenderer == null) return;
+            Debug.Log("Jitter Effect Enabled.");
+        }
 
-			// Use the OnPostProcessVertices callback to modify the vertices at the correct time.
-			skeletonRenderer.OnPostProcessVertices -= ProcessVertices;
-			skeletonRenderer.OnPostProcessVertices += ProcessVertices;
+        private void OnDisable()
+        {
+            if (skeletonRenderer == null) return;
+            skeletonRenderer.OnPostProcessVertices -= ProcessVertices;
 
-			Debug.Log("Jitter Effect Enabled.");
-		}
+            Debug.Log("Jitter Effect Disabled.");
+        }
 
-		void ProcessVertices (MeshGeneratorBuffers buffers) {
-			if (!this.enabled) return;
+        private void ProcessVertices(MeshGeneratorBuffers buffers)
+        {
+            if (!enabled) return;
 
-			// For efficiency, limit your effect to the actual mesh vertex count using vertexCount
-			int vertexCount = buffers.vertexCount;
+            // For efficiency, limit your effect to the actual mesh vertex count using vertexCount
+            var vertexCount = buffers.vertexCount;
 
-			// Modify vertex positions by accessing Vector3[] vertexBuffer
-			Vector3[] vertices = buffers.vertexBuffer;
-			for (int i = 0; i < vertexCount; i++)
-				vertices[i] += (Vector3)(Random.insideUnitCircle * jitterMagnitude);
+            // Modify vertex positions by accessing Vector3[] vertexBuffer
+            var vertices = buffers.vertexBuffer;
+            for (var i = 0; i < vertexCount; i++)
+                vertices[i] += (Vector3)(Random.insideUnitCircle * jitterMagnitude);
 
-			// You can also modify uvs and colors.
-			//Vector2[] uvs = buffers.uvBuffer;
-			//Color32[] colors = buffers.colorBuffer;
+            // You can also modify uvs and colors.
+            //Vector2[] uvs = buffers.uvBuffer;
+            //Color32[] colors = buffers.colorBuffer;
 
-			//
-		}
-
-		void OnDisable () {
-			if (skeletonRenderer == null) return;
-			skeletonRenderer.OnPostProcessVertices -= ProcessVertices;
-
-			Debug.Log("Jitter Effect Disabled.");
-		}
-	}
-
+            //
+        }
+    }
 }

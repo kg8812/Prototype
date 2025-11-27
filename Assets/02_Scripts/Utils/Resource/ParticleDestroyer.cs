@@ -1,33 +1,46 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Default;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Events;
 
 public class ParticleDestroyer : MonoBehaviour, IPoolObject
 {
-    private UnityEvent _onDestroy;
-
-    public UnityEvent OnDestroyed => _onDestroy ??= new();
-
     [LabelText("지워야하는 목록")] public List<ParticleSystem> removes = new();
     [LabelText("남겨야하는 목록")] public List<ParticleSystem> remains = new();
     [LabelText("멈춰야되는 목록")] public List<ParticleSystem> stopAndRemain = new();
     [LabelText("멈춘 후 삭제되는 시간")] public float remainingTime;
-
-    Renderer[] _renderers;
     public bool disappearWhenHide;
+    private UnityEvent _onDestroy;
     private ParticleSystem[] _particles;
-    
+
+    private Renderer[] _renderers;
+
+    public UnityEvent OnDestroyed => _onDestroy ??= new UnityEvent();
+
     private void Awake()
     {
         _renderers = GetComponentsInChildren<Renderer>(true).Where(x => x.gameObject != gameObject).ToArray();
         _particles = GetComponentsInChildren<ParticleSystem>(true);
         var exceptSet = new HashSet<ParticleSystem>(removes.Concat(remains).Concat(stopAndRemain));
         _particles = _particles.Where(p => !exceptSet.Contains(p)).ToArray();
+    }
+
+    private void OnParticleSystemStopped()
+    {
+        Return();
+    }
+
+    public void OnGet()
+    {
+        _renderers = GetComponentsInChildren<Renderer>(true).Where(x => x.gameObject != gameObject).ToArray();
+
+        TurnRenderers(true);
+    }
+
+    public void OnReturn()
+    {
+        OnDestroyed.RemoveAllListeners();
     }
 
     public bool CheckRemoveLists()
@@ -37,14 +50,11 @@ public class ParticleDestroyer : MonoBehaviour, IPoolObject
 
     public void StopEmitting()
     {
-        foreach (var particle in _particles)
-        {
-            particle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-        }
+        foreach (var particle in _particles) particle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         removes.ForEach(x =>
         {
             if (x == null) return;
-            x.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear); 
+            x.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
         });
         remains.ForEach(x =>
         {
@@ -55,9 +65,9 @@ public class ParticleDestroyer : MonoBehaviour, IPoolObject
         {
             if (x == null) return;
             x.Stop(false, ParticleSystemStopBehavior.StopEmitting);
-            ParticleSystem.Particle[] particles = new ParticleSystem.Particle[x.particleCount];
-            int count = x.GetParticles(particles);
-            for (int i = 0; i < count; i++)
+            var particles = new ParticleSystem.Particle[x.particleCount];
+            var count = x.GetParticles(particles);
+            for (var i = 0; i < count; i++)
             {
                 particles[i].velocity = Vector2.zero;
                 particles[i].remainingLifetime = remainingTime;
@@ -65,11 +75,6 @@ public class ParticleDestroyer : MonoBehaviour, IPoolObject
 
             x.SetParticles(particles, count);
         });
-    }
-
-    private void OnParticleSystemStopped()
-    {
-        Return();
     }
 
     public void Return()
@@ -86,16 +91,5 @@ public class ParticleDestroyer : MonoBehaviour, IPoolObject
             if (renderer1 == null) continue;
             renderer1.enabled = isOn;
         }
-    }
-    public void OnGet()
-    {
-        _renderers = GetComponentsInChildren<Renderer>(true).Where(x => x.gameObject != gameObject).ToArray();
-
-        TurnRenderers(true);
-    }
-
-    public void OnReturn()
-    {
-        OnDestroyed.RemoveAllListeners();
     }
 }

@@ -1,30 +1,30 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using Default;
 using UnityEngine;
 
 namespace Apis.CommonMonster2
 {
-    [CreateAssetMenu(fileName = "New MAS_ActiveAllProjectile", menuName = "Scriptable/Monster/Attack/MAS_ActiveAllProjectile")]
-    [System.Serializable]
-    public class MAS_ActiveAllProjectile: MonsterAction
+    [CreateAssetMenu(fileName = "New MAS_ActiveAllProjectile",
+        menuName = "Scriptable/Monster/Attack/MAS_ActiveAllProjectile")]
+    [Serializable]
+    public class MAS_ActiveAllProjectile : MonsterAction
     {
         public TimeType timeType;
         public float delayTime;
-        private float realDelayTime;
 
         private Coroutine myCrt;
-        
+        private float realDelayTime;
+
         public override void Action(CommonMonster2 monster)
         {
             // Debug.Log("all projectile action");
-            realDelayTime = Default.Utils.CalculateDurationWithAtkSpeed(monster, delayTime);
+            realDelayTime = Utils.CalculateDurationWithAtkSpeed(monster, delayTime);
             base.Action(monster);
             switch (timeType)
             {
                 case TimeType.Immediately:
-                    foreach (var proj in _cM.Projectiles)
-                    {
-                        proj.Fire();
-                    }
+                    foreach (var proj in _cM.Projectiles) proj.Fire();
                     break;
                 case TimeType.Periodically:
                     myCrt = GameManager.instance.StartCoroutineWrapper(FireProjectilesPeriodically());
@@ -34,12 +34,10 @@ namespace Apis.CommonMonster2
 
         public override void Update()
         {
-            
         }
 
         public override void FixedUpdate()
         {
-            
         }
 
         public override void OnCancel()

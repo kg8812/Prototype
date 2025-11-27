@@ -27,37 +27,42 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using Spine.Unity;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	[ExecuteInEditMode]
-	[RequireComponent(typeof(SkeletonRenderer))]
-	public class SpineGauge : MonoBehaviour {
+namespace Spine.Unity.Examples
+{
+    [ExecuteInEditMode]
+    [RequireComponent(typeof(SkeletonRenderer))]
+    public class SpineGauge : MonoBehaviour
+    {
+        private SkeletonRenderer skeletonRenderer;
 
-		#region Inspector
-		[Range(0, 1)]
-		public float fillPercent = 0;
-		public AnimationReferenceAsset fillAnimation;
-		#endregion
+        private void Awake()
+        {
+            skeletonRenderer = GetComponent<SkeletonRenderer>();
+        }
 
-		SkeletonRenderer skeletonRenderer;
+        private void Update()
+        {
+            SetGaugePercent(fillPercent);
+        }
 
-		void Awake () {
-			skeletonRenderer = GetComponent<SkeletonRenderer>();
-		}
+        public void SetGaugePercent(float percent)
+        {
+            if (skeletonRenderer == null) return;
+            var skeleton = skeletonRenderer.skeleton;
+            if (skeleton == null) return;
 
-		void Update () {
-			SetGaugePercent(fillPercent);
-		}
+            fillAnimation.Animation.Apply(skeleton, 0, percent, false, null, 1f, MixBlend.Setup, MixDirection.In);
+            skeleton.UpdateWorldTransform(Skeleton.Physics.Update);
+        }
 
-		public void SetGaugePercent (float percent) {
-			if (skeletonRenderer == null) return;
-			Skeleton skeleton = skeletonRenderer.skeleton; if (skeleton == null) return;
+        #region Inspector
 
-			fillAnimation.Animation.Apply(skeleton, 0, percent, false, null, 1f, MixBlend.Setup, MixDirection.In);
-			skeleton.UpdateWorldTransform(Skeleton.Physics.Update);
-		}
-	}
+        [Range(0, 1)] public float fillPercent;
 
+        public AnimationReferenceAsset fillAnimation;
+
+        #endregion
+    }
 }

@@ -1,14 +1,12 @@
-using UI;
-using Sirenix.OdinInspector;
-using Unity.VisualScripting;
-using UnityEngine;
+using EventData;
 
 namespace Apis
 {
     public abstract class MagicSkill : ActiveSkill
     {
+        protected Weapon _weapon;
         public virtual bool isActive => true;
-        
+
         public int Index => index;
 
         public override bool Use()
@@ -18,7 +16,7 @@ namespace Apis
             eventUser?.EventManager.ExecuteEvent(EventType.OnWeaponSkillUse,
                 new EventParameters(GameManager.instance.Player)
                 {
-                    skillData = new() { usedSkill = this }
+                    skillData = new SkillEventData { usedSkill = this }
                 });
 
             return true;
@@ -27,18 +25,13 @@ namespace Apis
         public override void Active()
         {
             base.Active();
-            if (isMotion)
-            {
-                SetSkillType();
-            }
+            if (isMotion) SetSkillType();
         }
 
         protected virtual void SetSkillType()
         {
             animator?.animator.SetInteger("WeaponSkillType", 1);
         }
-
-        protected Weapon _weapon;
 
         public virtual void Init(Weapon weapon)
         {
@@ -63,14 +56,13 @@ namespace Apis
         public override void BeforeAttack()
         {
             base.BeforeAttack();
-            animator.animator.SetInteger("WeaponSkillIndex",Index);
+            animator.animator.SetInteger("WeaponSkillIndex", Index);
         }
 
-        protected void SetAttackObject(AttackObject obj, ProjectileInfo info,float duration = 0)
+        protected void SetAttackObject(AttackObject obj, ProjectileInfo info, float duration = 0)
         {
-            obj.Init(attacker,new AtkItemCalculation(attacker as Actor, this,info.dmg ),duration);
+            obj.Init(attacker, new AtkItemCalculation(attacker as Actor, this, info.dmg), duration);
             obj.Init(info);
-            obj.Init((int)BaseGroggyPower);
         }
     }
 }

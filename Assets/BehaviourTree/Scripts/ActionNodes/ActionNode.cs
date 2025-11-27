@@ -1,4 +1,3 @@
-
 using DG.Tweening;
 using UnityEngine;
 
@@ -11,10 +10,7 @@ namespace Apis.BehaviourTreeTool
             _actor.ResetDirection();
             _actor.Rb.DOKill();
 
-            if (_actor.Rb.bodyType == RigidbodyType2D.Dynamic)
-            {
-                _actor.Rb.linearVelocity = Vector2.zero;
-            }
+            if (_actor.Rb.bodyType == RigidbodyType2D.Dynamic) _actor.Rb.linearVelocity = Vector2.zero;
         }
 
         public override State Update()
@@ -25,6 +21,7 @@ namespace Apis.BehaviourTreeTool
                 blackBoard.currentNodeName = description;
                 blackBoard.currentNode = this;
             }
+
             return state;
         }
 

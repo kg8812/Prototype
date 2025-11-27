@@ -1,21 +1,19 @@
 using Apis;
-using Apis;
 using Default;
 using UnityEngine;
-
 
 public class ParticleTrailFollower : MonoBehaviour
 {
     public string trailAddress;
-    
-    private ParticleSystem trail;
     private Projectile projectile;
+
+    private ParticleSystem trail;
 
     private void Awake()
     {
         projectile = Utils.GetComponentInParentAndChild<Projectile>(gameObject);
         projectile.AddEvent(EventType.OnInit, SpawnTrail);
-        projectile.AddEvent(EventType.OnDestroy,RemoveTrail);
+        projectile.AddEvent(EventType.OnDestroy, RemoveTrail);
     }
 
     private void Update()
@@ -23,15 +21,16 @@ public class ParticleTrailFollower : MonoBehaviour
         trail.transform.position = transform.position;
     }
 
-    void SpawnTrail(EventParameters parameters)
+    private void SpawnTrail(EventParameters parameters)
     {
-        trail = GameManager.Factory.Get<ParticleSystem>(FactoryManager.FactoryType.Effect, trailAddress, transform.position);
+        trail = GameManager.Factory.Get<ParticleSystem>(FactoryManager.FactoryType.Effect, trailAddress,
+            transform.position);
         trail.transform.localScale = projectile.transform.localScale;
     }
 
-    void RemoveTrail(EventParameters parameters)
+    private void RemoveTrail(EventParameters parameters)
     {
-        trail.Stop(true,ParticleSystemStopBehavior.StopEmitting);
+        trail.Stop(true, ParticleSystemStopBehavior.StopEmitting);
         GameManager.Factory.Return(trail.gameObject, 1);
     }
 }

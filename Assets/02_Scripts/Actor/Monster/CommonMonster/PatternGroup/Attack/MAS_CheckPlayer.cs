@@ -1,10 +1,10 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Apis.CommonMonster2
 {
-    
     [CreateAssetMenu(fileName = "New CheckPlayer", menuName = "Scriptable/Monster/Attack/checkPlayer")]
-    [System.Serializable]
+    [Serializable]
     public class MAS_CheckPlayer : MonsterAction
     {
         public float lx, rx;
@@ -13,15 +13,15 @@ namespace Apis.CommonMonster2
         public float maxTime = 4f;
         public string failTriggerName = "attackFail";
         public float moveRatio = 1.5f;
-
-        private Transform playerTrans;
-        private Transform monsterTrans;
-        private bool lastMoveStop;
-        private bool isCheck;
         private float _startTime;
+        private bool isCheck;
+        private bool lastMoveStop;
 
 
         private Vector2 monsterPos, playerPos;
+        private Transform monsterTrans;
+
+        private Transform playerTrans;
 
         public override void Action(CommonMonster2 monster)
         {
@@ -34,23 +34,18 @@ namespace Apis.CommonMonster2
 
         public override void Update()
         {
-            
         }
 
         public override void FixedUpdate()
         {
             if (!isCheck) return;
-            if (!playerTrans || !monsterTrans)
-            {
-                InitTrans(_cM);
-            }
-            bool isRight = _cM.Direction == EActorDirection.Right;
+            if (!playerTrans || !monsterTrans) InitTrans(_cM);
+            var isRight = _cM.Direction == EActorDirection.Right;
 
             monsterPos = monsterTrans.position;
             playerPos = playerTrans.position;
             if (monsterPos.x + (isRight ? lx : -rx) <= playerPos.x &&
                 playerPos.x <= monsterPos.x + (isRight ? rx : -lx))
-            {
                 // Debug.Log("update2");
                 if (monsterPos.y + dy <= playerPos.y &&
                     playerPos.y <= monsterPos.y + uy)
@@ -62,9 +57,8 @@ namespace Apis.CommonMonster2
                     _cM.animator.SetTrigger(triggerName);
                     return;
                 }
-            }
-            
-            if (_cM.MonsterMove(false, ratio:moveRatio))
+
+            if (_cM.MonsterMove(false, moveRatio))
             {
                 if (lastMoveStop)
                 {
@@ -100,6 +94,5 @@ namespace Apis.CommonMonster2
             playerTrans = GameManager.instance.PlayerTrans;
             monsterTrans = monster.transform;
         }
-
     }
 }

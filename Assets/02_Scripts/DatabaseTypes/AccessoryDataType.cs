@@ -1,6 +1,8 @@
+using System;
+
 namespace Apis.DataType
 {
-    [System.Serializable]
+    [Serializable]
     public class AccessoryDataType
     {
         public int accId;

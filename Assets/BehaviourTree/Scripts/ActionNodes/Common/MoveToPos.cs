@@ -7,33 +7,33 @@ namespace Apis.BehaviourTreeTool
     {
         public string objectName;
         public float time;
-        
-        bool success;
-
-        Tweener tweener;
 
         public Ease ease;
+
+        private bool success;
+
+        private Tweener tweener;
+
         public override void OnStart()
         {
             base.OnStart();
-            Transform pos = GameObject.Find(objectName).transform;
+            var pos = GameObject.Find(objectName).transform;
             success = false;
             _actor.Rb.DOKill();
             if (pos != null)
             {
-                Vector3 p = pos.position;
+                var p = pos.position;
                 tweener = _actor.transform.DOMove(new Vector3(p.x, p.y, 0), time);
                 blackBoard.tweener = tweener;
                 tweener.SetEase(ease);
-                tweener.OnComplete(() => success = true).
-                    OnKill(() =>
+                tweener.OnComplete(() => success = true).OnKill(() =>
+                {
+                    if (tweener.IsActive())
                     {
-                        if (tweener.IsActive())
-                        {
-                            state = State.Failure;
-                            success = false;
-                        }
-                    }).SetUpdate(UpdateType.Fixed);
+                        state = State.Failure;
+                        success = false;
+                    }
+                }).SetUpdate(UpdateType.Fixed);
             }
         }
 
@@ -56,12 +56,10 @@ namespace Apis.BehaviourTreeTool
             blackBoard.tweener = null;
             tweener = null;
         }
+
         public override State OnUpdate()
         {
-            if (tweener != null && tweener.IsActive())
-            {
-                return State.Running;
-            }
+            if (tweener != null && tweener.IsActive()) return State.Running;
 
             return success ? State.Success : State.Failure;
         }

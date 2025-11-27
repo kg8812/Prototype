@@ -15,22 +15,22 @@ namespace Apis
         private float maxHp; // 최대 체력    
 
         [MinValue(0)] [LabelText("공격력")] [SerializeField]
-        float atk; // 공격력
+        private float atk; // 공격력
 
         [MinValue(0)] [LabelText("이동속도")] [Tooltip("100 = 초당 1m")] [SerializeField]
-        float moveSpeed; // 이동속도
+        private float moveSpeed; // 이동속도
 
         [LabelText("공격속도")] [Tooltip("1 = 1% 추가")] [SerializeField]
-        float atkSpeed; // 공격속도
-        
-        [LabelText("방어력")] [SerializeField] float def; // 방어력
-        
+        private float atkSpeed; // 공격속도
+
+        [LabelText("방어력")] [SerializeField] private float def; // 방어력
+
         [LabelText("크리티컬 확률")] [MinValue(0)] [Tooltip("1 = 1%")] [SerializeField]
-        float critProb; // 크리티컬 확률
+        private float critProb; // 크리티컬 확률
 
         [LabelText("크리티컬 데미지")] [MinValue(0)] [Tooltip("1대1 대응, 125 = 125% 추가 데미지")] [SerializeField]
-        float critDmg; // 크리티컬 데미지
-        
+        private float critDmg; // 크리티컬 데미지
+
         public BaseStat()
         {
             maxHp = 0;
@@ -41,10 +41,11 @@ namespace Apis
             critProb = 0;
             critDmg = 0;
         }
+
         public BaseStat(BaseStat other)
         {
             if (other == null) return;
-            
+
             maxHp = other.maxHp;
             atk = other.atk;
             def = other.def;
@@ -53,6 +54,7 @@ namespace Apis
             critProb = other.critProb;
             critDmg = other.critDmg;
         }
+
         public static BaseStat operator +(BaseStat a, BaseStat b)
         {
             if (a == null) return b;

@@ -1,13 +1,10 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Callbacks;
+using UnityEditor.Compilation;
 using UnityEditor.SceneManagement;
+using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Collections;
-using System.Collections.Generic;
-using System.Reflection;
-using ES3Internal;
-using System.Linq;
 
 
 /*
@@ -20,7 +17,7 @@ using System.Linq;
  * - Local references for prefabs are processed whenever a prefab with an ES3Prefab Component is deselected (SelectionChanged -> ProcessGameObject)
  */
 [InitializeOnLoad]
-public class ES3Postprocessor : UnityEditor.AssetModificationProcessor
+public class ES3Postprocessor : AssetModificationProcessor
 {
     public static GameObject lastSelected = null;
 
@@ -42,167 +39,10 @@ public class ES3Postprocessor : UnityEditor.AssetModificationProcessor
         EditorSceneManager.sceneOpened += OnSceneOpened;
     }
 
-    #region Reference Updating
-
-    private static void PlayModeStateChanged(PlayModeStateChange state)
-    {
-        if (state == PlayModeStateChange.ExitingEditMode)
-            UpdateAssembliesContainingES3Types();
-    }
-
-    private static void OnSceneOpened(Scene scene, OpenSceneMode mode)
-    {
-        if (mode == OpenSceneMode.AdditiveWithoutLoading || Application.isPlaying)
-            return;
-
-        if (ES3Settings.defaultSettingsScriptableObject.autoUpdateReferences && ES3Settings.defaultSettingsScriptableObject.updateReferencesWhenSceneIsOpened)
-            RefreshScene(scene);
-    }
-
-    private static void RefreshReferences(bool isEnteringPlayMode = false)
-    {
-        /*if (refreshed) // If we've already refreshed, do nothing.
-            return;*/
-
-        if (ES3Settings.defaultSettingsScriptableObject.autoUpdateReferences)
-            for (int i = 0; i < SceneManager.sceneCount; i++)
-                RefreshScene(SceneManager.GetSceneAt(i));
-        //refreshed = true;
-    }
-
-    static void RefreshScene(Scene scene, bool isEnteringPlayMode = false)
-    {
-        if (scene != null && scene.isLoaded)
-        {
-            var mgr = (ES3ReferenceMgr)ES3ReferenceMgr.GetManagerFromScene(scene, false);
-            if (mgr != null)
-                mgr.RefreshDependencies(isEnteringPlayMode);
-        }
-    }
-
-    static void ComponentWasAdded(Component c)
-    {
-        var scene = c.gameObject.scene;
-
-        if (!scene.isLoaded)
-            return;
-
-        var mgr = (ES3ReferenceMgr)ES3ReferenceMgr.GetManagerFromScene(scene, false);
-
-        if (mgr != null && ES3Settings.defaultSettingsScriptableObject.autoUpdateReferences && ES3Settings.defaultSettingsScriptableObject.updateReferencesWhenSceneChanges)
-            mgr.AddDependencies(c);
-    }
-
-#if UNITY_2020_2_OR_NEWER
-    static void Changed(ref ObjectChangeEventStream stream)
-    {
-        if (EditorApplication.isUpdating || Application.isPlaying || !ES3Settings.defaultSettingsScriptableObject.autoUpdateReferences || !ES3Settings.defaultSettingsScriptableObject.updateReferencesWhenSceneChanges)
-            return;
-
-        for (int i = 0; i < stream.length; i++)
-        {
-            var eventType = stream.GetEventType(i);
-            int[] instanceIds;
-            Scene scene;
-
-            if (eventType == ObjectChangeKind.ChangeGameObjectOrComponentProperties)
-            {
-                ChangeGameObjectOrComponentPropertiesEventArgs evt;
-                stream.GetChangeGameObjectOrComponentPropertiesEvent(i, out evt);
-                instanceIds = new int[] { evt.instanceId };
-                scene = evt.scene;
-            }
-            else if (eventType == ObjectChangeKind.CreateGameObjectHierarchy)
-            {
-                CreateGameObjectHierarchyEventArgs evt;
-                stream.GetCreateGameObjectHierarchyEvent(i, out evt);
-                instanceIds = new int[] { evt.instanceId };
-                scene = evt.scene;
-            }
-            /*else if (eventType == ObjectChangeKind.ChangeAssetObjectProperties)
-            {
-                ChangeAssetObjectPropertiesEventArgs evt;
-                stream.GetChangeAssetObjectPropertiesEvent(i, out evt);
-                instanceIds = new int[] { evt.instanceId };
-            }*/
-            else if (eventType == ObjectChangeKind.UpdatePrefabInstances)
-            {
-                UpdatePrefabInstancesEventArgs evt;
-                stream.GetUpdatePrefabInstancesEvent(i, out evt);
-                instanceIds = evt.instanceIds.ToArray();
-                scene = evt.scene;
-            }
-            else
-                continue;
-
-            var mgr = (ES3ReferenceMgr)ES3ReferenceMgr.GetManagerFromScene(scene, false);
-
-            if (mgr == null)
-                return;
-
-            foreach (var id in instanceIds)
-            {
-                try
-                {
-                    var obj = EditorUtility.InstanceIDToObject(id);
-
-                    if (obj == null)
-                        continue;
-
-                    mgr.AddDependencies(obj);
-                }
-                catch { }
-            }
-        }
-    }
-#endif
-
-    /*public static void PlayModeStateChanged(PlayModeStateChange state)
-    {
-        // Add all GameObjects and Components to the reference manager before we enter play mode.
-        if (state == PlayModeStateChange.ExitingEditMode && ES3Settings.defaultSettingsScriptableObject.autoUpdateReferences)
-            RefreshReferences(true);
-    }*/
-
-
-    public static string[] OnWillSaveAssets(string[] paths)
-    {
-        // Don't refresh references when the application is playing.
-        if (!EditorApplication.isUpdating && !Application.isPlaying && !EditorApplication.isCompiling)
-        {
-            if (ES3Settings.defaultSettingsScriptableObject.autoUpdateReferences && ES3Settings.defaultSettingsScriptableObject.updateReferencesWhenSceneIsSaved)
-            {
-                foreach (var path in paths)
-                {
-                    if (path.EndsWith(".unity"))
-                    {
-                        var scene = EditorSceneManager.GetSceneByPath(path);
-                        if (scene.isLoaded)
-                        {
-                            var mgr = (ES3ReferenceMgr)ES3ReferenceMgr.GetManagerFromScene(scene, false);
-                            if (mgr != null)
-                                mgr.RefreshDependencies();
-                        }
-                    }
-                }
-            }
-        }
-
-        return paths;
-    }
-
-    [DidReloadScripts]
-    public static void DidReloadScripts()
-    {
-        UpdateAssembliesContainingES3Types();
-    }
-
-    #endregion
-
 
     private static void UpdateAssembliesContainingES3Types()
     {
-        var assemblies = UnityEditor.Compilation.CompilationPipeline.GetAssemblies();
+        var assemblies = CompilationPipeline.GetAssemblies();
 
         if (assemblies == null || assemblies.Length == 0)
             return;
@@ -215,7 +55,7 @@ public class ES3Postprocessor : UnityEditor.AssetModificationProcessor
         foreach (var assembly in assemblies)
         {
             // Don't include Editor assemblies.
-            if (assembly.flags.HasFlag(UnityEditor.Compilation.AssemblyFlags.EditorAssembly))
+            if (assembly.flags.HasFlag(AssemblyFlags.EditorAssembly))
                 continue;
 
             // Assemblies beginning with 'com.' are assumed to be internal.
@@ -225,16 +65,14 @@ public class ES3Postprocessor : UnityEditor.AssetModificationProcessor
             // If this assembly begins with 'Unity', but isn't created from an Assembly Definition File, skip it.
             if (assembly.name.StartsWith("Unity"))
             {
-                bool isAssemblyDefinition = true;
+                var isAssemblyDefinition = true;
 
-                foreach (string sourceFile in assembly.sourceFiles)
-                {
+                foreach (var sourceFile in assembly.sourceFiles)
                     if (!sourceFile.StartsWith("Assets/"))
                     {
                         isAssemblyDefinition = false;
                         break;
                     }
-                }
 
                 if (!isAssemblyDefinition)
                     continue;
@@ -251,15 +89,13 @@ public class ES3Postprocessor : UnityEditor.AssetModificationProcessor
         assemblyNames.Sort();
 
         // Only update if the list has changed.
-        for (int i = 0; i < assemblyNames.Count; i++)
-        {
+        for (var i = 0; i < assemblyNames.Count; i++)
             if (currentAssemblyNames.Length != assemblyNames.Count || currentAssemblyNames[i] != assemblyNames[i])
             {
                 defaults.settings.assemblyNames = assemblyNames.ToArray();
                 EditorUtility.SetDirty(defaults);
                 break;
             }
-        }
     }
 
     public static GameObject AddManagerToScene()
@@ -287,4 +123,162 @@ public class ES3Postprocessor : UnityEditor.AssetModificationProcessor
         Undo.RegisterCreatedObjectUndo(mgr, "Enabled Easy Save for Scene");
         return mgr;
     }
+
+    #region Reference Updating
+
+    private static void PlayModeStateChanged(PlayModeStateChange state)
+    {
+        if (state == PlayModeStateChange.ExitingEditMode)
+            UpdateAssembliesContainingES3Types();
+    }
+
+    private static void OnSceneOpened(Scene scene, OpenSceneMode mode)
+    {
+        if (mode == OpenSceneMode.AdditiveWithoutLoading || Application.isPlaying)
+            return;
+
+        if (ES3Settings.defaultSettingsScriptableObject.autoUpdateReferences &&
+            ES3Settings.defaultSettingsScriptableObject.updateReferencesWhenSceneIsOpened)
+            RefreshScene(scene);
+    }
+
+    private static void RefreshReferences(bool isEnteringPlayMode = false)
+    {
+        /*if (refreshed) // If we've already refreshed, do nothing.
+            return;*/
+
+        if (ES3Settings.defaultSettingsScriptableObject.autoUpdateReferences)
+            for (var i = 0; i < SceneManager.sceneCount; i++)
+                RefreshScene(SceneManager.GetSceneAt(i));
+        //refreshed = true;
+    }
+
+    private static void RefreshScene(Scene scene, bool isEnteringPlayMode = false)
+    {
+        if (scene != null && scene.isLoaded)
+        {
+            var mgr = (ES3ReferenceMgr)ES3ReferenceMgr.GetManagerFromScene(scene, false);
+            if (mgr != null)
+                mgr.RefreshDependencies(isEnteringPlayMode);
+        }
+    }
+
+    private static void ComponentWasAdded(Component c)
+    {
+        var scene = c.gameObject.scene;
+
+        if (!scene.isLoaded)
+            return;
+
+        var mgr = (ES3ReferenceMgr)ES3ReferenceMgr.GetManagerFromScene(scene, false);
+
+        if (mgr != null && ES3Settings.defaultSettingsScriptableObject.autoUpdateReferences &&
+            ES3Settings.defaultSettingsScriptableObject.updateReferencesWhenSceneChanges)
+            mgr.AddDependencies(c);
+    }
+
+#if UNITY_2020_2_OR_NEWER
+    private static void Changed(ref ObjectChangeEventStream stream)
+    {
+        if (EditorApplication.isUpdating || Application.isPlaying ||
+            !ES3Settings.defaultSettingsScriptableObject.autoUpdateReferences ||
+            !ES3Settings.defaultSettingsScriptableObject.updateReferencesWhenSceneChanges)
+            return;
+
+        for (var i = 0; i < stream.length; i++)
+        {
+            var eventType = stream.GetEventType(i);
+            int[] instanceIds;
+            Scene scene;
+
+            if (eventType == ObjectChangeKind.ChangeGameObjectOrComponentProperties)
+            {
+                ChangeGameObjectOrComponentPropertiesEventArgs evt;
+                stream.GetChangeGameObjectOrComponentPropertiesEvent(i, out evt);
+                instanceIds = new[] { evt.instanceId };
+                scene = evt.scene;
+            }
+            else if (eventType == ObjectChangeKind.CreateGameObjectHierarchy)
+            {
+                CreateGameObjectHierarchyEventArgs evt;
+                stream.GetCreateGameObjectHierarchyEvent(i, out evt);
+                instanceIds = new[] { evt.instanceId };
+                scene = evt.scene;
+            }
+            /*else if (eventType == ObjectChangeKind.ChangeAssetObjectProperties)
+            {
+                ChangeAssetObjectPropertiesEventArgs evt;
+                stream.GetChangeAssetObjectPropertiesEvent(i, out evt);
+                instanceIds = new int[] { evt.instanceId };
+            }*/
+            else if (eventType == ObjectChangeKind.UpdatePrefabInstances)
+            {
+                UpdatePrefabInstancesEventArgs evt;
+                stream.GetUpdatePrefabInstancesEvent(i, out evt);
+                instanceIds = evt.instanceIds.ToArray();
+                scene = evt.scene;
+            }
+            else
+            {
+                continue;
+            }
+
+            var mgr = (ES3ReferenceMgr)ES3ReferenceMgr.GetManagerFromScene(scene, false);
+
+            if (mgr == null)
+                return;
+
+            foreach (var id in instanceIds)
+                try
+                {
+                    var obj = EditorUtility.InstanceIDToObject(id);
+
+                    if (obj == null)
+                        continue;
+
+                    mgr.AddDependencies(obj);
+                }
+                catch
+                {
+                }
+        }
+    }
+#endif
+
+    /*public static void PlayModeStateChanged(PlayModeStateChange state)
+    {
+        // Add all GameObjects and Components to the reference manager before we enter play mode.
+        if (state == PlayModeStateChange.ExitingEditMode && ES3Settings.defaultSettingsScriptableObject.autoUpdateReferences)
+            RefreshReferences(true);
+    }*/
+
+
+    public static string[] OnWillSaveAssets(string[] paths)
+    {
+        // Don't refresh references when the application is playing.
+        if (!EditorApplication.isUpdating && !Application.isPlaying && !EditorApplication.isCompiling)
+            if (ES3Settings.defaultSettingsScriptableObject.autoUpdateReferences &&
+                ES3Settings.defaultSettingsScriptableObject.updateReferencesWhenSceneIsSaved)
+                foreach (var path in paths)
+                    if (path.EndsWith(".unity"))
+                    {
+                        var scene = EditorSceneManager.GetSceneByPath(path);
+                        if (scene.isLoaded)
+                        {
+                            var mgr = (ES3ReferenceMgr)ES3ReferenceMgr.GetManagerFromScene(scene, false);
+                            if (mgr != null)
+                                mgr.RefreshDependencies();
+                        }
+                    }
+
+        return paths;
+    }
+
+    [DidReloadScripts]
+    public static void DidReloadScripts()
+    {
+        UpdateAssembliesContainingES3Types();
+    }
+
+    #endregion
 }

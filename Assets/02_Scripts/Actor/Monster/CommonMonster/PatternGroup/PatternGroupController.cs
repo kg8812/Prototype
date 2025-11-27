@@ -1,48 +1,45 @@
 ﻿using System;
 using System.Collections.Generic;
 using Apis.Util;
+using Default;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
 namespace Apis.CommonMonster2
 {
-    [Serializable] [ShowInInspector]
+    [Serializable]
+    [ShowInInspector]
     public class PatternGroup : HasChance
     {
         public int id;
-
-        public int chance
-        {
-            get { return pgChance; }
-            set { pgChance = value; }
-        }
 
         public int pgChance;
         public float coolTime;
         public bool isLoop;
 
+        public bool isCoolResetAt;
+        public List<Pattern> patterns;
+        private CommonMonster2 _monster;
+
+
+        private float startTime;
+
         private float CoolTime
         {
             get
             {
-                if (coolTime == 0)
-                {
-                    return 0;
-                }
-                else
-                {
-                    return coolTime;
-                }
+                if (coolTime == 0) return 0;
+
+                return coolTime;
             }
         }
 
-        public bool isCoolResetAtGroggy;
-        public List<Pattern> patterns;
-
-
-        private float startTime;
-        private CommonMonster2 _monster;
+        public int chance
+        {
+            get => pgChance;
+            set => pgChance = value;
+        }
 
         public void Init(CommonMonster2 monster)
 
@@ -69,38 +66,63 @@ namespace Apis.CommonMonster2
 
     public class PatternGroupController : MonoBehaviour
     {
-        [ShowInInspector]
-        public List<PatternGroup> _patternGroups;
-
-        private CommonMonster2 _monster;
+        [ShowInInspector] public List<PatternGroup> _patternGroups;
 
         // 현재 상태
         [HideInInspector] public int curPGId;
-        private PatternGroup curPG;
-        private int curPatternId;
-        private Pattern curPattern;
-        private int curAttackId;
-        private MonsterAction curAttack;
-        private int curMovementId;
-        private MonsterAction curMovement;
 
-        private bool isPlayingPG;
-        private bool isPlayingPattern;
+        // 몬스터 액션에서 여러번 하는것들 있는데 그거 몇번했는지 체크하기 위함
+        [HideInInspector] public int patternReturnCount;
+        private List<PatternGroup> _availablePg;
 
 
         // for coding
         private List<int> _checkedPg;
-        private List<PatternGroup> _availablePg;
 
         private bool _hasCheckCliff;
 
         private bool _isCliff;
-        private bool _isOppositeDir;
-
-        // 몬스터 액션에서 여러번 하는것들 있는데 그거 몇번했는지 체크하기 위함
-        [HideInInspector] public int patternReturnCount;
 
         private bool _isInit;
+        private bool _isOppositeDir;
+
+        private CommonMonster2 _monster;
+        private MonsterAction curAttack;
+        private int curAttackId;
+        private MonsterAction curMovement;
+        private int curMovementId;
+        private Pattern curPattern;
+        private int curPatternId;
+        private PatternGroup curPG;
+        private bool isPlayingPattern;
+
+        private bool isPlayingPG;
+
+
+        private void Update()
+        {
+            if (isPlayingPattern && curPatternId != -1)
+            {
+                if (curPattern.attacks != null && curPattern.attacks.Count > curAttackId && curAttackId >= 0)
+                    curPattern.attacks[curAttackId].Update();
+
+                if (curPattern.movements != null && curPattern.movements.Count > curMovementId && curMovementId >= 0)
+                    curPattern.movements[curMovementId].Update();
+            }
+        }
+
+        // TODO: 체크 방식 수동적으로 바꾸기
+        private void FixedUpdate()
+        {
+            if (isPlayingPattern && curPatternId != -1)
+            {
+                if (curPattern.attacks != null && curPattern.attacks.Count > curAttackId && curAttackId >= 0)
+                    curPattern.attacks[curAttackId].FixedUpdate();
+
+                if (curPattern.movements != null && curPattern.movements.Count > curMovementId && curMovementId >= 0)
+                    curPattern.movements[curMovementId].FixedUpdate();
+            }
+        }
 
         public void InitCheck()
         {
@@ -117,13 +139,10 @@ namespace Apis.CommonMonster2
             {
                 pG.Init(_monster);
                 pG.CoolReset();
-                if (!pG.patterns[0].isCliffRun)
-                {
-                    _hasCheckCliff = true;
-                }
+                if (!pG.patterns[0].isCliffRun) _hasCheckCliff = true;
             }
 
-            _availablePg = new();
+            _availablePg = new List<PatternGroup>();
         }
 
 
@@ -133,7 +152,7 @@ namespace Apis.CommonMonster2
             if (_patternGroups.Count >= pGId)
             {
                 curPGId = pGId;
-                curPG = _patternGroups[pGId-1];
+                curPG = _patternGroups[pGId - 1];
                 curPatternId = -1;
                 curPattern = null;
                 curAttackId = -1;
@@ -155,58 +174,41 @@ namespace Apis.CommonMonster2
             _checkedPg = _monster.GetCheckedPatternGroupsWithCondition(playerDist);
             if (_checkedPg.Count == 0) return -1;
             _isCliff = false;
-            if (_hasCheckCliff)
-            {
-                _isCliff = _monster.ActorMovement.CheckCliff();
-            }
+            if (_hasCheckCliff) _isCliff = _monster.ActorMovement.CheckCliff();
 
             _isOppositeDir = !_monster.CheckPlayerRl();
 
             foreach (var pGId in _checkedPg)
             {
                 if (_patternGroups.Count < pGId) continue;
-                PatternGroup pg = _patternGroups[pGId - 1];
-                if (!pg.IsNotCoolTime())
-                {
-                    continue;
-                }
-                if (_isCliff && !pg.patterns[0].isCliffRun)
-                {
-                    continue;
-                }
+                var pg = _patternGroups[pGId - 1];
+                if (!pg.IsNotCoolTime()) continue;
+                if (_isCliff && !pg.patterns[0].isCliffRun) continue;
                 if (!_monster.ableMove && ((_isOppositeDir && !pg.patterns[0].canAtkWithoutTurn) ||
                                            pg.patterns[0].haveMoving))
-                {
                     continue;
-                }
 
                 _availablePg.Add(pg);
             }
 
             if (_availablePg.Count == 0) return -1;
-            _availablePg = Default.Utils.GetChanceList<PatternGroup>(_availablePg);
-            int randId = Random.Range(0, _availablePg.Count);
+            _availablePg = Utils.GetChanceList(_availablePg);
+            var randId = Random.Range(0, _availablePg.Count);
 
             return _availablePg[randId].id;
         }
-        
+
 
         public void PatternStarted(int fixedPattern = -1)
         {
             if (fixedPattern != -1)
-            {
                 curPatternId = fixedPattern;
-            }
             else
-            {
                 curPatternId += 1;
-            }
 
 
             if (curPG.patterns.Count <= curPatternId)
-            {
                 Debug.LogError($"뭔가 벗어납니다. {curPG.id} {curPG.patterns.Count} {curPatternId}");
-            }
 
             curPattern = curPG.patterns[curPatternId];
             curAttackId = -1;
@@ -216,32 +218,20 @@ namespace Apis.CommonMonster2
 
         public void PatternEnded()
         {
-            if (curAttackId > -1)
-            {
-                curPattern.attacks?[curAttackId].OnEnd();
-            }
-            if (curMovementId > -1)
-            {
-                curPattern.movements?[curMovementId].OnEnd();
-            }
-            int nextPatternInd = curPatternId + 1;
-            if (nextPatternInd >= curPG.patterns.Count && curPG.isLoop)
-            {
-                nextPatternInd = 0;
-            }
+            if (curAttackId > -1) curPattern.attacks?[curAttackId].OnEnd();
+            if (curMovementId > -1) curPattern.movements?[curMovementId].OnEnd();
+            var nextPatternInd = curPatternId + 1;
+            if (nextPatternInd >= curPG.patterns.Count && curPG.isLoop) nextPatternInd = 0;
 
             if (nextPatternInd < curPG.patterns.Count)
             {
-                if ((!curPG.patterns[nextPatternInd].isCliffRun) && _monster.ActorMovement.CheckCliff())
+                if (!curPG.patterns[nextPatternInd].isCliffRun && _monster.ActorMovement.CheckCliff())
                 {
                     _monster.animator.SetTrigger("forceDelay");
                 }
                 else
                 {
-                    if (!_monster.CheckPlayerRl())
-                    {
-                        _monster.TurnWithoutDelay();
-                    }
+                    if (!_monster.CheckPlayerRl()) _monster.TurnWithoutDelay();
 
                     PatternStarted(nextPatternInd);
                 }
@@ -254,11 +244,8 @@ namespace Apis.CommonMonster2
 
         public void ForceCancel()
         {
-            if (isPlayingPattern)
-            {
-                curPattern?.CancelPattern();
-            }
-                
+            if (isPlayingPattern) curPattern?.CancelPattern();
+
             ResetPGController();
         }
 
@@ -282,65 +269,23 @@ namespace Apis.CommonMonster2
             isPlayingPG = false;
         }
 
-
-        private void Update()
-        {
-            if (isPlayingPattern && curPatternId != -1)
-            {
-                if (curPattern.attacks != null && curPattern.attacks.Count > curAttackId && curAttackId >= 0)
-                {
-                    curPattern.attacks[curAttackId].Update();
-                }
-
-                if (curPattern.movements != null && curPattern.movements.Count > curMovementId && curMovementId >= 0)
-                {
-                    curPattern.movements[curMovementId].Update();
-                }
-            }
-        }
-
-        // TODO: 체크 방식 수동적으로 바꾸기
-        private void FixedUpdate()
-        {
-            if (isPlayingPattern && curPatternId != -1)
-            {
-                if (curPattern.attacks != null && curPattern.attacks.Count > curAttackId && curAttackId >= 0)
-                {
-                    curPattern.attacks[curAttackId].FixedUpdate();
-                }
-
-                if (curPattern.movements != null && curPattern.movements.Count > curMovementId && curMovementId >= 0)
-                {
-                    curPattern.movements[curMovementId].FixedUpdate();
-                }
-            }
-        }
-
         public void Attack()
         {
-            if (curAttackId > -1)
-            {
-                curPattern.attacks?[curAttackId].OnEnd();
-            }
+            if (curAttackId > -1) curPattern.attacks?[curAttackId].OnEnd();
             curAttackId += 1;
             if (curAttackId >= curPattern.attacks.Count)
-            {
-                Debug.LogError($"{_monster.gameObject.name}: pattern의 attack count[{curPattern.attacks.Count}]를 넘어 [{curAttackId}]번째 attack을 시행하려고 함.");
-            }
+                Debug.LogError(
+                    $"{_monster.gameObject.name}: pattern의 attack count[{curPattern.attacks.Count}]를 넘어 [{curAttackId}]번째 attack을 시행하려고 함.");
             curPattern.attacks?[curAttackId].Action(_monster);
         }
 
         public void Movement()
         {
-            if (curMovementId > -1)
-            {
-                curPattern.movements?[curMovementId].OnEnd();
-            }
+            if (curMovementId > -1) curPattern.movements?[curMovementId].OnEnd();
             curMovementId += 1;
             if (curMovementId >= curPattern.movements.Count)
-            {
-                Debug.LogError($"{_monster.gameObject.name}: pattern의 movement count[{curPattern.movements.Count}]를 넘어 [{curMovementId}]번째 movement을 시행하려고 함.");
-            }
+                Debug.LogError(
+                    $"{_monster.gameObject.name}: pattern의 movement count[{curPattern.movements.Count}]를 넘어 [{curMovementId}]번째 movement을 시행하려고 함.");
             curPattern.movements?[curMovementId].Action(_monster);
         }
     }

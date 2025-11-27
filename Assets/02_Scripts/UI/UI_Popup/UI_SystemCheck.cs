@@ -10,44 +10,26 @@ namespace Apis
     public class UI_SystemCheck : UI_Popup
     {
         [SerializeField] private FocusParent focusParent;
-        enum Texts
-        {
-            SystemText
-        }
 
-        enum Buttons
-        {
-            YesBtn,
-            NoBtn
-        }
+        private bool choosed;
 
         public override void KeyControl()
         {
             if (InputManager.GetKeyDown(KeySettingManager.GetUIKeyCode(Define.UIKey.Cancel)))
-            {
                 ChooseNo();
-            }
             else
-            {
                 focusParent.KeyControl();
-            }
         }
 
         public override void GamePadControl()
         {
             base.GamePadControl();
-            
-            if (InputManager.GetButtonDown(KeySettingManager.GetUIButton(Define.UIKey.Cancel)))
-            {
-                ChooseNo();
-            }
-            else
-            {
-                focusParent.GamePadControl();
-            }
-        }
 
-        private bool choosed;
+            if (InputManager.GetButtonDown(KeySettingManager.GetUIButton(Define.UIKey.Cancel)))
+                ChooseNo();
+            else
+                focusParent.GamePadControl();
+        }
 
         public override void Init()
         {
@@ -62,7 +44,6 @@ namespace Apis
             Get<UIAsset_Button>((int)Buttons.NoBtn).OnClick.AddListener(ChooseNo);
 
             focusParent.InitCheck();
-            
         }
 
         public override void TryActivated(bool force = false)
@@ -95,6 +76,17 @@ namespace Apis
         private void ChooseNo()
         {
             Choose(false);
+        }
+
+        private enum Texts
+        {
+            SystemText
+        }
+
+        private enum Buttons
+        {
+            YesBtn,
+            NoBtn
         }
     }
 }

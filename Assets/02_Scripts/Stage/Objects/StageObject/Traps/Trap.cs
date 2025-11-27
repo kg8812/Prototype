@@ -2,7 +2,7 @@
 
 namespace Apis
 {
-    public abstract class Trap: MonoBehaviour
+    public abstract class Trap : MonoBehaviour
     {
         protected bool Activated;
 

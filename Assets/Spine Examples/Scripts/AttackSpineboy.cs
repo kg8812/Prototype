@@ -28,44 +28,52 @@
  *****************************************************************************/
 
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace Spine.Unity.Examples {
-	public class AttackSpineboy : MonoBehaviour {
+namespace Spine.Unity.Examples
+{
+    public class AttackSpineboy : MonoBehaviour
+    {
+        private const int maxHealth = 100;
 
-		public SkeletonAnimation spineboy;
-		public SkeletonAnimation attackerSpineboy;
-		public SpineGauge gauge;
-		public Text healthText;
+        public SkeletonAnimation spineboy;
+        public SkeletonAnimation attackerSpineboy;
+        public SpineGauge gauge;
+        public Text healthText;
 
-		int currentHealth = 100;
-		const int maxHealth = 100;
+        public AnimationReferenceAsset shoot, hit, idle, death;
 
-		public AnimationReferenceAsset shoot, hit, idle, death;
+        public UnityEvent onAttack;
 
-		public UnityEngine.Events.UnityEvent onAttack;
+        private int currentHealth = 100;
 
-		void Update () {
-			if (Input.GetKeyDown(KeyCode.Space)) {
-				currentHealth -= 10;
-				healthText.text = currentHealth + "/" + maxHealth;
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                currentHealth -= 10;
+                healthText.text = currentHealth + "/" + maxHealth;
 
-				attackerSpineboy.AnimationState.SetAnimation(1, shoot, false);
-				attackerSpineboy.AnimationState.AddEmptyAnimation(1, 0.5f, 2f);
+                attackerSpineboy.AnimationState.SetAnimation(1, shoot, false);
+                attackerSpineboy.AnimationState.AddEmptyAnimation(1, 0.5f, 2f);
 
-				if (currentHealth > 0) {
-					spineboy.AnimationState.SetAnimation(0, hit, false);
-					spineboy.AnimationState.AddAnimation(0, idle, true, 0);
-					gauge.fillPercent = (float)currentHealth / (float)maxHealth;
-					onAttack.Invoke();
-				} else {
-					if (currentHealth >= 0) {
-						gauge.fillPercent = 0;
-						spineboy.AnimationState.SetAnimation(0, death, false).TrackEnd = float.PositiveInfinity;
-					}
-				}
-			}
-		}
-	}
-
+                if (currentHealth > 0)
+                {
+                    spineboy.AnimationState.SetAnimation(0, hit, false);
+                    spineboy.AnimationState.AddAnimation(0, idle, true, 0);
+                    gauge.fillPercent = currentHealth / (float)maxHealth;
+                    onAttack.Invoke();
+                }
+                else
+                {
+                    if (currentHealth >= 0)
+                    {
+                        gauge.fillPercent = 0;
+                        spineboy.AnimationState.SetAnimation(0, death, false).TrackEnd = float.PositiveInfinity;
+                    }
+                }
+            }
+        }
+    }
 }

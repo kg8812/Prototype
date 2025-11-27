@@ -1,34 +1,13 @@
-using UnityEngine;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace ES3Internal
 {
     public class SetReferenceID : EditorWindow
     {
-        private long id = 0;
-        public UnityEngine.Object obj;
-
-        [MenuItem("GameObject/Easy Save 3/Set Reference ID..", false, 33)]
-        [MenuItem("Assets/Easy Save 3/Set Reference ID..", false, 33)]
-
-        public static void ShowWindow()
-        {
-            var selected = Selection.GetFiltered<UnityEngine.Object>(SelectionMode.TopLevel);
-
-            if (selected == null || selected.Length == 0)
-                EditorUtility.DisplayDialog("Could not set reference ID", "No reference was selected to set the ID of.", "Ok");
-            else if (selected.Length > 1)
-                EditorUtility.DisplayDialog("Could not set reference ID", "Multiple references are selected. Please select a single reference.", "Ok");
-            else
-                EditorWindow.GetWindow<SetReferenceID>("Set Reference ID").obj = selected[0];
-        }
-
-        [MenuItem("CONTEXT/Component/Easy Save 3/Set Reference ID..", false, 33)]
-        public static void ShowWindowContext(MenuCommand command)
-        {
-            EditorWindow.GetWindow<SetReferenceID>("Set Reference ID").obj = command.context;
-        }
+        public Object obj;
+        private long id;
 
         private void OnGUI()
         {
@@ -37,7 +16,7 @@ namespace ES3Internal
 
             if (GUILayout.Button("Apply"))
             {
-                int setCount = 0;
+                var setCount = 0;
 
                 string sceneName = null;
 
@@ -50,7 +29,7 @@ namespace ES3Internal
                         sceneName = c.gameObject.scene.name;
                 }
 
-                for (int i = 0; i < SceneManager.sceneCount; i++)
+                for (var i = 0; i < SceneManager.sceneCount; i++)
                 {
                     var loadedScene = SceneManager.GetSceneAt(i);
 
@@ -72,20 +51,45 @@ namespace ES3Internal
 
                 if (setCount == 0)
                 {
-                    this.Close();
-                    EditorUtility.DisplayDialog("Could not set reference ID", "No open scenes contain reference managers. Add a reference manager by going to Tools > Easy Save 3 > Add Manager to Scene.", "Ok");
+                    Close();
+                    EditorUtility.DisplayDialog("Could not set reference ID",
+                        "No open scenes contain reference managers. Add a reference manager by going to Tools > Easy Save 3 > Add Manager to Scene.",
+                        "Ok");
                 }
 
-                this.Close();
-                EditorUtility.DisplayDialog($"Reference ID successfully changed", $"Reference ID changed to {id} in {setCount} managers.", "Ok");
+                Close();
+                EditorUtility.DisplayDialog("Reference ID successfully changed",
+                    $"Reference ID changed to {id} in {setCount} managers.", "Ok");
             }
+        }
+
+        [MenuItem("GameObject/Easy Save 3/Set Reference ID..", false, 33)]
+        [MenuItem("Assets/Easy Save 3/Set Reference ID..", false, 33)]
+        public static void ShowWindow()
+        {
+            var selected = Selection.GetFiltered<Object>(SelectionMode.TopLevel);
+
+            if (selected == null || selected.Length == 0)
+                EditorUtility.DisplayDialog("Could not set reference ID", "No reference was selected to set the ID of.",
+                    "Ok");
+            else if (selected.Length > 1)
+                EditorUtility.DisplayDialog("Could not set reference ID",
+                    "Multiple references are selected. Please select a single reference.", "Ok");
+            else
+                GetWindow<SetReferenceID>("Set Reference ID").obj = selected[0];
+        }
+
+        [MenuItem("CONTEXT/Component/Easy Save 3/Set Reference ID..", false, 33)]
+        public static void ShowWindowContext(MenuCommand command)
+        {
+            GetWindow<SetReferenceID>("Set Reference ID").obj = command.context;
         }
 
         [MenuItem("GameObject/Easy Save 3/Set Reference ID..", true, 33)]
         [MenuItem("Assets/Easy Save 3/Set Reference ID..", true, 33)]
         private static bool CanSetReference()
         {
-            var selected = Selection.GetFiltered<UnityEngine.Object>(SelectionMode.TopLevel);
+            var selected = Selection.GetFiltered<Object>(SelectionMode.TopLevel);
 
             return selected != null && selected.Length == 1 && ES3ReferenceMgr.Current != null;
         }

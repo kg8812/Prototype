@@ -2,23 +2,17 @@
 
 namespace Apis.Components
 {
-    public class TS_PlayerExit: ITriggerStrategy
+    public class TS_PlayerExit : ITriggerStrategy
     {
-        private Trigger _triggerComponent;
+        private readonly Trigger _triggerComponent;
 
         public TS_PlayerExit(Trigger triggerComponent)
         {
             _triggerComponent = triggerComponent;
         }
-        
-        public void Update()
-        {
-            
-        }
 
         public void OnTriggerEnter2D(Collider2D col)
         {
-            
         }
 
         public void OnTriggerExit2D(Collider2D col)
@@ -29,6 +23,10 @@ namespace Apis.Components
         public bool CheckAvailable(Collider2D col)
         {
             return col.gameObject.CompareTag("Player") && !col.isTrigger;
+        }
+
+        public void Update()
+        {
         }
     }
 }

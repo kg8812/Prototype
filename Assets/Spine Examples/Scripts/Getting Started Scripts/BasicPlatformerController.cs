@@ -27,194 +27,207 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using Spine.Unity;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Spine.Unity.Examples {
+namespace Spine.Unity.Examples
+{
+    [RequireComponent(typeof(CharacterController))]
+    public class BasicPlatformerController : MonoBehaviour
+    {
+        public enum CharacterState
+        {
+            None,
+            Idle,
+            Walk,
+            Run,
+            Crouch,
+            Rise,
+            Fall,
+            Attack
+        }
 
-	[RequireComponent(typeof(CharacterController))]
-	public class BasicPlatformerController : MonoBehaviour {
+        [Header("Components")] public CharacterController controller;
 
-		public enum CharacterState {
-			None,
-			Idle,
-			Walk,
-			Run,
-			Crouch,
-			Rise,
-			Fall,
-			Attack
-		}
+        [Header("Controls")] public string XAxis = "Horizontal";
 
-		[Header("Components")]
-		public CharacterController controller;
+        public string YAxis = "Vertical";
+        public string JumpButton = "Jump";
 
-		[Header("Controls")]
-		public string XAxis = "Horizontal";
-		public string YAxis = "Vertical";
-		public string JumpButton = "Jump";
+        [Header("Moving")] public float walkSpeed = 1.5f;
 
-		[Header("Moving")]
-		public float walkSpeed = 1.5f;
-		public float runSpeed = 7f;
-		public float gravityScale = 6.6f;
+        public float runSpeed = 7f;
+        public float gravityScale = 6.6f;
 
-		[Header("Jumping")]
-		public float jumpSpeed = 25;
-		public float minimumJumpDuration = 0.5f;
-		public float jumpInterruptFactor = 0.5f;
-		public float forceCrouchVelocity = 25;
-		public float forceCrouchDuration = 0.5f;
+        [Header("Jumping")] public float jumpSpeed = 25;
 
-		[Header("Animation")]
-		public SkeletonAnimationHandleExample animationHandle;
+        public float minimumJumpDuration = 0.5f;
+        public float jumpInterruptFactor = 0.5f;
+        public float forceCrouchVelocity = 25;
+        public float forceCrouchDuration = 0.5f;
 
-		// Events
-		public event UnityAction OnJump, OnLand, OnHardLand;
+        [Header("Animation")] public SkeletonAnimationHandleExample animationHandle;
 
-		Vector2 input = default(Vector2);
-		Vector3 velocity = default(Vector3);
-		float minimumJumpEndTime = 0;
-		float forceCrouchEndTime;
-		bool wasGrounded = false;
+        private float forceCrouchEndTime;
 
-		CharacterState previousState, currentState;
+        private Vector2 input = default;
+        private float minimumJumpEndTime;
 
-		void Update () {
-			float dt = Time.deltaTime;
-			bool isGrounded = controller.isGrounded;
-			bool landed = !wasGrounded && isGrounded;
+        private CharacterState previousState, currentState;
+        private Vector3 velocity = default;
+        private bool wasGrounded;
 
-			// Dummy input.
-			input.x = Input.GetAxis(XAxis);
-			input.y = Input.GetAxis(YAxis);
-			bool inputJumpStop = Input.GetButtonUp(JumpButton);
-			bool inputJumpStart = Input.GetButtonDown(JumpButton);
-			bool doCrouch = (isGrounded && input.y < -0.5f) || (forceCrouchEndTime > Time.time);
-			bool doJumpInterrupt = false;
-			bool doJump = false;
-			bool hardLand = false;
+        private void Update()
+        {
+            var dt = Time.deltaTime;
+            var isGrounded = controller.isGrounded;
+            var landed = !wasGrounded && isGrounded;
 
-			if (landed) {
-				if (-velocity.y > forceCrouchVelocity) {
-					hardLand = true;
-					doCrouch = true;
-					forceCrouchEndTime = Time.time + forceCrouchDuration;
-				}
-			}
+            // Dummy input.
+            input.x = Input.GetAxis(XAxis);
+            input.y = Input.GetAxis(YAxis);
+            var inputJumpStop = Input.GetButtonUp(JumpButton);
+            var inputJumpStart = Input.GetButtonDown(JumpButton);
+            var doCrouch = (isGrounded && input.y < -0.5f) || forceCrouchEndTime > Time.time;
+            var doJumpInterrupt = false;
+            var doJump = false;
+            var hardLand = false;
 
-			if (!doCrouch) {
-				if (isGrounded) {
-					if (inputJumpStart) {
-						doJump = true;
-					}
-				} else {
-					doJumpInterrupt = inputJumpStop && Time.time < minimumJumpEndTime;
-				}
-			}
+            if (landed)
+                if (-velocity.y > forceCrouchVelocity)
+                {
+                    hardLand = true;
+                    doCrouch = true;
+                    forceCrouchEndTime = Time.time + forceCrouchDuration;
+                }
 
-			// Dummy physics and controller using UnityEngine.CharacterController.
-			Vector3 gravityDeltaVelocity = Physics.gravity * gravityScale * dt;
+            if (!doCrouch)
+            {
+                if (isGrounded)
+                {
+                    if (inputJumpStart) doJump = true;
+                }
+                else
+                {
+                    doJumpInterrupt = inputJumpStop && Time.time < minimumJumpEndTime;
+                }
+            }
 
-			if (doJump) {
-				velocity.y = jumpSpeed;
-				minimumJumpEndTime = Time.time + minimumJumpDuration;
-			} else if (doJumpInterrupt) {
-				if (velocity.y > 0)
-					velocity.y *= jumpInterruptFactor;
-			}
+            // Dummy physics and controller using UnityEngine.CharacterController.
+            var gravityDeltaVelocity = Physics.gravity * gravityScale * dt;
 
-			velocity.x = 0;
-			if (!doCrouch) {
-				if (input.x != 0) {
-					velocity.x = Mathf.Abs(input.x) > 0.6f ? runSpeed : walkSpeed;
-					velocity.x *= Mathf.Sign(input.x);
-				}
-			}
+            if (doJump)
+            {
+                velocity.y = jumpSpeed;
+                minimumJumpEndTime = Time.time + minimumJumpDuration;
+            }
+            else if (doJumpInterrupt)
+            {
+                if (velocity.y > 0)
+                    velocity.y *= jumpInterruptFactor;
+            }
+
+            velocity.x = 0;
+            if (!doCrouch)
+                if (input.x != 0)
+                {
+                    velocity.x = Mathf.Abs(input.x) > 0.6f ? runSpeed : walkSpeed;
+                    velocity.x *= Mathf.Sign(input.x);
+                }
 
 
-			if (!isGrounded) {
-				if (wasGrounded) {
-					if (velocity.y < 0)
-						velocity.y = 0;
-				} else {
-					velocity += gravityDeltaVelocity;
-				}
-			}
-			controller.Move(velocity * dt);
-			wasGrounded = isGrounded;
+            if (!isGrounded)
+            {
+                if (wasGrounded)
+                {
+                    if (velocity.y < 0)
+                        velocity.y = 0;
+                }
+                else
+                {
+                    velocity += gravityDeltaVelocity;
+                }
+            }
 
-			// Determine and store character state
-			if (isGrounded) {
-				if (doCrouch) {
-					currentState = CharacterState.Crouch;
-				} else {
-					if (input.x == 0)
-						currentState = CharacterState.Idle;
-					else
-						currentState = Mathf.Abs(input.x) > 0.6f ? CharacterState.Run : CharacterState.Walk;
-				}
-			} else {
-				currentState = velocity.y > 0 ? CharacterState.Rise : CharacterState.Fall;
-			}
+            controller.Move(velocity * dt);
+            wasGrounded = isGrounded;
 
-			bool stateChanged = previousState != currentState;
-			previousState = currentState;
+            // Determine and store character state
+            if (isGrounded)
+            {
+                if (doCrouch)
+                {
+                    currentState = CharacterState.Crouch;
+                }
+                else
+                {
+                    if (input.x == 0)
+                        currentState = CharacterState.Idle;
+                    else
+                        currentState = Mathf.Abs(input.x) > 0.6f ? CharacterState.Run : CharacterState.Walk;
+                }
+            }
+            else
+            {
+                currentState = velocity.y > 0 ? CharacterState.Rise : CharacterState.Fall;
+            }
 
-			// Animation
-			// Do not modify character parameters or state in this phase. Just read them.
-			// Detect changes in state, and communicate with animation handle if it changes.
-			if (stateChanged)
-				HandleStateChanged();
+            var stateChanged = previousState != currentState;
+            previousState = currentState;
 
-			if (input.x != 0)
-				animationHandle.SetFlip(input.x);
+            // Animation
+            // Do not modify character parameters or state in this phase. Just read them.
+            // Detect changes in state, and communicate with animation handle if it changes.
+            if (stateChanged)
+                HandleStateChanged();
 
-			// Fire events.
-			if (doJump) {
-				OnJump.Invoke();
-			}
-			if (landed) {
-				if (hardLand) {
-					OnHardLand.Invoke();
-				} else {
-					OnLand.Invoke();
-				}
-			}
-		}
+            if (input.x != 0)
+                animationHandle.SetFlip(input.x);
 
-		void HandleStateChanged () {
-			// When the state changes, notify the animation handle of the new state.
-			string stateName = null;
-			switch (currentState) {
-			case CharacterState.Idle:
-				stateName = "idle";
-				break;
-			case CharacterState.Walk:
-				stateName = "walk";
-				break;
-			case CharacterState.Run:
-				stateName = "run";
-				break;
-			case CharacterState.Crouch:
-				stateName = "crouch";
-				break;
-			case CharacterState.Rise:
-				stateName = "rise";
-				break;
-			case CharacterState.Fall:
-				stateName = "fall";
-				break;
-			case CharacterState.Attack:
-				stateName = "attack";
-				break;
-			default:
-				break;
-			}
+            // Fire events.
+            if (doJump) OnJump.Invoke();
+            if (landed)
+            {
+                if (hardLand)
+                    OnHardLand.Invoke();
+                else
+                    OnLand.Invoke();
+            }
+        }
 
-			animationHandle.PlayAnimationForState(stateName, 0);
-		}
+        // Events
+        public event UnityAction OnJump, OnLand, OnHardLand;
 
-	}
+        private void HandleStateChanged()
+        {
+            // When the state changes, notify the animation handle of the new state.
+            string stateName = null;
+            switch (currentState)
+            {
+                case CharacterState.Idle:
+                    stateName = "idle";
+                    break;
+                case CharacterState.Walk:
+                    stateName = "walk";
+                    break;
+                case CharacterState.Run:
+                    stateName = "run";
+                    break;
+                case CharacterState.Crouch:
+                    stateName = "crouch";
+                    break;
+                case CharacterState.Rise:
+                    stateName = "rise";
+                    break;
+                case CharacterState.Fall:
+                    stateName = "fall";
+                    break;
+                case CharacterState.Attack:
+                    stateName = "attack";
+                    break;
+            }
+
+            animationHandle.PlayAnimationForState(stateName, 0);
+        }
+    }
 }

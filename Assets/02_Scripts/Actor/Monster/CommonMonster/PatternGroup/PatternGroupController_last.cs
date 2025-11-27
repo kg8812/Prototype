@@ -74,11 +74,11 @@
 //             return false;
 //         }
 //
-//         public void ResetWhenGroggyStart()
+//         public void ResetWhenStart()
 //         {
 //             foreach (var value in _patternGroups)
 //             {
-//                 if (value.Value.isCoolResetAtGroggy)
+//                 if (value.Value.isCoolResetAt)
 //                 {
 //                     value.Value.CoolReset();
 //                 }
@@ -252,3 +252,4 @@
 //
 //     }
 // }
+

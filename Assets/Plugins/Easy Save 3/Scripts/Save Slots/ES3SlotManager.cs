@@ -1,11 +1,10 @@
 using UnityEngine;
-
+using UnityEngine.UI;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
 #if ES3_TMPRO && ES3_UGUI
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,52 +17,55 @@ using UnityEngine.EventSystems;
 
 public class ES3SlotManager : MonoBehaviour
 {
+    // The relative path of the slot which has been selected, or null if none have been selected.
+    public static string selectedSlotPath = null;
+
+    // If a file doesn't have a timestamp, it will return have this DateTime.
+    private static readonly DateTime falseDateTime = new(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+
     [Tooltip("Shows a confirmation if this slot already exists when we select it.")]
     public bool showConfirmationIfExists = true;
+
     [Tooltip("Whether the Create new slot button should be visible.")]
     public bool showCreateSlotButton = true;
-    [Tooltip("Whether we should automatically create an empty save file when the user creates a new save slot. This will be created using the default settings, so you should set this to false if you are using ES3Settings objects.")]
-    public bool autoCreateSaveFile = false;
+
+    [Tooltip(
+        "Whether we should automatically create an empty save file when the user creates a new save slot. This will be created using the default settings, so you should set this to false if you are using ES3Settings objects.")]
+    public bool autoCreateSaveFile;
+
     [Tooltip("Whether a save slot should be selected after a user creates it.")]
-    public bool selectSlotAfterCreation = false;
+    public bool selectSlotAfterCreation;
 
-    [Space(16)]
-
-    [Tooltip("The name of a scene to load after the user chooses a slot.")]
+    [Space(16)] [Tooltip("The name of a scene to load after the user chooses a slot.")]
     public string loadSceneAfterSelectSlot;
 
     [Space(16)]
-
-    [Tooltip("An event called after a slot is selected, but before the scene specified by loadSceneAfterSelectSlot is loaded.")]
+    [Tooltip(
+        "An event called after a slot is selected, but before the scene specified by loadSceneAfterSelectSlot is loaded.")]
     public UnityEvent onAfterSelectSlot;
 
     [Tooltip("An event called after a slot is created by a user, but hasn't been selected.")]
     public UnityEvent onAfterCreateSlot;
 
     [Space(16)]
-
-    [Tooltip("The subfolder we want to store our save files in. If this is a relative path, it will be relative to Application.persistentDataPath.")]
+    [Tooltip(
+        "The subfolder we want to store our save files in. If this is a relative path, it will be relative to Application.persistentDataPath.")]
     public string slotDirectory = "slots/";
+
     [Tooltip("The extension we want to use for our save files.")]
     public string slotExtension = ".es3";
 
-    [Space(16)]
-
-    [Tooltip("The template we'll instantiate to create our slots.")]
+    [Space(16)] [Tooltip("The template we'll instantiate to create our slots.")]
     public GameObject slotTemplate;
+
     [Tooltip("The dialog box for creating a new slot.")]
     public GameObject createDialog;
+
     [Tooltip("The dialog box for displaying an error to the user.")]
     public GameObject errorDialog;
 
-    // The relative path of the slot which has been selected, or null if none have been selected.
-    public static string selectedSlotPath = null;
-
     // A list of slots which have been created.
-    public List<GameObject> slots = new List<GameObject>();
-
-    // If a file doesn't have a timestamp, it will return have this DateTime.
-    static DateTime falseDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+    public List<GameObject> slots = new();
 
     // See Unity's docs for more info: https://docs.unity3d.com/ScriptReference/MonoBehaviour.OnEnable.html
     protected virtual void OnEnable()
@@ -80,7 +82,7 @@ public class ES3SlotManager : MonoBehaviour
     protected virtual void InstantiateSlots()
     {
         // A list used to store our save slots so we can order them.
-        List<(string Name, DateTime Timestamp)> slots = new List<(string Name, DateTime Timestamp)>();
+        var slots = new List<(string Name, DateTime Timestamp)>();
 
         // If there are no slots to load, do nothing.
         if (!ES3.DirectoryExists(slotDirectory))
@@ -181,8 +183,9 @@ public class ES3SlotManager : MonoBehaviour
     // Scrolls to the top of the list of slots.
     public void ScrollToTop()
     {
-        transform.Find("Scroll View").GetComponent<UnityEngine.UI.ScrollRect>().verticalNormalizedPosition = 1f;
+        transform.Find("Scroll View").GetComponent<ScrollRect>().verticalNormalizedPosition = 1f;
     }
+
     #endregion
 }
 #endif
@@ -229,30 +232,33 @@ public class ES3SlotMenuItems : MonoBehaviour
 
 #if ES3_TMPRO && ES3_UGUI
 
-    static void AddEventSystemToSceneIfNotExists()
+    private static void AddEventSystemToSceneIfNotExists()
     {
 #if UNITY_2022_3_OR_NEWER
-        if (UnityEngine.Object.FindFirstObjectByType<EventSystem>() == null)
+        if (FindFirstObjectByType<EventSystem>() == null)
 #else
         if (UnityEngine.Object.FindObjectOfType<EventSystem>() == null)
 #endif
         {
-            GameObject eventSystemGameObject = new GameObject("EventSystem");
+            var eventSystemGameObject = new GameObject("EventSystem");
             eventSystemGameObject.AddComponent<EventSystem>();
             eventSystemGameObject.AddComponent<StandaloneInputModule>();
             Undo.RegisterCreatedObjectUndo(eventSystemGameObject, "Created EventSystem");
         }
     }
 
-    static ES3SlotManager AddSlotsToScene()
+    private static ES3SlotManager AddSlotsToScene()
     {
         if (!SceneManager.GetActiveScene().isLoaded)
-            EditorUtility.DisplayDialog("Could not add manager to scene", "Could not add Save Slots to scene because there is not currently a scene open.", "Ok");
+            EditorUtility.DisplayDialog("Could not add manager to scene",
+                "Could not add Save Slots to scene because there is not currently a scene open.", "Ok");
 
         var pathToEasySaveFolder = ES3Settings.PathToEasySaveFolder();
 
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(pathToEasySaveFolder + "Scripts/Save Slots/Easy Save Slots Canvas.prefab");
-        var instance = (GameObject)Instantiate(prefab);
+        var prefab =
+            AssetDatabase.LoadAssetAtPath<GameObject>(pathToEasySaveFolder +
+                                                      "Scripts/Save Slots/Easy Save Slots Canvas.prefab");
+        var instance = Instantiate(prefab);
         Undo.RegisterCreatedObjectUndo(instance, "Added Save Slots to Scene");
 
         return instance.GetComponentInChildren<ES3SlotManager>();

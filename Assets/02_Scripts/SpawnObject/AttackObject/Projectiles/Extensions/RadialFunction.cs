@@ -1,6 +1,3 @@
-using System;
-using Apis;
-using Apis;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -25,13 +22,13 @@ namespace Apis
             projectile.AddEvent(EventType.OnDestroy, Destroy);
         }
 
-        void Destroy(EventParameters _)
+        private void Destroy(EventParameters _)
         {
             if (projectile == null) return;
 
-            int dir = projectile.DirectionScale;
+            var dir = projectile.DirectionScale;
 
-            AttackObject l = GameManager.Factory.Get<AttackObject>(FactoryManager.FactoryType.AttackObject, radialName,
+            var l = GameManager.Factory.Get<AttackObject>(FactoryManager.FactoryType.AttackObject, radialName,
                 transform.position + Vector3.right * size.x / 2 * dir);
             l.transform.localScale = size;
             l.Init(projectile._attacker, new AtkBase(projectile._attacker, dmg2),

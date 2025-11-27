@@ -1,12 +1,12 @@
-using UnityEngine;
 using System;
+using UnityEngine;
 
 namespace Apis.CommonMonster2
 {
     public class SMDeath : ICommonMonsterState<CommonMonster2>
     {
-        private CommonMonster2 _cM;
         private readonly int _deadAnim = Animator.StringToHash("dead");
+        private CommonMonster2 _cM;
 
         private Guid _invincibleGuid;
 
@@ -23,12 +23,9 @@ namespace Apis.CommonMonster2
             _cM.Collider.enabled = false;
             _cM.HitCollider.enabled = false;
 
-            for (int i = _cM.Projectiles.Count - 1; i >= 0; i--)
-            {
-                _cM.Projectiles[i].Destroy();
-            }
+            for (var i = _cM.Projectiles.Count - 1; i >= 0; i--) _cM.Projectiles[i].Destroy();
             _cM.Projectiles.Clear();
-            
+
 
             GameManager.instance.BattleStateClass.RemoveRecogMonster(_cM);
         }
@@ -45,12 +42,10 @@ namespace Apis.CommonMonster2
         {
             _cM.animator.ResetTrigger(_deadAnim);
             _cM.RemoveInvincibility(_invincibleGuid);
-            
         }
 
         public void OnCancel()
         {
-            
         }
     }
 }

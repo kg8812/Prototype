@@ -4,12 +4,13 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// A script attached to the error dialog and confirm dialog to provide events which other scripts can receive.
+///     A script attached to the error dialog and confirm dialog to provide events which other scripts can receive.
 /// </summary>
 public class ES3SlotDialog : MonoBehaviour
 {
     [Tooltip("The UnityEngine.UI.Button Component for the Confirm button.")]
     public Button confirmButton;
+
     [Tooltip("The UnityEngine.UI.Button Component for the Cancel button.")]
     public Button cancelButton;
 

@@ -6,9 +6,9 @@ namespace Coffee.UIExtensions
 {
     internal static class UIParticleUpdater
     {
-        private static readonly List<UIParticle> s_ActiveParticles = new List<UIParticle>();
-        private static readonly List<UIParticleAttractor> s_ActiveAttractors = new List<UIParticleAttractor>();
-        private static readonly HashSet<int> s_UpdatedGroupIds = new HashSet<int>();
+        private static readonly List<UIParticle> s_ActiveParticles = new();
+        private static readonly List<UIParticleAttractor> s_ActiveAttractors = new();
+        private static readonly HashSet<int> s_UpdatedGroupIds = new();
         private static int s_FrameCount;
 
         public static int uiParticleCount => s_ActiveParticles.Count;
@@ -86,10 +86,7 @@ namespace Coffee.UIExtensions
             s_UpdatedGroupIds.Clear();
 
             // Attract
-            for (var i = 0; i < s_ActiveAttractors.Count; i++)
-            {
-                s_ActiveAttractors[i].Attract();
-            }
+            for (var i = 0; i < s_ActiveAttractors.Count; i++) s_ActiveAttractors[i].Attract();
         }
 
         public static void GetGroupedRenderers(int groupId, int index, List<UIParticleRenderer> results)
@@ -98,10 +95,7 @@ namespace Coffee.UIExtensions
             for (var i = 0; i < s_ActiveParticles.Count; i++)
             {
                 var uip = s_ActiveParticles[i];
-                if (uip.useMeshSharing && uip.groupId == groupId)
-                {
-                    results.Add(uip.GetRenderer(index));
-                }
+                if (uip.useMeshSharing && uip.groupId == groupId) results.Add(uip.GetRenderer(index));
             }
         }
 

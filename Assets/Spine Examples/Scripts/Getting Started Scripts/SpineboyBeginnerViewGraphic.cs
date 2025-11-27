@@ -27,141 +27,153 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using Spine.Unity;
-using System.Collections;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	public class SpineboyBeginnerViewGraphic : MonoBehaviour {
+namespace Spine.Unity.Examples
+{
+    public class SpineboyBeginnerViewGraphic : MonoBehaviour
+    {
+        private SpineBeginnerBodyState previousViewState;
 
-		#region Inspector
-		[Header("Components")]
-		public SpineboyBeginnerModel model;
-		public SkeletonGraphic skeletonGraphic;
+        private void Start()
+        {
+            if (skeletonGraphic == null) return;
+            model.ShootEvent += PlayShoot;
+            model.StartAimEvent += StartPlayingAim;
+            model.StopAimEvent += StopPlayingAim;
+            skeletonGraphic.AnimationState.Event += HandleEvent;
+        }
 
-		public AnimationReferenceAsset run, idle, aim, shoot, jump;
-		public EventDataReferenceAsset footstepEvent;
+        private void Update()
+        {
+            if (skeletonGraphic == null) return;
+            if (model == null) return;
 
-		[Header("Audio")]
-		public float footstepPitchOffset = 0.2f;
-		public float gunsoundPitchOffset = 0.13f;
-		public AudioSource footstepSource, gunSource, jumpSource;
+            if (skeletonGraphic.Skeleton.ScaleX < 0 != model.facingLeft) // Detect changes in model.facingLeft
+                Turn(model.facingLeft);
 
-		[Header("Effects")]
-		public ParticleSystem gunParticles;
-		#endregion
+            // Detect changes in model.state
+            var currentModelState = model.state;
 
-		SpineBeginnerBodyState previousViewState;
+            if (previousViewState != currentModelState) PlayNewStableAnimation();
 
-		void Start () {
-			if (skeletonGraphic == null) return;
-			model.ShootEvent += PlayShoot;
-			model.StartAimEvent += StartPlayingAim;
-			model.StopAimEvent += StopPlayingAim;
-			skeletonGraphic.AnimationState.Event += HandleEvent;
-		}
+            previousViewState = currentModelState;
+        }
 
-		void HandleEvent (Spine.TrackEntry trackEntry, Spine.Event e) {
-			if (e.Data == footstepEvent.EventData)
-				PlayFootstepSound();
-		}
+        private void HandleEvent(TrackEntry trackEntry, Event e)
+        {
+            if (e.Data == footstepEvent.EventData)
+                PlayFootstepSound();
+        }
 
-		void Update () {
-			if (skeletonGraphic == null) return;
-			if (model == null) return;
+        private void PlayNewStableAnimation()
+        {
+            var newModelState = model.state;
+            Animation nextAnimation;
 
-			if ((skeletonGraphic.Skeleton.ScaleX < 0) != model.facingLeft) {  // Detect changes in model.facingLeft
-				Turn(model.facingLeft);
-			}
+            // Add conditionals to not interrupt transient animations.
 
-			// Detect changes in model.state
-			SpineBeginnerBodyState currentModelState = model.state;
+            if (previousViewState == SpineBeginnerBodyState.Jumping && newModelState != SpineBeginnerBodyState.Jumping)
+                PlayFootstepSound();
 
-			if (previousViewState != currentModelState) {
-				PlayNewStableAnimation();
-			}
+            if (newModelState == SpineBeginnerBodyState.Jumping)
+            {
+                jumpSource.Play();
+                nextAnimation = jump;
+            }
+            else
+            {
+                if (newModelState == SpineBeginnerBodyState.Running)
+                    nextAnimation = run;
+                else
+                    nextAnimation = idle;
+            }
 
-			previousViewState = currentModelState;
-		}
+            skeletonGraphic.AnimationState.SetAnimation(0, nextAnimation, true);
+        }
 
-		void PlayNewStableAnimation () {
-			SpineBeginnerBodyState newModelState = model.state;
-			Animation nextAnimation;
+        private void PlayFootstepSound()
+        {
+            footstepSource.Play();
+            footstepSource.pitch = GetRandomPitch(footstepPitchOffset);
+        }
 
-			// Add conditionals to not interrupt transient animations.
+        [ContextMenu("Check Tracks")]
+        private void CheckTracks()
+        {
+            var state = skeletonGraphic.AnimationState;
+            Debug.Log(state.GetCurrent(0));
+            Debug.Log(state.GetCurrent(1));
+        }
 
-			if (previousViewState == SpineBeginnerBodyState.Jumping && newModelState != SpineBeginnerBodyState.Jumping) {
-				PlayFootstepSound();
-			}
+        #region Utility
 
-			if (newModelState == SpineBeginnerBodyState.Jumping) {
-				jumpSource.Play();
-				nextAnimation = jump;
-			} else {
-				if (newModelState == SpineBeginnerBodyState.Running) {
-					nextAnimation = run;
-				} else {
-					nextAnimation = idle;
-				}
-			}
+        public float GetRandomPitch(float maxPitchOffset)
+        {
+            return 1f + Random.Range(-maxPitchOffset, maxPitchOffset);
+        }
 
-			skeletonGraphic.AnimationState.SetAnimation(0, nextAnimation, true);
-		}
+        #endregion
 
-		void PlayFootstepSound () {
-			footstepSource.Play();
-			footstepSource.pitch = GetRandomPitch(footstepPitchOffset);
-		}
+        #region Inspector
 
-		[ContextMenu("Check Tracks")]
-		void CheckTracks () {
-			AnimationState state = skeletonGraphic.AnimationState;
-			Debug.Log(state.GetCurrent(0));
-			Debug.Log(state.GetCurrent(1));
-		}
+        [Header("Components")] public SpineboyBeginnerModel model;
 
-		#region Transient Actions
-		public void PlayShoot () {
-			// Play the shoot animation on track 1.
-			TrackEntry shootTrack = skeletonGraphic.AnimationState.SetAnimation(1, shoot, false);
-			shootTrack.MixAttachmentThreshold = 1f;
-			shootTrack.SetMixDuration(0f, 0f);
-			skeletonGraphic.AnimationState.AddEmptyAnimation(1, 0.5f, 0.1f);
+        public SkeletonGraphic skeletonGraphic;
 
-			// Play the aim animation on track 2 to aim at the mouse target.
-			TrackEntry aimTrack = skeletonGraphic.AnimationState.SetAnimation(2, aim, false);
-			aimTrack.MixAttachmentThreshold = 1f;
-			aimTrack.SetMixDuration(0f, 0f);
-			skeletonGraphic.AnimationState.AddEmptyAnimation(2, 0.5f, 0.1f);
+        public AnimationReferenceAsset run, idle, aim, shoot, jump;
+        public EventDataReferenceAsset footstepEvent;
 
-			gunSource.pitch = GetRandomPitch(gunsoundPitchOffset);
-			gunSource.Play();
-			//gunParticles.randomSeed = (uint)Random.Range(0, 100);
-			gunParticles.Play();
-		}
+        [Header("Audio")] public float footstepPitchOffset = 0.2f;
 
-		public void StartPlayingAim () {
-			// Play the aim animation on track 2 to aim at the mouse target.
-			TrackEntry aimTrack = skeletonGraphic.AnimationState.SetAnimation(2, aim, true);
-			aimTrack.MixAttachmentThreshold = 1f;
-			aimTrack.SetMixDuration(0f, 0f); // use SetMixDuration(mixDuration, delay) to update delay correctly
-		}
+        public float gunsoundPitchOffset = 0.13f;
+        public AudioSource footstepSource, gunSource, jumpSource;
 
-		public void StopPlayingAim () {
-			skeletonGraphic.AnimationState.AddEmptyAnimation(2, 0.5f, 0.1f);
-		}
+        [Header("Effects")] public ParticleSystem gunParticles;
 
-		public void Turn (bool facingLeft) {
-			skeletonGraphic.Skeleton.ScaleX = facingLeft ? -1f : 1f;
-			// Maybe play a transient turning animation too, then call ChangeStableAnimation.
-		}
-		#endregion
+        #endregion
 
-		#region Utility
-		public float GetRandomPitch (float maxPitchOffset) {
-			return 1f + Random.Range(-maxPitchOffset, maxPitchOffset);
-		}
-		#endregion
-	}
+        #region Transient Actions
 
+        public void PlayShoot()
+        {
+            // Play the shoot animation on track 1.
+            var shootTrack = skeletonGraphic.AnimationState.SetAnimation(1, shoot, false);
+            shootTrack.MixAttachmentThreshold = 1f;
+            shootTrack.SetMixDuration(0f, 0f);
+            skeletonGraphic.AnimationState.AddEmptyAnimation(1, 0.5f, 0.1f);
+
+            // Play the aim animation on track 2 to aim at the mouse target.
+            var aimTrack = skeletonGraphic.AnimationState.SetAnimation(2, aim, false);
+            aimTrack.MixAttachmentThreshold = 1f;
+            aimTrack.SetMixDuration(0f, 0f);
+            skeletonGraphic.AnimationState.AddEmptyAnimation(2, 0.5f, 0.1f);
+
+            gunSource.pitch = GetRandomPitch(gunsoundPitchOffset);
+            gunSource.Play();
+            //gunParticles.randomSeed = (uint)Random.Range(0, 100);
+            gunParticles.Play();
+        }
+
+        public void StartPlayingAim()
+        {
+            // Play the aim animation on track 2 to aim at the mouse target.
+            var aimTrack = skeletonGraphic.AnimationState.SetAnimation(2, aim, true);
+            aimTrack.MixAttachmentThreshold = 1f;
+            aimTrack.SetMixDuration(0f, 0f); // use SetMixDuration(mixDuration, delay) to update delay correctly
+        }
+
+        public void StopPlayingAim()
+        {
+            skeletonGraphic.AnimationState.AddEmptyAnimation(2, 0.5f, 0.1f);
+        }
+
+        public void Turn(bool facingLeft)
+        {
+            skeletonGraphic.Skeleton.ScaleX = facingLeft ? -1f : 1f;
+            // Maybe play a transient turning animation too, then call ChangeStableAnimation.
+        }
+
+        #endregion
+    }
 }

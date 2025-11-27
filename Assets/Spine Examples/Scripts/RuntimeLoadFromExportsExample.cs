@@ -28,93 +28,102 @@
  *****************************************************************************/
 
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	public class RuntimeLoadFromExportsExample : MonoBehaviour {
+namespace Spine.Unity.Examples
+{
+    public class RuntimeLoadFromExportsExample : MonoBehaviour
+    {
+        public TextAsset skeletonJson;
+        public TextAsset atlasText;
+        public Texture2D[] textures;
+        public Material materialPropertySource;
 
-		public TextAsset skeletonJson;
-		public TextAsset atlasText;
-		public Texture2D[] textures;
-		public Material materialPropertySource;
+        public float delay;
+        public string skinName;
+        public string animationName;
 
-		public float delay = 0;
-		public string skinName;
-		public string animationName;
+        public bool blendModeMaterials;
+        public bool applyAdditiveMaterial;
+        public BlendModeMaterials.TemplateMaterials blendModeTemplateMaterials;
+        public BlendModeMaterials.TemplateMaterials graphicBlendModeMaterials;
+        public Material skeletonGraphicMaterial;
 
-		SpineAtlasAsset runtimeAtlasAsset;
-		SkeletonDataAsset runtimeSkeletonDataAsset;
-		SkeletonAnimation runtimeSkeletonAnimation;
-		SkeletonGraphic runtimeSkeletonGraphic;
+        private SpineAtlasAsset runtimeAtlasAsset;
+        private SkeletonAnimation runtimeSkeletonAnimation;
+        private SkeletonDataAsset runtimeSkeletonDataAsset;
+        private SkeletonGraphic runtimeSkeletonGraphic;
 
-		public bool blendModeMaterials = false;
-		public bool applyAdditiveMaterial = false;
-		public BlendModeMaterials.TemplateMaterials blendModeTemplateMaterials;
-		public BlendModeMaterials.TemplateMaterials graphicBlendModeMaterials;
-		public Material skeletonGraphicMaterial;
+        private IEnumerator Start()
+        {
+            CreateRuntimeAssetsAndGameObject();
+            if (delay > 0)
+            {
+                runtimeSkeletonDataAsset.GetSkeletonData(false); // preload
+                yield return new WaitForSeconds(delay);
+            }
 
-		void CreateRuntimeAssetsAndGameObject () {
-			// 1. Create the AtlasAsset (needs atlas text asset and textures, and materials/shader);
-			// 2. Create SkeletonDataAsset (needs json or binary asset file, and an AtlasAsset)
-			// 2.1 Optional: Setup blend mode materials at SkeletonDataAsset. Only required if the skeleton
-			//    uses blend modes which require blend mode materials.
-			// 3.a Create SkeletonAnimation (needs a valid SkeletonDataAsset)
-			// 3.b Create SkeletonGraphic (needs a valid SkeletonDataAsset)
+            InstantiateSkeletonAnimation();
 
-			runtimeAtlasAsset = SpineAtlasAsset.CreateRuntimeInstance(atlasText, textures, materialPropertySource, true, null, true);
-			runtimeSkeletonDataAsset = SkeletonDataAsset.CreateRuntimeInstance(skeletonJson, runtimeAtlasAsset, true);
-			if (blendModeMaterials)
-				runtimeSkeletonDataAsset.SetupRuntimeBlendModeMaterials(
-					applyAdditiveMaterial, blendModeTemplateMaterials);
-		}
+            InstantiateSkeletonGraphic();
+        }
 
-		IEnumerator Start () {
-			CreateRuntimeAssetsAndGameObject();
-			if (delay > 0) {
-				runtimeSkeletonDataAsset.GetSkeletonData(false); // preload
-				yield return new WaitForSeconds(delay);
-			}
-			InstantiateSkeletonAnimation();
+        private void CreateRuntimeAssetsAndGameObject()
+        {
+            // 1. Create the AtlasAsset (needs atlas text asset and textures, and materials/shader);
+            // 2. Create SkeletonDataAsset (needs json or binary asset file, and an AtlasAsset)
+            // 2.1 Optional: Setup blend mode materials at SkeletonDataAsset. Only required if the skeleton
+            //    uses blend modes which require blend mode materials.
+            // 3.a Create SkeletonAnimation (needs a valid SkeletonDataAsset)
+            // 3.b Create SkeletonGraphic (needs a valid SkeletonDataAsset)
 
-			InstantiateSkeletonGraphic();
-		}
+            runtimeAtlasAsset =
+                SpineAtlasAsset.CreateRuntimeInstance(atlasText, textures, materialPropertySource, true, null, true);
+            runtimeSkeletonDataAsset = SkeletonDataAsset.CreateRuntimeInstance(skeletonJson, runtimeAtlasAsset, true);
+            if (blendModeMaterials)
+                runtimeSkeletonDataAsset.SetupRuntimeBlendModeMaterials(
+                    applyAdditiveMaterial, blendModeTemplateMaterials);
+        }
 
-		void InstantiateSkeletonAnimation () {
-			runtimeSkeletonAnimation = SkeletonAnimation.NewSkeletonAnimationGameObject(runtimeSkeletonDataAsset);
-			runtimeSkeletonAnimation.transform.parent = transform;
-			runtimeSkeletonAnimation.name = "SkeletonAnimation Instance";
+        private void InstantiateSkeletonAnimation()
+        {
+            runtimeSkeletonAnimation = SkeletonAnimation.NewSkeletonAnimationGameObject(runtimeSkeletonDataAsset);
+            runtimeSkeletonAnimation.transform.parent = transform;
+            runtimeSkeletonAnimation.name = "SkeletonAnimation Instance";
 
-			// additional initialization
-			runtimeSkeletonAnimation.Initialize(false);
-			if (skinName != "")
-				runtimeSkeletonAnimation.Skeleton.SetSkin(skinName);
-			runtimeSkeletonAnimation.Skeleton.SetSlotsToSetupPose();
-			if (animationName != "")
-				runtimeSkeletonAnimation.AnimationState.SetAnimation(0, animationName, true);
-		}
+            // additional initialization
+            runtimeSkeletonAnimation.Initialize(false);
+            if (skinName != "")
+                runtimeSkeletonAnimation.Skeleton.SetSkin(skinName);
+            runtimeSkeletonAnimation.Skeleton.SetSlotsToSetupPose();
+            if (animationName != "")
+                runtimeSkeletonAnimation.AnimationState.SetAnimation(0, animationName, true);
+        }
 
-		void InstantiateSkeletonGraphic () {
-			Canvas canvas = this.GetComponentInChildren<Canvas>();
-			Transform parent = canvas.transform;
+        private void InstantiateSkeletonGraphic()
+        {
+            var canvas = GetComponentInChildren<Canvas>();
+            var parent = canvas.transform;
 
-			runtimeSkeletonGraphic = SkeletonGraphic.NewSkeletonGraphicGameObject(runtimeSkeletonDataAsset, parent, skeletonGraphicMaterial);
-			runtimeSkeletonGraphic.name = "SkeletonGraphic Instance";
+            runtimeSkeletonGraphic =
+                SkeletonGraphic.NewSkeletonGraphicGameObject(runtimeSkeletonDataAsset, parent, skeletonGraphicMaterial);
+            runtimeSkeletonGraphic.name = "SkeletonGraphic Instance";
 
-			if (blendModeMaterials) {
-				runtimeSkeletonGraphic.allowMultipleCanvasRenderers = true;
-				runtimeSkeletonGraphic.additiveMaterial = graphicBlendModeMaterials.additiveTemplate;
-				runtimeSkeletonGraphic.multiplyMaterial = graphicBlendModeMaterials.multiplyTemplate;
-				runtimeSkeletonGraphic.screenMaterial = graphicBlendModeMaterials.screenTemplate;
-			}
+            if (blendModeMaterials)
+            {
+                runtimeSkeletonGraphic.allowMultipleCanvasRenderers = true;
+                runtimeSkeletonGraphic.additiveMaterial = graphicBlendModeMaterials.additiveTemplate;
+                runtimeSkeletonGraphic.multiplyMaterial = graphicBlendModeMaterials.multiplyTemplate;
+                runtimeSkeletonGraphic.screenMaterial = graphicBlendModeMaterials.screenTemplate;
+            }
 
-			// additional initialization
-			runtimeSkeletonGraphic.Initialize(false);
-			if (skinName != "")
-				runtimeSkeletonGraphic.Skeleton.SetSkin(skinName);
-			runtimeSkeletonGraphic.Skeleton.SetSlotsToSetupPose();
-			if (animationName != "")
-				runtimeSkeletonGraphic.AnimationState.SetAnimation(0, animationName, true);
-		}
-	}
+            // additional initialization
+            runtimeSkeletonGraphic.Initialize(false);
+            if (skinName != "")
+                runtimeSkeletonGraphic.Skeleton.SetSkin(skinName);
+            runtimeSkeletonGraphic.Skeleton.SetSlotsToSetupPose();
+            if (animationName != "")
+                runtimeSkeletonGraphic.AnimationState.SetAnimation(0, animationName, true);
+        }
+    }
 }

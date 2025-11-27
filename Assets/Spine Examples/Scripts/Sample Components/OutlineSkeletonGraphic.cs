@@ -27,43 +27,46 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using Spine.Unity;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-
-	public class OutlineSkeletonGraphic : MonoBehaviour {
-
-		public SkeletonGraphic skeletonGraphic;
-		public Material materialWithoutOutline;
-		public Material materialWithOutline;
+namespace Spine.Unity.Examples
+{
+    public class OutlineSkeletonGraphic : MonoBehaviour
+    {
+        public SkeletonGraphic skeletonGraphic;
+        public Material materialWithoutOutline;
+        public Material materialWithOutline;
 
 #if UNITY_EDITOR
-		void Reset () {
-			skeletonGraphic = GetComponent<SkeletonGraphic>();
+        private void Reset()
+        {
+            skeletonGraphic = GetComponent<SkeletonGraphic>();
 
-			// Add normal material as default
-			if (skeletonGraphic != null && skeletonGraphic.skeletonDataAsset != null) {
-				AtlasAssetBase[] atlasAssets = skeletonGraphic.skeletonDataAsset.atlasAssets;
+            // Add normal material as default
+            if (skeletonGraphic != null && skeletonGraphic.skeletonDataAsset != null)
+            {
+                var atlasAssets = skeletonGraphic.skeletonDataAsset.atlasAssets;
 
-				if (atlasAssets.Length > 0 && atlasAssets[0].PrimaryMaterial) {
-					materialWithoutOutline = atlasAssets[0].PrimaryMaterial;
-				}
-			}
-		}
+                if (atlasAssets.Length > 0 && atlasAssets[0].PrimaryMaterial)
+                    materialWithoutOutline = atlasAssets[0].PrimaryMaterial;
+            }
+        }
 #endif
 
-		void OnEnable () {
-			if (skeletonGraphic == null)
-				skeletonGraphic = GetComponent<SkeletonGraphic>();
-		}
+        private void OnEnable()
+        {
+            if (skeletonGraphic == null)
+                skeletonGraphic = GetComponent<SkeletonGraphic>();
+        }
 
-		public void EnableOutlineRendering () {
-			skeletonGraphic.material = materialWithOutline;
-		}
+        public void EnableOutlineRendering()
+        {
+            skeletonGraphic.material = materialWithOutline;
+        }
 
-		public void DisableOutlineRendering () {
-			skeletonGraphic.material = materialWithoutOutline;
-		}
-	}
+        public void DisableOutlineRendering()
+        {
+            skeletonGraphic.material = materialWithoutOutline;
+        }
+    }
 }

@@ -1,98 +1,90 @@
 using System.Collections.Generic;
 using System.Linq;
-using Apis;
-using Apis.Managers;
+using Default;
 using NewNewInvenSpace;
-using Save.Schema;
-using Sirenix.Utilities;
-using UnityEngine;
 
 namespace Apis
 {
     public class ItemFactoryManager
     {
+        // public ItemStorage Storage; // 아이템 보관소 (스킬로 인한 무기 교체 등 인벤토리 외 위치에 보관이 필요할 떄 사용)
+        // inven용 item저장이라 invenmanager.instance.Storage로 이전.
+
+        private bool isInit;
+
+        public ItemFactoryManager()
+        {
+            LoadItems();
+        }
         // 팩토리 매니저       
 
         public Factory_AccPickUp AccPickUp { get; private set; } // 악세 픽업 팩토리
         public Factory_WeaponPickUp WeaponPickUp { get; private set; } // 무기 픽업 팩토리
-        
+
         public Factory_ActiveSkillPickUp ActiveSkillPickUp { get; private set; }
         public Factory_Acc Acc { get; private set; } // 악세 팩토리
         public Factory_Weapon Weapon { get; private set; } // 무기 팩토리
         public Factory_ActiveSkillItem ActiveSkillItem { get; private set; }
         public Factory_Etc Etc { get; private set; } // 기타 팩토리
+        public List<Weapon> WeaponList => Weapon.WpDict.Values.ToList();
+        public List<Accessory> Accessories => Acc.AccDict.Values.ToList();
 
-        // public ItemStorage Storage; // 아이템 보관소 (스킬로 인한 무기 교체 등 인벤토리 외 위치에 보관이 필요할 떄 사용)
-        // inven용 item저장이라 invenmanager.instance.Storage로 이전.
+        public Accessory RandAcc => Acc.CreateRandom();
 
-        private bool isInit = false;
-        public ItemFactoryManager()
-        {
-            LoadItems();
-        }
+        public Weapon RandWeapon => Weapon.CreateRandom();
+
+        public ActiveSkillItem RandActiveSkill => ActiveSkillItem.CreateRandom();
 
         public void LoadItems()
         {
             if (isInit) return;
             isInit = true;
             // 팩토리 초기화
-            var accs = Default.ResourceUtil.LoadAll<Accessory>("Prefabs/Items/Accessory");
-            var weapons = Default.ResourceUtil.LoadAll<Weapon>("Prefabs/Items/Weapon");
-            var activeSkills = Default.ResourceUtil.LoadAll<ActiveSkill>("Prefabs/Items/ActiveSkill");
+            var accs = ResourceUtil.LoadAll<Accessory>("Prefabs/Items/Accessory");
+            var weapons = ResourceUtil.LoadAll<Weapon>("Prefabs/Items/Weapon");
+            var activeSkills = ResourceUtil.LoadAll<ActiveSkill>("Prefabs/Items/ActiveSkill");
             var activeSkillItem = new[]
             {
-                Default.ResourceUtil.Load<ActiveSkillItem>("ActiveSkillItem"),
+                ResourceUtil.Load<ActiveSkillItem>("ActiveSkillItem")
             };
-            
-            var etcs = Default.ResourceUtil.LoadAll<EtcItem>("EtcItems");
-            AccPickUp = new Factory_AccPickUp(new[]
-                { Default.ResourceUtil.Load<Acc_PickUp>("Prefabs/Items/Accessory/AccPickUp") });
-            WeaponPickUp = new Factory_WeaponPickUp(new[]
-                { Default.ResourceUtil.Load<Weapon_PickUp>("Prefabs/Items/Weapon/WeaponPickUp") });
-            ActiveSkillPickUp = new Factory_ActiveSkillPickUp(new[]
-                { Default.ResourceUtil.Load<ActiveSkill_PickUp>("Prefabs/Items/ActiveSkill/ActiveSkillPickUp") });
-            foreach (var x in accs)
-            {
-                x.Init();
-            }
 
-            foreach (var x in weapons)
-            {
-                x.Init();
-            }
+            var etcs = ResourceUtil.LoadAll<EtcItem>("EtcItems");
+            AccPickUp = new Factory_AccPickUp(new[]
+                { ResourceUtil.Load<Acc_PickUp>("Prefabs/Items/Accessory/AccPickUp") });
+            WeaponPickUp = new Factory_WeaponPickUp(new[]
+                { ResourceUtil.Load<Weapon_PickUp>("Prefabs/Items/Weapon/WeaponPickUp") });
+            ActiveSkillPickUp = new Factory_ActiveSkillPickUp(new[]
+                { ResourceUtil.Load<ActiveSkill_PickUp>("Prefabs/Items/ActiveSkill/ActiveSkillPickUp") });
+            foreach (var x in accs) x.Init();
+
+            foreach (var x in weapons) x.Init();
             Acc = new Factory_Acc(accs);
             Weapon = new Factory_Weapon(weapons);
             // TODO: skill list
             ActiveSkillItem = new Factory_ActiveSkillItem(activeSkills, activeSkillItem);
             Etc = new Factory_Etc(etcs);
         }
-        public List<Weapon> WeaponList => Weapon.WpDict.Values.ToList();
-        public List<Accessory> Accessories => Acc.AccDict.Values.ToList();
+
         public Accessory GetAcc(int itemId)
         {
             return Acc.CreateNew(itemId);
         }
-
-        public Accessory RandAcc => Acc.CreateRandom();
 
         public Weapon GetWeapon(int itemId)
         {
             return Weapon.CreateNew(itemId);
         }
 
-        public Weapon RandWeapon => Weapon.CreateRandom();
-        
         public ActiveSkillItem GetActiveSkill(int skillId)
         {
             return ActiveSkillItem.CreateNew(skillId);
         }
-        
-        public ActiveSkillItem RandActiveSkill => ActiveSkillItem.CreateRandom();
 
         public EtcItem GetEtcItem(int itemId)
         {
             return Etc.CreateNew(itemId);
         }
+
         //인벤에 악세서리 추가
         public void AddAcc(int index)
         {

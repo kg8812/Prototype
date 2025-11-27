@@ -2,23 +2,25 @@ using UnityEngine;
 
 public class CircleAround
 {
-    private IMonoBehaviour user;
-    public float Degree;
+    public enum Direction
+    {
+        ClockWise = 1 // 시계방향
+        ,
+        AntiClockWise = -1 // 반시계방향
+    }
+
     public readonly float radius;
     public readonly float speed;
 
     private readonly Transform transform;
+    public float Degree;
 
-    public enum Direction
-    {
-        ClockWise = 1 // 시계방향
-        ,AntiClockWise = -1 // 반시계방향
-    }
-
-    private Direction dir;
+    private readonly Direction dir;
     public bool lookCenter;
-    
-    public CircleAround(IMonoBehaviour center, Transform transform, float radius, float speed,Direction dir = Direction.ClockWise)
+    private readonly IMonoBehaviour user;
+
+    public CircleAround(IMonoBehaviour center, Transform transform, float radius, float speed,
+        Direction dir = Direction.ClockWise)
     {
         user = center;
         this.transform = transform;
@@ -38,9 +40,6 @@ public class CircleAround
         var x = radius * Mathf.Sin(rad);
         var y = radius * Mathf.Cos(rad);
         transform.position = user.Position + new Vector3(x, y);
-        if (lookCenter)
-        {
-            transform.rotation = Quaternion.Euler(0, 0, Degree * -1 * (int)dir); //가운데를 바라보게 각도 조절
-        }
+        if (lookCenter) transform.rotation = Quaternion.Euler(0, 0, Degree * -1 * (int)dir); //가운데를 바라보게 각도 조절
     }
 }

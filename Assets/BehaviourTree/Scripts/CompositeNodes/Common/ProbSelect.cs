@@ -6,21 +6,18 @@ namespace Apis.BehaviourTreeTool
 {
     public class ProbSelect : CommonCompositeNode
     {
-        public List<int> probs = new List<int>();
-        int index;
+        public List<int> probs = new();
+        private int index;
 
         public override void OnStart()
         {
             base.OnStart();
             index = -1;
-            List<int> list = probs.Select((_, index) => index).Where(x =>
+            var list = probs.Select((_, index) => index).Where(x =>
             {
                 if (x >= children.Count) return false;
 
-                if (children[x] is DecoratorNode dec)
-                {
-                    return dec.Check();
-                }
+                if (children[x] is DecoratorNode dec) return dec.Check();
                 return true;
             }).ToList();
 
@@ -28,17 +25,10 @@ namespace Apis.BehaviourTreeTool
 
             list.ForEach(x =>
             {
-                for (int i = 0; i < probs[x]; i++)
-                {
-                    probList.Add(x);
-                }
+                for (var i = 0; i < probs[x]; i++) probList.Add(x);
             });
 
-            if (probList.Count > 0)
-            {
-                index = probList[Random.Range(0, probList.Count)];
-            }
-
+            if (probList.Count > 0) index = probList[Random.Range(0, probList.Count)];
         }
 
         public override void OnStop()
@@ -48,7 +38,6 @@ namespace Apis.BehaviourTreeTool
         public override State OnUpdate()
         {
             if (index >= 0)
-            {
                 switch (children[index].Update())
                 {
                     case State.Success:
@@ -60,7 +49,6 @@ namespace Apis.BehaviourTreeTool
                     case State.Running:
                         return State.Running;
                 }
-            }
 
             return State.Failure;
         }

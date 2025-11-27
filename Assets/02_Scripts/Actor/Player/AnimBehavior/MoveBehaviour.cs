@@ -34,17 +34,14 @@ public class MoveBehaviour : StateMachineBehaviour
     //    
     //}
 
-    override public void OnStateMachineEnter(Animator animator, int stateMachinePathHash)
+    public override void OnStateMachineEnter(Animator animator, int stateMachinePathHash)
     {
-        if (actor == null)
-        {
-            actor = Utils.GetComponentInParentAndChild<Actor>(animator.gameObject);
-        }
+        if (actor == null) actor = Utils.GetComponentInParentAndChild<Actor>(animator.gameObject);
 
         if (actor is not Player) return;
-        
-        animator.SetFloat("MoveMultiplier",1 * actor.MoveSpeed / actor.StatManager.BaseStat.Get(ActorStatType.MoveSpeed));
-        
+
+        animator.SetFloat("MoveMultiplier",
+            1 * actor.MoveSpeed / actor.StatManager.BaseStat.Get(ActorStatType.MoveSpeed));
     }
 
     // OnStateMachineExit is called when exiting a state machine via its Exit Node

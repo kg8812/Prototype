@@ -1,4 +1,5 @@
-public enum MonsterAttackType{
+public enum MonsterAttackType
+{
     Melee,
     Range
 }

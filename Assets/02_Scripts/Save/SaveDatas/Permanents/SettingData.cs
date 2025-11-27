@@ -11,31 +11,51 @@ namespace Save.Schema
 {
     public class SettingData : ISaveData
     {
-        public float[] Volumes;
+        private Dictionary<Define.GameKey, ButtonControl> _gamePadKeys;
+
+        private UnityEvent _onKeyChange;
+
+
+        private Dictionary<Define.UIKey, ButtonControl> _UIButtons;
+
+        private Dictionary<Define.UIKey, KeyCode> _UIKeys;
+
+        public Dictionary<Define.GameKey, KeyCode> gameKeys;
 
         /**
          * Game setting
          */
         public LanguageType languageType;
 
-        private Dictionary<KeyCode, Sprite> _keycodeImages;
+        public float[] Volumes;
 
-        public Dictionary<KeyCode, Sprite> KeycodeImages => _keycodeImages;
-            
+        public SettingData()
+        {
+            Volumes = new float [(int)Define.Sound.MaxCOUNT];
 
-        private Dictionary<ButtonControl, Sprite> _psImages;
+            for (var i = 0; i < Volumes.Length; i++) Volumes[i] = 0.5f;
 
-        public Dictionary<ButtonControl, Sprite> PSImages => _psImages;
+            languageType = LanguageType.Korean;
+            LoadKeyImages();
+            gameKeys ??= new Dictionary<Define.GameKey, KeyCode>
+            {
+                { Define.GameKey.LeftMove, KeyCode.LeftArrow },
+                { Define.GameKey.RightMove, KeyCode.RightArrow },
+                { Define.GameKey.Down, KeyCode.DownArrow },
+                { Define.GameKey.Up, KeyCode.UpArrow },
+                { Define.GameKey.Jump, KeyCode.Space },
+                { Define.GameKey.ActiveSkill, KeyCode.D },
+                { Define.GameKey.Attack, KeyCode.Z }
+            };
+        }
 
-        private Dictionary<ButtonControl, Sprite> _xboxImages;
+        public Dictionary<KeyCode, Sprite> KeycodeImages { get; private set; }
 
-        public Dictionary<ButtonControl, Sprite> XboxImages => _xboxImages;
-        
-        public Dictionary<Define.GameKey, KeyCode> gameKeys;
+        public Dictionary<ButtonControl, Sprite> PSImages { get; private set; }
 
-        Dictionary<Define.UIKey, KeyCode> _UIKeys;
-            
-        public Dictionary<Define.UIKey, KeyCode> UIKeys => _UIKeys ??= new()
+        public Dictionary<ButtonControl, Sprite> XboxImages { get; private set; }
+
+        public Dictionary<Define.UIKey, KeyCode> UIKeys => _UIKeys ??= new Dictionary<Define.UIKey, KeyCode>
         {
             { Define.UIKey.Up, KeyCode.UpArrow },
             { Define.UIKey.Down, KeyCode.DownArrow },
@@ -46,70 +66,73 @@ namespace Save.Schema
             { Define.UIKey.Select, KeyCode.Space },
             { Define.UIKey.Cancel, KeyCode.Escape },
             { Define.UIKey.Equip, KeyCode.F },
-            { Define.UIKey.Skip, KeyCode.F },
+            { Define.UIKey.Skip, KeyCode.F }
         };
 
+        public Dictionary<Define.UIKey, ButtonControl> UIButtons => _UIButtons ??=
+            new Dictionary<Define.UIKey, ButtonControl>
+            {
+                { Define.UIKey.Up, Gamepad.current.dpad.up },
+                { Define.UIKey.Down, Gamepad.current.dpad.down },
+                { Define.UIKey.Left, Gamepad.current.dpad.left },
+                { Define.UIKey.Right, Gamepad.current.dpad.right },
+                { Define.UIKey.LeftHeader, Gamepad.current.leftShoulder },
+                { Define.UIKey.RightHeader, Gamepad.current.rightShoulder },
+                { Define.UIKey.Select, Gamepad.current.buttonSouth },
+                { Define.UIKey.Cancel, Gamepad.current.startButton },
+                { Define.UIKey.Equip, Gamepad.current.buttonWest },
+                { Define.UIKey.Skip, Gamepad.current.buttonSouth }
+            };
 
-        private Dictionary<Define.UIKey, ButtonControl> _UIButtons;
-        public Dictionary<Define.UIKey, ButtonControl> UIButtons => _UIButtons??= new()
-        {
-            { Define.UIKey.Up, Gamepad.current.dpad.up },
-            { Define.UIKey.Down, Gamepad.current.dpad.down },
-            { Define.UIKey.Left, Gamepad.current.dpad.left },
-            { Define.UIKey.Right, Gamepad.current.dpad.right },
-            { Define.UIKey.LeftHeader, Gamepad.current.leftShoulder },
-            { Define.UIKey.RightHeader, Gamepad.current.rightShoulder },
-            { Define.UIKey.Select, Gamepad.current.buttonSouth },
-            { Define.UIKey.Cancel, Gamepad.current.startButton },
-            { Define.UIKey.Equip, Gamepad.current.buttonWest },
-            { Define.UIKey.Skip, Gamepad.current.buttonSouth },
-        };
+        public Dictionary<Define.GameKey, ButtonControl> GamePadKeys => _gamePadKeys ??=
+            new Dictionary<Define.GameKey, ButtonControl>
+            {
+                { Define.GameKey.LeftMove, Gamepad.current.leftStick.left },
+                { Define.GameKey.RightMove, Gamepad.current.leftStick.right },
+                { Define.GameKey.Down, Gamepad.current.leftStick.down },
+                { Define.GameKey.Up, Gamepad.current.leftStick.up },
+                { Define.GameKey.Jump, Gamepad.current.buttonSouth },
+                { Define.GameKey.ActiveSkill, Gamepad.current.leftTrigger },
+                { Define.GameKey.Attack, Gamepad.current.buttonWest }
+            };
 
-
-        private Dictionary<Define.GameKey, ButtonControl> _gamePadKeys;
-        public Dictionary<Define.GameKey, ButtonControl> GamePadKeys => _gamePadKeys??= new()
-        {
-            { Define.GameKey.LeftMove, Gamepad.current.leftStick.left },
-            { Define.GameKey.RightMove, Gamepad.current.leftStick.right },
-            { Define.GameKey.Down, Gamepad.current.leftStick.down },
-            { Define.GameKey.Up, Gamepad.current.leftStick.up },
-            { Define.GameKey.Jump, Gamepad.current.buttonSouth },
-            { Define.GameKey.ActiveSkill, Gamepad.current.leftTrigger },
-            {Define.GameKey.Attack,Gamepad.current.buttonWest},
-            
-        };
-
-        private UnityEvent _onKeyChange;
         public UnityEvent OnKeyChange => _onKeyChange ??= new UnityEvent();
 
-        public SettingData()
+        public void OnLoaded()
         {
-            Volumes = new float [(int)Define.Sound.MaxCOUNT];
+            Debug.Log(Volumes.Length);
 
-            for (int i = 0; i < Volumes.Length; i++)
+            foreach (Define.Sound sound in Enum.GetValues(typeof(Define.Sound)))
             {
-                Volumes[i] = 0.5f;
+                Debug.Log("Volume : " + (int)sound);
+
+                if (sound != Define.Sound.MaxCOUNT) GameManager.Sound.ChangeVolume(Volumes[(int)sound], sound);
             }
+        }
 
-            languageType = LanguageType.Korean;
+        public void Initialize()
+        {
+            Volumes ??= new float [(int)Define.Sound.MaxCOUNT];
+
+            for (var i = 0; i < Volumes.Length; i++) Volumes[i] = 0.5f;
+
+            foreach (Define.Sound sound in Enum.GetValues(typeof(Define.Sound)))
+                if (sound != Define.Sound.MaxCOUNT)
+                    GameManager.Sound.ChangeVolume(Volumes[(int)sound], sound);
+
             LoadKeyImages();
-            gameKeys ??= new()
-            {
-                { Define.GameKey.LeftMove, KeyCode.LeftArrow },
-                { Define.GameKey.RightMove, KeyCode.RightArrow },
-                { Define.GameKey.Down, KeyCode.DownArrow },
-                { Define.GameKey.Up, KeyCode.UpArrow },
-                { Define.GameKey.Jump, KeyCode.Space },
-                { Define.GameKey.ActiveSkill, KeyCode.D },
-                { Define.GameKey.Attack, KeyCode.Z },
-            };
+        }
+
+        public void BeforeSave()
+        {
+            for (var i = 0; i < Volumes.Length; i++) Volumes[i] = GameManager.Sound.volume[i];
         }
 
         public void LoadKeyImages()
         {
             if (!Application.isPlaying) return;
-            
-            _keycodeImages ??= new Dictionary<KeyCode, Sprite>()
+
+            KeycodeImages ??= new Dictionary<KeyCode, Sprite>
             {
                 { KeyCode.BackQuote, ResourceUtil.Load<Sprite>("KeyCodes/quote") },
                 { KeyCode.Alpha1, ResourceUtil.Load<Sprite>("KeyCodes/1") },
@@ -167,7 +190,7 @@ namespace Save.Schema
                 { KeyCode.Mouse1, ResourceUtil.Load<Sprite>("KeyCodes/mouse-right") },
                 { KeyCode.Mouse2, ResourceUtil.Load<Sprite>("KeyCodes/mouse-middle") },
                 { KeyCode.Mouse3, ResourceUtil.Load<Sprite>("KeyCodes/mouse-g1") },
-                { KeyCode.Mouse4, ResourceUtil.Load<Sprite>("KeyCodes/mouse-g2") },
+                { KeyCode.Mouse4, ResourceUtil.Load<Sprite>("KeyCodes/mouse-g2") }
             };
         }
 
@@ -175,35 +198,35 @@ namespace Save.Schema
         {
             if (!Application.isPlaying) return;
 
-            _psImages ??= new()
+            PSImages ??= new Dictionary<ButtonControl, Sprite>
             {
-                {Gamepad.current.dpad.left, ResourceUtil.Load<Sprite>("KeyCodes/ps-arrow-left")},
-                {Gamepad.current.dpad.right, ResourceUtil.Load<Sprite>("KeyCodes/ps-arrow-right")},
-                {Gamepad.current.dpad.up, ResourceUtil.Load<Sprite>("KeyCodes/ps-arrow-up")},
-                {Gamepad.current.dpad.down, ResourceUtil.Load<Sprite>("KeyCodes/ps-arrow-down")},
-                {Gamepad.current.leftShoulder,ResourceUtil.Load<Sprite>("KeyCodes/ps-l1")},
-                {Gamepad.current.leftTrigger,ResourceUtil.Load<Sprite>("KeyCodes/ps-l2")},
-                {Gamepad.current.leftStickButton,ResourceUtil.Load<Sprite>("KeyCodes/ps-l3-click")},
-                {Gamepad.current.leftStick.up,ResourceUtil.Load<Sprite>("KeyCodes/ps-l3-up")},
-                {Gamepad.current.leftStick.left,ResourceUtil.Load<Sprite>("KeyCodes/ps-l3-left")},
-                {Gamepad.current.leftStick.down,ResourceUtil.Load<Sprite>("KeyCodes/ps-l3-down")},
-                {Gamepad.current.leftStick.right,ResourceUtil.Load<Sprite>("KeyCodes/ps-l3-right")},
-                {Gamepad.current.rightShoulder,ResourceUtil.Load<Sprite>("KeyCodes/ps-r1")},
-                {Gamepad.current.rightTrigger,ResourceUtil.Load<Sprite>("KeyCodes/ps-r2")},
-                {Gamepad.current.rightStickButton,ResourceUtil.Load<Sprite>("KeyCodes/ps-r3-click")},
-                {Gamepad.current.rightStick.up,ResourceUtil.Load<Sprite>("KeyCodes/ps-r3-up")},
-                {Gamepad.current.rightStick.left,ResourceUtil.Load<Sprite>("KeyCodes/ps-r3-left")},
-                {Gamepad.current.rightStick.down,ResourceUtil.Load<Sprite>("KeyCodes/ps-r3-down")},
-                {Gamepad.current.rightStick.right,ResourceUtil.Load<Sprite>("KeyCodes/ps-r3-right")},
-                {Gamepad.current.buttonEast,ResourceUtil.Load<Sprite>("KeyCodes/ps-o")},
-                {Gamepad.current.buttonWest,ResourceUtil.Load<Sprite>("KeyCodes/ps-square")},
-                {Gamepad.current.buttonSouth,ResourceUtil.Load<Sprite>("KeyCodes/ps-x")},
-                {Gamepad.current.buttonNorth,ResourceUtil.Load<Sprite>("KeyCodes/ps-triangle")},
-                {Gamepad.current.startButton,ResourceUtil.Load<Sprite>("KeyCodes/ps-options")},
-                {Gamepad.current.selectButton,ResourceUtil.Load<Sprite>("KeyCodes/ps-share")},
+                { Gamepad.current.dpad.left, ResourceUtil.Load<Sprite>("KeyCodes/ps-arrow-left") },
+                { Gamepad.current.dpad.right, ResourceUtil.Load<Sprite>("KeyCodes/ps-arrow-right") },
+                { Gamepad.current.dpad.up, ResourceUtil.Load<Sprite>("KeyCodes/ps-arrow-up") },
+                { Gamepad.current.dpad.down, ResourceUtil.Load<Sprite>("KeyCodes/ps-arrow-down") },
+                { Gamepad.current.leftShoulder, ResourceUtil.Load<Sprite>("KeyCodes/ps-l1") },
+                { Gamepad.current.leftTrigger, ResourceUtil.Load<Sprite>("KeyCodes/ps-l2") },
+                { Gamepad.current.leftStickButton, ResourceUtil.Load<Sprite>("KeyCodes/ps-l3-click") },
+                { Gamepad.current.leftStick.up, ResourceUtil.Load<Sprite>("KeyCodes/ps-l3-up") },
+                { Gamepad.current.leftStick.left, ResourceUtil.Load<Sprite>("KeyCodes/ps-l3-left") },
+                { Gamepad.current.leftStick.down, ResourceUtil.Load<Sprite>("KeyCodes/ps-l3-down") },
+                { Gamepad.current.leftStick.right, ResourceUtil.Load<Sprite>("KeyCodes/ps-l3-right") },
+                { Gamepad.current.rightShoulder, ResourceUtil.Load<Sprite>("KeyCodes/ps-r1") },
+                { Gamepad.current.rightTrigger, ResourceUtil.Load<Sprite>("KeyCodes/ps-r2") },
+                { Gamepad.current.rightStickButton, ResourceUtil.Load<Sprite>("KeyCodes/ps-r3-click") },
+                { Gamepad.current.rightStick.up, ResourceUtil.Load<Sprite>("KeyCodes/ps-r3-up") },
+                { Gamepad.current.rightStick.left, ResourceUtil.Load<Sprite>("KeyCodes/ps-r3-left") },
+                { Gamepad.current.rightStick.down, ResourceUtil.Load<Sprite>("KeyCodes/ps-r3-down") },
+                { Gamepad.current.rightStick.right, ResourceUtil.Load<Sprite>("KeyCodes/ps-r3-right") },
+                { Gamepad.current.buttonEast, ResourceUtil.Load<Sprite>("KeyCodes/ps-o") },
+                { Gamepad.current.buttonWest, ResourceUtil.Load<Sprite>("KeyCodes/ps-square") },
+                { Gamepad.current.buttonSouth, ResourceUtil.Load<Sprite>("KeyCodes/ps-x") },
+                { Gamepad.current.buttonNorth, ResourceUtil.Load<Sprite>("KeyCodes/ps-triangle") },
+                { Gamepad.current.startButton, ResourceUtil.Load<Sprite>("KeyCodes/ps-options") },
+                { Gamepad.current.selectButton, ResourceUtil.Load<Sprite>("KeyCodes/ps-share") }
             };
 
-            _xboxImages ??= new()
+            XboxImages ??= new Dictionary<ButtonControl, Sprite>
             {
                 { Gamepad.current.dpad.left, ResourceUtil.Load<Sprite>("KeyCodes/xbox-arrow-left") },
                 { Gamepad.current.dpad.right, ResourceUtil.Load<Sprite>("KeyCodes/xbox-arrow-right") },
@@ -228,51 +251,8 @@ namespace Save.Schema
                 { Gamepad.current.buttonSouth, ResourceUtil.Load<Sprite>("KeyCodes/xbox-a") },
                 { Gamepad.current.buttonNorth, ResourceUtil.Load<Sprite>("KeyCodes/xbox-y") },
                 { Gamepad.current.startButton, ResourceUtil.Load<Sprite>("KeyCodes/xbox-menu") },
-                { Gamepad.current.selectButton, ResourceUtil.Load<Sprite>("KeyCodes/xbox-view") },
+                { Gamepad.current.selectButton, ResourceUtil.Load<Sprite>("KeyCodes/xbox-view") }
             };
-        }
-        
-        public void OnLoaded()
-        {
-            Debug.Log(Volumes.Length);
-
-            foreach (Define.Sound sound in Enum.GetValues(typeof(Define.Sound)))
-            {
-                Debug.Log("Volume : " +(int)sound);
-                
-                if (sound != Define.Sound.MaxCOUNT)
-                {
-                    GameManager.Sound.ChangeVolume(Volumes[(int)sound],sound);
-                }
-            }
-        }
-
-        public void Initialize()
-        {
-            Volumes ??= new float [(int)Define.Sound.MaxCOUNT];
-            
-            for (int i = 0; i < Volumes.Length; i++)
-            {
-                Volumes[i] = 0.5f;
-            }
-            
-            foreach (Define.Sound sound in Enum.GetValues(typeof(Define.Sound)))
-            {
-                if (sound != Define.Sound.MaxCOUNT)
-                {
-                    GameManager.Sound.ChangeVolume(Volumes[(int)sound],sound);
-                }
-            }
-            
-            LoadKeyImages();
-        }
-
-        public void BeforeSave()
-        {
-            for (int i = 0; i < Volumes.Length; i++)
-            {
-                Volumes[i] = GameManager.Sound.volume[i];
-            }
         }
 
         public Sprite GetGameKeyImage(Define.GameKey key)
@@ -282,10 +262,7 @@ namespace Save.Schema
             {
                 case InputType.KeyBoard:
                     LoadKeyImages();
-                    if (gameKeys.ContainsKey(key) && KeycodeImages.TryGetValue(gameKeys[key], out image))
-                    {
-                        return image;
-                    }
+                    if (gameKeys.ContainsKey(key) && KeycodeImages.TryGetValue(gameKeys[key], out image)) return image;
 
                     break;
                 case InputType.GamePad:
@@ -294,26 +271,23 @@ namespace Save.Schema
                     if (gamepad != null)
                     {
                         LoadGamePadImages();
-                        string name = (gamepad.name + gamepad.displayName).ToLower(); // 두 값을 하나로 합쳐서 체크
+                        var name = (gamepad.name + gamepad.displayName).ToLower(); // 두 값을 하나로 합쳐서 체크
 
                         if (name.Contains("dualshock") || name.Contains("dualsense") || name.Contains("playstation"))
                         {
                             if (GamePadKeys.ContainsKey(key) && PSImages.TryGetValue(GamePadKeys[key], out image))
-                            {
                                 return image;
-                            }
                         }
                         else if (name.Contains("xbox"))
                         {
                             if (GamePadKeys.ContainsKey(key) && XboxImages.TryGetValue(GamePadKeys[key], out image))
-                            {
                                 return image;
-                            }
                         }
                     }
+
                     break;
             }
-            
+
 
             return null;
         }
@@ -325,10 +299,7 @@ namespace Save.Schema
             {
                 case InputType.KeyBoard:
                     LoadKeyImages();
-                    if (UIKeys.ContainsKey(key) && KeycodeImages.TryGetValue(UIKeys[key], out image))
-                    {
-                        return image;
-                    }
+                    if (UIKeys.ContainsKey(key) && KeycodeImages.TryGetValue(UIKeys[key], out image)) return image;
 
                     break;
                 case InputType.GamePad:
@@ -337,47 +308,40 @@ namespace Save.Schema
                     if (gamepad != null)
                     {
                         LoadGamePadImages();
-                        string name = (gamepad.name + gamepad.displayName).ToLower(); // 두 값을 하나로 합쳐서 체크
+                        var name = (gamepad.name + gamepad.displayName).ToLower(); // 두 값을 하나로 합쳐서 체크
 
                         if (name.Contains("dualshock") || name.Contains("dualsense") || name.Contains("playstation"))
                         {
                             if (UIButtons.ContainsKey(key) && PSImages.TryGetValue(UIButtons[key], out image))
-                            {
                                 return image;
-                            }
                         }
                         else if (name.Contains("xbox"))
                         {
                             if (UIButtons.ContainsKey(key) && XboxImages.TryGetValue(UIButtons[key], out image))
-                            {
                                 return image;
-                            }
                         }
                     }
+
                     break;
             }
 
             return null;
         }
+
         public void SetGameKey(Define.GameKey gameKey, KeyCode keyCode)
         {
-            KeyCode lastKey = gameKeys[gameKey];
-            bool isFound = false;
-            Define.GameKey tempKey = gameKey;
+            var lastKey = gameKeys[gameKey];
+            var isFound = false;
+            var tempKey = gameKey;
             foreach (var x in gameKeys.Keys)
-            {
                 if (gameKeys[x] == keyCode)
                 {
                     isFound = true;
                     tempKey = x;
                     break;
                 }
-            }
 
-            if (isFound)
-            {
-                gameKeys[tempKey] = lastKey;
-            }
+            if (isFound) gameKeys[tempKey] = lastKey;
 
             gameKeys[gameKey] = keyCode;
 
@@ -392,11 +356,10 @@ namespace Save.Schema
             OnKeyChange?.Invoke();
         }
 
-        List<(Define.GameKey, KeyCode)> GetKeySettingPreset(int number)
+        private List<(Define.GameKey, KeyCode)> GetKeySettingPreset(int number)
         {
             if (number == 2)
-            {
-                return new()
+                return new List<(Define.GameKey, KeyCode)>
                 {
                     (Define.GameKey.LeftMove, KeyCode.A),
                     (Define.GameKey.RightMove, KeyCode.D),
@@ -404,11 +367,10 @@ namespace Save.Schema
                     (Define.GameKey.Up, KeyCode.W),
                     (Define.GameKey.Jump, KeyCode.Space),
                     (Define.GameKey.ActiveSkill, KeyCode.R),
-                    (Define.GameKey.Attack, KeyCode.Mouse0),
+                    (Define.GameKey.Attack, KeyCode.Mouse0)
                 };
-            }
 
-            return new()
+            return new List<(Define.GameKey, KeyCode)>
             {
                 (Define.GameKey.LeftMove, KeyCode.LeftArrow),
                 (Define.GameKey.RightMove, KeyCode.RightArrow),
@@ -416,7 +378,7 @@ namespace Save.Schema
                 (Define.GameKey.Up, KeyCode.UpArrow),
                 (Define.GameKey.Jump, KeyCode.Space),
                 (Define.GameKey.ActiveSkill, KeyCode.D),
-                (Define.GameKey.Attack, KeyCode.Z),
+                (Define.GameKey.Attack, KeyCode.Z)
             };
         }
     }

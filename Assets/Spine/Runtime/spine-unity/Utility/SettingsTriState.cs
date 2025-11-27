@@ -27,16 +27,17 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-namespace Spine.Unity {
-
+namespace Spine.Unity
+{
 	/// <summary>
-	/// TriState enum which can be used to replace and extend a bool variable by
-	/// a third <c>UseGlobalSettings</c> state. Automatically maps serialized
-	/// bool values to corresponding <c>Disable</c> and <c>Enable</c> states.
+	///     TriState enum which can be used to replace and extend a bool variable by
+	///     a third <c>UseGlobalSettings</c> state. Automatically maps serialized
+	///     bool values to corresponding <c>Disable</c> and <c>Enable</c> states.
 	/// </summary>
-	public enum SettingsTriState {
-		Disable,
-		Enable,
-		UseGlobalSetting
-	}
+	public enum SettingsTriState
+    {
+        Disable,
+        Enable,
+        UseGlobalSetting
+    }
 }

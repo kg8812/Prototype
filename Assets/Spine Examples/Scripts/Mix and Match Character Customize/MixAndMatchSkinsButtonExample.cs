@@ -27,24 +27,27 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using Spine.Unity;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Spine.Unity.Examples {
-	public class MixAndMatchSkinsButtonExample : MonoBehaviour {
+namespace Spine.Unity.Examples
+{
+    public class MixAndMatchSkinsButtonExample : MonoBehaviour
+    {
+        public SkeletonDataAsset skeletonDataAsset;
+        public MixAndMatchSkinsExample skinsSystem;
 
-		public SkeletonDataAsset skeletonDataAsset;
-		public MixAndMatchSkinsExample skinsSystem;
+        [SpineSkin(dataField: "skeletonDataAsset")]
+        public string itemSkin;
 
-		[SpineSkin(dataField: "skeletonDataAsset")] public string itemSkin;
-		public MixAndMatchSkinsExample.ItemType itemType;
+        public MixAndMatchSkinsExample.ItemType itemType;
 
-		void Start () {
-			Button button = GetComponent<Button>();
-			button.onClick.AddListener(
-				delegate { skinsSystem.Equip(itemSkin, itemType); }
-			);
-		}
-	}
+        private void Start()
+        {
+            var button = GetComponent<Button>();
+            button.onClick.AddListener(
+                delegate { skinsSystem.Equip(itemSkin, itemType); }
+            );
+        }
+    }
 }

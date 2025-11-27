@@ -5,36 +5,33 @@ using UnityEngine;
 
 public abstract class Item : SerializedMonoBehaviour
 {
-    public abstract int ItemId { get; } // 아이템 id
-    // public abstract string Name { get; } // 아이템 이름
-    public Sprite Image { get; protected set; } // 아이템 이미지 
     // public abstract string FlavourText { get; } // 아이템 플레이버 텍스트 
     // public abstract string Description { get; } // 아이템 효과 설명
-    private Apis.ItemSlot _slot;
 
     private ItemSaveData _saveData;
 
+    protected Actor user;
+
+    [HideInInspector] public Action<Item> OnEquipped;
+    [HideInInspector] public Action<Item> OnUnEquipped;
+
+    public abstract int ItemId { get; } // 아이템 id
+
+    // public abstract string Name { get; } // 아이템 이름
+    public Sprite Image { get; protected set; } // 아이템 이미지 
+
     public virtual ItemSaveData SaveData
     {
-        get => _saveData ??= new()
+        get => _saveData ??= new ItemSaveData
         {
-            ItemId = ItemId,
+            ItemId = ItemId
         };
         set => _saveData = value;
     }
 
-    protected Actor user;
-
-    public Apis.ItemSlot slot
-    {
-        get => _slot;
-        set { _slot = value; }
-    }
+    public ItemSlot slot { get; set; }
 
     public bool IsEquip { get; set; }
-
-    [HideInInspector] public Action<Item> OnEquipped;
-    [HideInInspector] public Action<Item> OnUnEquipped;
 
     public void Collect()
     {
@@ -103,12 +100,8 @@ public abstract class Item : SerializedMonoBehaviour
     public virtual void SetParent(Transform trans)
     {
         if (ReferenceEquals(trans, null))
-        {
             InvenManager.instance.Storage.Store(this);
-        }
         else
-        {
             gameObject.transform.SetParent(trans);
-        }
     }
 }

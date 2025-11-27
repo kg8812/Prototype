@@ -30,23 +30,26 @@
 using Spine.Unity;
 using UnityEngine;
 
-public class SkeletonGraphicPlayAnimationAtEvent : MonoBehaviour {
+public class SkeletonGraphicPlayAnimationAtEvent : MonoBehaviour
+{
+    public SkeletonGraphic skeletonGraphic;
+    public int trackIndex;
+    public float playbackSpeed = 1.0f;
 
-	public SkeletonGraphic skeletonGraphic;
-	public int trackIndex = 0;
-	public float playbackSpeed = 1.0f;
+    public void PlayAnimationLooping(string animation)
+    {
+        var entry = skeletonGraphic.AnimationState.SetAnimation(trackIndex, animation, true);
+        entry.TimeScale = playbackSpeed;
+    }
 
-	public void PlayAnimationLooping (string animation) {
-		Spine.TrackEntry entry = skeletonGraphic.AnimationState.SetAnimation(trackIndex, animation, true);
-		entry.TimeScale = playbackSpeed;
-	}
+    public void PlayAnimationOnce(string animation)
+    {
+        var entry = skeletonGraphic.AnimationState.SetAnimation(trackIndex, animation, false);
+        entry.TimeScale = playbackSpeed;
+    }
 
-	public void PlayAnimationOnce (string animation) {
-		Spine.TrackEntry entry = skeletonGraphic.AnimationState.SetAnimation(trackIndex, animation, false);
-		entry.TimeScale = playbackSpeed;
-	}
-
-	public void ClearTrack () {
-		skeletonGraphic.AnimationState.ClearTrack(trackIndex);
-	}
+    public void ClearTrack()
+    {
+        skeletonGraphic.AnimationState.ClearTrack(trackIndex);
+    }
 }

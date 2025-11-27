@@ -1,5 +1,4 @@
 using System;
-using Save.Schema;
 using Apis.SkillTrees;
 
 namespace Apis.DataType
@@ -9,12 +8,11 @@ namespace Apis.DataType
     {
         public int index;
         public PlayerType playerType;
-        
+
         public SkillTree.TreeTypeEnum treeType;
         public SkillTree.SlotTypeEnum slotType;
         public int name;
         public int description;
         public int[] tagNames;
-        
     }
 }

@@ -1,13 +1,10 @@
-
-using UnityEngine;
-
 namespace Apis.BehaviourTreeTool
 {
     public class RepeatNode : CommonDecoratorNode
     {
         public int count;
 
-        int curCount;
+        private int curCount;
 
         public override bool Check()
         {
@@ -40,6 +37,7 @@ namespace Apis.BehaviourTreeTool
                 case State.Running:
                     return State.Running;
             }
+
             return State.Running;
         }
     }

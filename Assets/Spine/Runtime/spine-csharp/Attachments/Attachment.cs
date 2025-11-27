@@ -29,28 +29,32 @@
 
 using System;
 
-namespace Spine {
+namespace Spine
+{
+    /// <summary>The base class for all attachments.</summary>
+    public abstract class Attachment
+    {
+        protected Attachment(string name)
+        {
+            if (name == null) throw new ArgumentNullException("name", "name cannot be null");
+            Name = name;
+        }
 
-	/// <summary>The base class for all attachments.</summary>
-	abstract public class Attachment {
-		/// <summary>The attachment's name.</summary>
-		public string Name { get; }
+        /// <summary>Copy constructor.</summary>
+        protected Attachment(Attachment other)
+        {
+            Name = other.Name;
+        }
 
-		protected Attachment (string name) {
-			if (name == null) throw new ArgumentNullException("name", "name cannot be null");
-			this.Name = name;
-		}
+        /// <summary>The attachment's name.</summary>
+        public string Name { get; }
 
-		/// <summary>Copy constructor.</summary>
-		protected Attachment (Attachment other) {
-			Name = other.Name;
-		}
+        public override string ToString()
+        {
+            return Name;
+        }
 
-		override public string ToString () {
-			return Name;
-		}
-
-		/// <summary>Returns a copy of the attachment.</summary>
-		public abstract Attachment Copy ();
-	}
+        /// <summary>Returns a copy of the attachment.</summary>
+        public abstract Attachment Copy();
+    }
 }

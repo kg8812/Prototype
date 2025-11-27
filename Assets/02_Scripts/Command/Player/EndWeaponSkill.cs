@@ -1,5 +1,4 @@
 using Apis;
-using Apis;
 using UnityEngine;
 
 namespace Command
@@ -11,7 +10,7 @@ namespace Command
 
         public override void Invoke(Actor go)
         {
-            IAttackItem item = AttackItemManager.AtkInven.AtkItemInven[index] as IAttackItem;
+            var item = AttackItemManager.AtkInven.AtkItemInven[index] as IAttackItem;
             item?.EndAttack();
         }
 

@@ -1,9 +1,8 @@
-
 namespace Apis.BehaviourTreeTool
 {
     public class SelectNode : CommonCompositeNode
     {
-        int current;
+        private int current;
 
         public override void OnStart()
         {
@@ -32,14 +31,10 @@ namespace Apis.BehaviourTreeTool
                         return State.Running;
                 }
             }
-            if (current >= children.Count)
-            {
-                return State.Failure;
-            }
-            else
-            {
-                return State.Running;
-            }
+
+            if (current >= children.Count) return State.Failure;
+
+            return State.Running;
         }
     }
 }

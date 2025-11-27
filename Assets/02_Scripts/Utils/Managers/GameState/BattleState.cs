@@ -2,20 +2,18 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Apis;
-using Apis;
 using Defaut;
-using UI;
 using UnityEngine;
 
 namespace GameStateSpace
 {
     public class BattleState : GameState
     {
-        private Dictionary<StateCond, Guid> _guids;
-        
+        private readonly Dictionary<StateCond, Guid> _guids;
+
         public BattleState()
         {
-            _guids = new();
+            _guids = new Dictionary<StateCond, Guid>();
             _guids.Add(StateCond.MonsterRecog, Guid.Empty);
             _guids.Add(StateCond.Arena, Guid.Empty);
             _guids.Add(StateCond.PlayerHit, Guid.Empty);
@@ -25,27 +23,6 @@ namespace GameStateSpace
             InitPlayerHit();
         }
 
-        #region condition on off
-
-        private enum StateCond
-        {
-            MonsterRecog, Arena, PlayerHit, PlayerDeffued
-        }
-
-        private void TryOnWithCondition(StateCond condition)
-        {
-            _guids[condition] = GameManager.instance.TryOnGameState(GameStateType.BattleState);
-        }
-
-        private void TryOffWithCondition(StateCond condition)
-        {
-            if (_guids[condition] == Guid.Empty) return;
-            GameManager.instance.TryOffGameState(GameStateType.BattleState, _guids[condition]);
-            _guids[condition] = Guid.Empty;
-        }
-
-        #endregion
-        
 
         public override void OnEnterState()
         {
@@ -69,6 +46,30 @@ namespace GameStateSpace
             GameManager.DefaultController?.GamePadControl();
         }
 
+        #region condition on off
+
+        private enum StateCond
+        {
+            MonsterRecog,
+            Arena,
+            PlayerHit,
+            PlayerDeffued
+        }
+
+        private void TryOnWithCondition(StateCond condition)
+        {
+            _guids[condition] = GameManager.instance.TryOnGameState(GameStateType.BattleState);
+        }
+
+        private void TryOffWithCondition(StateCond condition)
+        {
+            if (_guids[condition] == Guid.Empty) return;
+            GameManager.instance.TryOffGameState(GameStateType.BattleState, _guids[condition]);
+            _guids[condition] = Guid.Empty;
+        }
+
+        #endregion
+
 
         /**
          * 진입 조건 목록 (or)
@@ -81,14 +82,14 @@ namespace GameStateSpace
         #region 개별 조건들
 
         #region 몬스터 인식
-        
+
         private List<Monster> _recogMonsterList;
 
         private void InitMonsterRecog()
         {
-            _recogMonsterList = new();
+            _recogMonsterList = new List<Monster>();
         }
-        
+
         public void AddRecogMonster(Monster mon)
         {
             if (!_recogMonsterList.Contains(mon))
@@ -99,14 +100,14 @@ namespace GameStateSpace
                     mon.RemoveEvent(EventType.OnRecognitionExit, ExitRecog);
                     mon.RemoveEvent(EventType.OnDisable, ExitRecog);
                 }
+
                 mon.AddEvent(EventType.OnRecognitionExit, ExitRecog);
                 mon.AddEvent(EventType.OnDisable, ExitRecog);
                 _recogMonsterList.Add(mon);
                 TryOnWithCondition(StateCond.MonsterRecog);
             }
-            
         }
-        
+
         public void RemoveRecogMonster(Monster mon)
         {
             if (_recogMonsterList.Contains(mon))
@@ -120,22 +121,19 @@ namespace GameStateSpace
 
 
         #region 플레이어 피격
-        
+
         private bool _isPlayerHit;
         private Coroutine _battleStateHitCoroutine;
-        
+
 
         private void InitPlayerHit()
         {
             _isPlayerHit = false;
             _battleStateHitCoroutine = null;
-            
-            GameManager.instance.InitWithPlayer(p =>
-            {
-                p.AddEvent(EventType.OnAfterHit, LastHit);
-            });
+
+            GameManager.instance.InitWithPlayer(p => { p.AddEvent(EventType.OnAfterHit, LastHit); });
         }
-        
+
         private void LastHit(EventParameters eventParameters)
         {
             if (!_isPlayerHit)
@@ -144,13 +142,10 @@ namespace GameStateSpace
                 TryOnWithCondition(StateCond.PlayerHit);
             }
 
-            if (_battleStateHitCoroutine != null)
-            {
-                GameManager.instance.StopCoroutineWrapper(_battleStateHitCoroutine);
-            }
+            if (_battleStateHitCoroutine != null) GameManager.instance.StopCoroutineWrapper(_battleStateHitCoroutine);
             _battleStateHitCoroutine = GameManager.instance.StartCoroutineWrapper(DelayLastHitForBattleState());
         }
-        
+
         private IEnumerator DelayLastHitForBattleState()
         {
             yield return new WaitForSeconds(Consts.BattleStateHitDelay);
@@ -162,10 +157,7 @@ namespace GameStateSpace
         }
 
         #endregion
-        
-        
-        #endregion
-        
-    }
 
+        #endregion
+    }
 }

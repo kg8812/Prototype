@@ -1,17 +1,17 @@
-
 namespace Apis
 {
     public class Weapon_Decorator : IWeaponStat
     {
-        public BonusStat BonusStat => decoratedWeapon.BonusStat + attachment.BonusStat;         
+        private readonly IWeaponStat attachment;
 
-        readonly IWeaponStat decoratedWeapon;
-        readonly IWeaponStat attachment;
+        private readonly IWeaponStat decoratedWeapon;
 
-        public Weapon_Decorator(IWeaponStat weapon,IWeaponStat attachment)
+        public Weapon_Decorator(IWeaponStat weapon, IWeaponStat attachment)
         {
             decoratedWeapon = weapon;
             this.attachment = attachment;
         }
+
+        public BonusStat BonusStat => decoratedWeapon.BonusStat + attachment.BonusStat;
     }
 }

@@ -2,22 +2,17 @@ using System;
 using Apis;
 using Default;
 using UnityEngine;
-using UnityEngine.Events;
 
-public class UIObject1 : MonoBehaviour,IOnInteract
+public class UIObject1 : MonoBehaviour, IOnInteract
 {
-    protected UI_Base ui;
-    [SerializeField] string uiName;
-    [SerializeField] UIType uiType;
+    [SerializeField] private string uiName;
+    [SerializeField] private UIType uiType;
 
-    public bool isOnceUse = false;
+    public bool isOnceUse;
 
     private bool isUsed;
+    protected UI_Base ui;
 
-    bool Check()
-    {
-        return !isOnceUse || (isOnceUse && !isUsed);
-    }
     private void Start()
     {
         InteractCheckEvent += Check;
@@ -29,5 +24,10 @@ public class UIObject1 : MonoBehaviour,IOnInteract
     {
         ui = GameManager.UI.CreateUI(uiName, uiType);
         isUsed = true;
+    }
+
+    private bool Check()
+    {
+        return !isOnceUse || (isOnceUse && !isUsed);
     }
 }

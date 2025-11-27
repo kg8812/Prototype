@@ -1,16 +1,15 @@
 ﻿namespace GameStateSpace
 {
-    public class InteractionState: GameState
+    public class InteractionState : GameState
     {
         public override void OnEnterState()
         {
-            
         }
 
         public override void OnExitState()
         {
-            
         }
+
         public override void KeyBoardControlling()
         {
             base.KeyBoardControlling();
@@ -21,7 +20,7 @@
         public override void GamePadControlling()
         {
             base.GamePadControlling();
-            
+
             GameManager.UiController?.GamePadControl();
             GameManager.DefaultController?.GamePadControl();
         }

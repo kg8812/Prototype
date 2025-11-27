@@ -29,36 +29,64 @@
 
 using System;
 
-namespace Spine {
-	/// <summary>Stores the current pose values for an Event.</summary>
-	public class Event {
-		internal readonly EventData data;
-		internal readonly float time;
-		internal int intValue;
-		internal float floatValue;
-		internal string stringValue;
-		internal float volume;
-		internal float balance;
+namespace Spine
+{
+    /// <summary>Stores the current pose values for an Event.</summary>
+    public class Event
+    {
+        internal readonly EventData data;
+        internal readonly float time;
+        internal float balance;
+        internal float floatValue;
+        internal int intValue;
+        internal string stringValue;
+        internal float volume;
 
-		public EventData Data { get { return data; } }
-		/// <summary>The animation time this event was keyed.</summary>
-		public float Time { get { return time; } }
+        public Event(float time, EventData data)
+        {
+            if (data == null) throw new ArgumentNullException("data", "data cannot be null.");
+            this.time = time;
+            this.data = data;
+        }
 
-		public int Int { get { return intValue; } set { intValue = value; } }
-		public float Float { get { return floatValue; } set { floatValue = value; } }
-		public string String { get { return stringValue; } set { stringValue = value; } }
+        public EventData Data => data;
 
-		public float Volume { get { return volume; } set { volume = value; } }
-		public float Balance { get { return balance; } set { balance = value; } }
+        /// <summary>The animation time this event was keyed.</summary>
+        public float Time => time;
 
-		public Event (float time, EventData data) {
-			if (data == null) throw new ArgumentNullException("data", "data cannot be null.");
-			this.time = time;
-			this.data = data;
-		}
+        public int Int
+        {
+            get => intValue;
+            set => intValue = value;
+        }
 
-		override public string ToString () {
-			return this.data.Name;
-		}
-	}
+        public float Float
+        {
+            get => floatValue;
+            set => floatValue = value;
+        }
+
+        public string String
+        {
+            get => stringValue;
+            set => stringValue = value;
+        }
+
+        public float Volume
+        {
+            get => volume;
+            set => volume = value;
+        }
+
+        public float Balance
+        {
+            get => balance;
+            set => balance = value;
+        }
+
+        public override string ToString()
+        {
+            return data.Name;
+        }
+    }
 }

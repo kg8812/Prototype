@@ -27,111 +27,128 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using Spine;
 using UnityEditor;
 using UnityEngine;
 
-namespace Spine.Unity.Editor {
+namespace Spine.Unity.Editor
+{
+    [CustomEditor(typeof(SkeletonAnimation))]
+    [CanEditMultipleObjects]
+    public class SkeletonAnimationInspector : SkeletonRendererInspector
+    {
+        private readonly GUIContent LoopLabel = new("Loop",
+            "Whether or not .AnimationName should loop. This only applies to the initial animation specified in the inspector, or any subsequent Animations played through .AnimationName. Animations set through state.SetAnimation are unaffected.");
 
-	[CustomEditor(typeof(SkeletonAnimation))]
-	[CanEditMultipleObjects]
-	public class SkeletonAnimationInspector : SkeletonRendererInspector {
-		protected SerializedProperty animationName, loop, timeScale, unscaledTime, autoReset;
-		protected bool wasAnimationParameterChanged = false;
-		readonly GUIContent LoopLabel = new GUIContent("Loop", "Whether or not .AnimationName should loop. This only applies to the initial animation specified in the inspector, or any subsequent Animations played through .AnimationName. Animations set through state.SetAnimation are unaffected.");
-		readonly GUIContent TimeScaleLabel = new GUIContent("Time Scale", "The rate at which animations progress over time. 1 means normal speed. 0.5 means 50% speed.");
-		readonly GUIContent UnscaledTimeLabel = new GUIContent("Unscaled Time",
-			"If enabled, AnimationState uses unscaled game time (Time.unscaledDeltaTime), " +
-				"running animations independent of e.g. game pause (Time.timeScale). " +
-				"Instance SkeletonAnimation.timeScale will still be applied.");
+        private readonly GUIContent TimeScaleLabel = new("Time Scale",
+            "The rate at which animations progress over time. 1 means normal speed. 0.5 means 50% speed.");
 
-		protected override void OnEnable () {
-			base.OnEnable();
-			animationName = serializedObject.FindProperty("_animationName");
-			loop = serializedObject.FindProperty("loop");
-			timeScale = serializedObject.FindProperty("timeScale");
-			unscaledTime = serializedObject.FindProperty("unscaledTime");
-		}
+        private readonly GUIContent UnscaledTimeLabel = new("Unscaled Time",
+            "If enabled, AnimationState uses unscaled game time (Time.unscaledDeltaTime), " +
+            "running animations independent of e.g. game pause (Time.timeScale). " +
+            "Instance SkeletonAnimation.timeScale will still be applied.");
 
-		protected override void DrawInspectorGUI (bool multi) {
-			base.DrawInspectorGUI(multi);
-			if (!TargetIsValid) return;
-			bool sameData = SpineInspectorUtility.TargetsUseSameData(serializedObject);
+        protected SerializedProperty animationName, loop, timeScale, unscaledTime, autoReset;
+        protected bool wasAnimationParameterChanged;
 
-			foreach (UnityEngine.Object o in targets)
-				TrySetAnimation(o as SkeletonAnimation);
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            animationName = serializedObject.FindProperty("_animationName");
+            loop = serializedObject.FindProperty("loop");
+            timeScale = serializedObject.FindProperty("timeScale");
+            unscaledTime = serializedObject.FindProperty("unscaledTime");
+        }
 
-			EditorGUILayout.Space();
-			if (!sameData) {
-				EditorGUILayout.DelayedTextField(animationName);
-			} else {
-				EditorGUI.BeginChangeCheck();
-				EditorGUILayout.PropertyField(animationName);
-				wasAnimationParameterChanged |= EditorGUI.EndChangeCheck(); // Value used in the next update.
-			}
+        protected override void DrawInspectorGUI(bool multi)
+        {
+            base.DrawInspectorGUI(multi);
+            if (!TargetIsValid) return;
+            var sameData = SpineInspectorUtility.TargetsUseSameData(serializedObject);
 
-			EditorGUI.BeginChangeCheck();
-			EditorGUILayout.PropertyField(loop, LoopLabel);
-			wasAnimationParameterChanged |= EditorGUI.EndChangeCheck(); // Value used in the next update.
-			EditorGUILayout.PropertyField(timeScale, TimeScaleLabel);
-			foreach (UnityEngine.Object o in targets) {
-				SkeletonAnimation component = o as SkeletonAnimation;
-				component.timeScale = Mathf.Max(component.timeScale, 0);
-			}
-			EditorGUILayout.PropertyField(unscaledTime, UnscaledTimeLabel);
+            foreach (var o in targets)
+                TrySetAnimation(o as SkeletonAnimation);
 
-			EditorGUILayout.Space();
-			SkeletonRootMotionParameter();
+            EditorGUILayout.Space();
+            if (!sameData)
+            {
+                EditorGUILayout.DelayedTextField(animationName);
+            }
+            else
+            {
+                EditorGUI.BeginChangeCheck();
+                EditorGUILayout.PropertyField(animationName);
+                wasAnimationParameterChanged |= EditorGUI.EndChangeCheck(); // Value used in the next update.
+            }
 
-			serializedObject.ApplyModifiedProperties();
-		}
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField(loop, LoopLabel);
+            wasAnimationParameterChanged |= EditorGUI.EndChangeCheck(); // Value used in the next update.
+            EditorGUILayout.PropertyField(timeScale, TimeScaleLabel);
+            foreach (var o in targets)
+            {
+                var component = o as SkeletonAnimation;
+                component.timeScale = Mathf.Max(component.timeScale, 0);
+            }
 
-		protected void TrySetAnimation (SkeletonAnimation skeletonAnimation) {
-			if (skeletonAnimation == null) return;
-			if (!skeletonAnimation.valid || skeletonAnimation.AnimationState == null)
-				return;
+            EditorGUILayout.PropertyField(unscaledTime, UnscaledTimeLabel);
 
-			TrackEntry current = skeletonAnimation.AnimationState.GetCurrent(0);
-			if (!isInspectingPrefab) {
-				string activeAnimation = (current != null) ? current.Animation.Name : "";
-				bool activeLoop = (current != null) ? current.Loop : false;
-				bool animationParameterChanged = this.wasAnimationParameterChanged &&
-					((activeAnimation != animationName.stringValue) || (activeLoop != loop.boolValue));
-				if (animationParameterChanged) {
-					this.wasAnimationParameterChanged = false;
-					Skeleton skeleton = skeletonAnimation.Skeleton;
-					AnimationState state = skeletonAnimation.AnimationState;
+            EditorGUILayout.Space();
+            SkeletonRootMotionParameter();
 
-					if (!Application.isPlaying) {
-						if (state != null) state.ClearTrack(0);
-						skeleton.SetToSetupPose();
-					}
+            serializedObject.ApplyModifiedProperties();
+        }
 
-					Spine.Animation animationToUse = skeleton.Data.FindAnimation(animationName.stringValue);
+        protected void TrySetAnimation(SkeletonAnimation skeletonAnimation)
+        {
+            if (skeletonAnimation == null) return;
+            if (!skeletonAnimation.valid || skeletonAnimation.AnimationState == null)
+                return;
 
-					if (!Application.isPlaying) {
-						if (animationToUse != null) {
-							skeletonAnimation.AnimationState.SetAnimation(0, animationToUse, loop.boolValue);
-						}
-						skeletonAnimation.Update(0);
-						skeletonAnimation.LateUpdate();
-						requireRepaint = true;
-					} else {
-						if (animationToUse != null)
-							state.SetAnimation(0, animationToUse, loop.boolValue);
-						else
-							state.ClearTrack(0);
-					}
-				}
+            var current = skeletonAnimation.AnimationState.GetCurrent(0);
+            if (!isInspectingPrefab)
+            {
+                var activeAnimation = current != null ? current.Animation.Name : "";
+                var activeLoop = current != null ? current.Loop : false;
+                var animationParameterChanged = wasAnimationParameterChanged &&
+                                                (activeAnimation != animationName.stringValue ||
+                                                 activeLoop != loop.boolValue);
+                if (animationParameterChanged)
+                {
+                    wasAnimationParameterChanged = false;
+                    var skeleton = skeletonAnimation.Skeleton;
+                    var state = skeletonAnimation.AnimationState;
 
-				// Reflect animationName serialized property in the inspector even if SetAnimation API was used.
-				if (Application.isPlaying) {
-					if (current != null && current.Animation != null) {
-						if (skeletonAnimation.AnimationName != animationName.stringValue)
-							animationName.stringValue = current.Animation.Name;
-					}
-				}
-			}
-		}
-	}
+                    if (!Application.isPlaying)
+                    {
+                        if (state != null) state.ClearTrack(0);
+                        skeleton.SetToSetupPose();
+                    }
+
+                    var animationToUse = skeleton.Data.FindAnimation(animationName.stringValue);
+
+                    if (!Application.isPlaying)
+                    {
+                        if (animationToUse != null)
+                            skeletonAnimation.AnimationState.SetAnimation(0, animationToUse, loop.boolValue);
+                        skeletonAnimation.Update(0);
+                        skeletonAnimation.LateUpdate();
+                        requireRepaint = true;
+                    }
+                    else
+                    {
+                        if (animationToUse != null)
+                            state.SetAnimation(0, animationToUse, loop.boolValue);
+                        else
+                            state.ClearTrack(0);
+                    }
+                }
+
+                // Reflect animationName serialized property in the inspector even if SetAnimation API was used.
+                if (Application.isPlaying)
+                    if (current != null && current.Animation != null)
+                        if (skeletonAnimation.AnimationName != animationName.stringValue)
+                            animationName.stringValue = current.Animation.Name;
+            }
+        }
+    }
 }

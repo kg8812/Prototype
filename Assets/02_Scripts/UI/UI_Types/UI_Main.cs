@@ -1,10 +1,9 @@
 ﻿using Apis;
 using Default;
-using UnityEngine;
 
 namespace UISpaces
 {
-    public class UI_Main: UI_Base
+    public class UI_Main : UI_Base
     {
         private bool mainUIShow;
 
@@ -15,7 +14,6 @@ namespace UISpaces
             {
                 mainUIShow = value;
                 ToggleCanvas(value, true);
-                    
             }
         }
 
@@ -34,10 +32,7 @@ namespace UISpaces
         protected override void Activated()
         {
             base.Activated();
-            if (!mainUIShow)
-            {
-                ToggleCanvas(false, true);
-            }
+            if (!mainUIShow) ToggleCanvas(false, true);
         }
     }
 }

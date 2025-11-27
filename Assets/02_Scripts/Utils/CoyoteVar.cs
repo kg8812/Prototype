@@ -1,23 +1,11 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class CoyoteVar<T>
 {
+    private readonly float _coyoteTime;
     private T _CurrentVal;
-    private float _coyoteTime;
     private Coroutine coroutine;
-
-    public T Value {
-        get {
-            return _CurrentVal;
-        }
-        set {
-            if(coroutine != null) GameManager.instance.StopCoroutineWrapper(coroutine);
-            coroutine = null;
-            _CurrentVal = value;
-        }
-    }
 
     public CoyoteVar(float coyoteTime = 0, T Val = default)
     {
@@ -26,22 +14,32 @@ public class CoyoteVar<T>
         coroutine = null;
     }
 
-    public void CoyoteSet(T value)
+    public T Value
     {
-        if(coroutine != null) GameManager.instance.StopCoroutineWrapper(coroutine);
-
-        coroutine = GameManager.instance.StartCoroutineWrapper(CoyoteCoroutine(value, _coyoteTime));
-
+        get => _CurrentVal;
+        set
+        {
+            if (coroutine != null) GameManager.instance.StopCoroutineWrapper(coroutine);
+            coroutine = null;
+            _CurrentVal = value;
+        }
     }
 
-    IEnumerator CoyoteCoroutine(T value, float time)
+    public void CoyoteSet(T value)
+    {
+        if (coroutine != null) GameManager.instance.StopCoroutineWrapper(coroutine);
+
+        coroutine = GameManager.instance.StartCoroutineWrapper(CoyoteCoroutine(value, _coyoteTime));
+    }
+
+    private IEnumerator CoyoteCoroutine(T value, float time)
     {
         yield return new WaitForSeconds(time);
         _CurrentVal = value;
         coroutine = null;
     }
 
-    public static implicit operator T (CoyoteVar<T> v)
+    public static implicit operator T(CoyoteVar<T> v)
     {
         return v.Value;
     }

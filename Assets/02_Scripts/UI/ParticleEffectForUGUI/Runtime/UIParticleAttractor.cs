@@ -21,29 +21,19 @@ namespace Coffee.UIExtensions
             UnscaledTime
         }
 
-        [SerializeField]
-        private ParticleSystem m_ParticleSystem;
+        [SerializeField] private ParticleSystem m_ParticleSystem;
 
-        [Range(0.1f, 10f)]
-        [SerializeField]
-        private float m_DestinationRadius = 1;
+        [Range(0.1f, 10f)] [SerializeField] private float m_DestinationRadius = 1;
 
-        [Range(0f, 0.95f)]
-        [SerializeField]
-        private float m_DelayRate;
+        [Range(0f, 0.95f)] [SerializeField] private float m_DelayRate;
 
-        [Range(0.001f, 100f)]
-        [SerializeField]
-        private float m_MaxSpeed = 1;
+        [Range(0.001f, 100f)] [SerializeField] private float m_MaxSpeed = 1;
 
-        [SerializeField]
-        private Movement m_Movement;
+        [SerializeField] private Movement m_Movement;
 
-        [SerializeField]
-        private UpdateMode m_UpdateMode;
+        [SerializeField] private UpdateMode m_UpdateMode;
 
-        [SerializeField]
-        private UnityEvent m_OnAttracted;
+        [SerializeField] private UnityEvent m_OnAttracted;
 
         private UIParticle _uiParticle;
 
@@ -84,7 +74,7 @@ namespace Coffee.UIExtensions
         }
 
         /// <summary>
-        /// The target ParticleSystem to attract.
+        ///     The target ParticleSystem to attract.
         /// </summary>
 #if UNITY_EDITOR
         public new ParticleSystem particleSystem
@@ -138,7 +128,6 @@ namespace Coffee.UIExtensions
                     particles[i] = p;
 
                     if (m_OnAttracted != null)
-                    {
                         try
                         {
                             m_OnAttracted.Invoke();
@@ -147,7 +136,6 @@ namespace Coffee.UIExtensions
                         {
                             Debug.LogException(e);
                         }
-                    }
 
                     continue;
                 }
@@ -177,10 +165,7 @@ namespace Coffee.UIExtensions
             var dstPos = attractorPos;
             var isLocalSpace = m_ParticleSystem.IsLocalSpace();
 
-            if (isLocalSpace)
-            {
-                dstPos = m_ParticleSystem.transform.InverseTransformPoint(dstPos);
-            }
+            if (isLocalSpace) dstPos = m_ParticleSystem.transform.InverseTransformPoint(dstPos);
 
             if (isUI)
             {
@@ -199,9 +184,7 @@ namespace Coffee.UIExtensions
 
 #if UNITY_EDITOR
                 if (!Application.isPlaying && !isLocalSpace)
-                {
                     dstPos += psPos - psPos.GetScaled(inverseScale, scale3d.Inverse());
-                }
 #endif
             }
 
@@ -245,18 +228,13 @@ namespace Coffee.UIExtensions
 #if UNITY_EDITOR
                 if (Application.isPlaying)
 #endif
-                {
                     Debug.LogError("No particle system attached to particle attractor script", this);
-                }
 
                 return;
             }
 
             _uiParticle = m_ParticleSystem.GetComponentInParent<UIParticle>(true);
-            if (_uiParticle && !_uiParticle.particles.Contains(m_ParticleSystem))
-            {
-                _uiParticle = null;
-            }
+            if (_uiParticle && !_uiParticle.particles.Contains(m_ParticleSystem)) _uiParticle = null;
         }
     }
 }

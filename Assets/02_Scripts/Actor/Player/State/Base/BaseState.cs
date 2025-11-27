@@ -1,23 +1,23 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace PlayerState
 {
     public abstract class BaseState : IState<Player>
     {
-        protected Player _player;
         // protected EPlayerState[] AbleStates;
         private List<EPlayerState> _AbleStates;
-        public virtual List<EPlayerState> AbleStates { 
-            get{
-                _AbleStates ??= new();
+        protected Player _player;
+
+        public virtual List<EPlayerState> AbleStates
+        {
+            get
+            {
+                _AbleStates ??= new List<EPlayerState>();
                 return _AbleStates;
-            } 
-            set{
-                _AbleStates = value;
             }
+            set => _AbleStates = value;
         }
+
         public virtual void OnEnter(Player t)
         {
             _player = t;
@@ -25,9 +25,9 @@ namespace PlayerState
             AbleStates.Clear();
 
             var states = NextState.Get(_player.CurrentState);
-            if(states != null) AbleStates.AddRange(states);
+            if (states != null) AbleStates.AddRange(states);
 
-            foreach (EPlayerState state in AbleStates)
+            foreach (var state in AbleStates)
                 _player.SetAbleState(state);
 
             _player.StateEvent.ExecuteEventOnce(EventType.OnAnyState, null);
@@ -35,11 +35,11 @@ namespace PlayerState
 
         public virtual void FixedUpdate()
         {
-            bool isStick = _player.ActorMovement.IsStick;
-            if(_player.onAir)
-            {   
-                if(!_player.IsFixGravity) _player.GravityOn();
-                if(isStick) 
+            var isStick = _player.ActorMovement.IsStick;
+            if (_player.onAir)
+            {
+                if (!_player.IsFixGravity) _player.GravityOn();
+                if (isStick)
                 {
                     /* 착지 */
                     _player.StateEvent.ExecuteEventOnce(EventType.OnLanding, null);
@@ -47,11 +47,11 @@ namespace PlayerState
                     _player.CoyoteCurrentJump.Value = 0;
                     _player.AnimController.SetBool(EAnimationBool.OnAir, false);
                 }
-            }   
+            }
             else
             {
-                if(!_player.IsFixGravity) _player.GravityOff();
-                if(!isStick)
+                if (!_player.IsFixGravity) _player.GravityOff();
+                if (!isStick)
                 {
                     /* 땅 -> 공중 */
                     _player.StateEvent.ExecuteEventOnce(EventType.OnAirEnter, null);
@@ -59,25 +59,24 @@ namespace PlayerState
                     _player.CoyoteCurrentJump.CoyoteSet(1);
                     _player.AnimController.SetBool(EAnimationBool.OnAir, true);
                 }
-            }         
+            }
         }
 
         public virtual void OnExit()
         {
-            foreach (EPlayerState state in AbleStates)
+            foreach (var state in AbleStates)
                 _player.SetAbleState(state, false);
             _player.SetAbleState(_player.CurrentState, false);
         }
 
         public virtual void Update()
         {
-            
         }
 
         public void AddAbleState(EPlayerState state)
         {
             AbleStates.Add(state);
-            _player.SetAbleState(state, true);
+            _player.SetAbleState(state);
         }
 
         public void RemoveAbleState(EPlayerState state)

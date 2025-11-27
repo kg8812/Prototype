@@ -17,8 +17,27 @@ namespace Apis.StageObj
 
         private readonly int AnimBooleanL = Animator.StringToHash("toLeft");
 
-        private readonly WaitForSeconds leverWait = new WaitForSeconds(1f);
-        bool isInteractable;
+        private readonly WaitForSeconds leverWait = new(1f);
+        private bool isInteractable;
+
+        [SerializeField] private bool isMultiLever;
+
+        [SerializeField] private SpriteRenderer spr;
+
+        [ShowIf("isMultiLever")] [SerializeField]
+        private Lever multiLever;
+
+        [SerializeField] private bool isInitialRight;
+        [SerializeField] private bool canInteractOneSide;
+
+        [ShowIf("canInteractOneSide")] [SerializeField]
+        private bool interactInRight;
+
+        private bool _curRight;
+        private Animator _animator;
+        private Collider2D _interactionCol;
+
+        public List<TriggeredObj> triggeredObj;
 
         public bool IsInteractable
         {
@@ -29,25 +48,6 @@ namespace Apis.StageObj
                 isInteractable = value;
             }
         }
-
-        [SerializeField] private bool isMultiLever;
-
-        [SerializeField] private SpriteRenderer spr;
-
-        [ShowIf("isMultiLever", true)] [SerializeField]
-        private Lever multiLever;
-
-        [SerializeField] private bool isInitialRight;
-        [SerializeField] private bool canInteractOneSide;
-
-        [ShowIf("canInteractOneSide", true)] [SerializeField]
-        private bool interactInRight;
-
-        public List<TriggeredObj> triggeredObj;
-
-        private bool _curRight;
-        private Animator _animator;
-        private Collider2D _interactionCol;
 
 
         protected virtual void Awake()
@@ -63,47 +63,36 @@ namespace Apis.StageObj
             MoveToForce(isInitialRight);
         }
 
+        public Func<bool> InteractCheckEvent { get; set; }
+
+        public virtual void OnInteract()
+        {
+            if (IsInteractable) MoveLever();
+        }
+
         public void MoveTo(bool isRight)
         {
             IsInteractable = false;
             _curRight = isRight;
             _animator.SetTrigger(_curRight ? AnimBooleanR : AnimBooleanL);
-            if (!canInteractOneSide || (_curRight == interactInRight))
-            {
-                StartCoroutine(LeverMoveEnded());
-            }
+            if (!canInteractOneSide || _curRight == interactInRight) StartCoroutine(LeverMoveEnded());
         }
 
         public void MoveToForce(bool isRight)
         {
             _curRight = isRight;
-            IsInteractable = !canInteractOneSide || (_curRight == interactInRight);
-        }
-
-        public Func<bool> InteractCheckEvent { get; set; }
-
-        public virtual void OnInteract()
-        {
-            if (IsInteractable)
-            {
-               MoveLever();
-            }
+            IsInteractable = !canInteractOneSide || _curRight == interactInRight;
         }
 
         protected void MoveLever()
         {
             MoveTo(!_curRight);
 
-            foreach (var x in triggeredObj)
-            {
-                x.ChangeTrigger(_curRight ? 1 : 0);
-            }
+            foreach (var x in triggeredObj) x.ChangeTrigger(_curRight ? 1 : 0);
 
-            if (isMultiLever)
-            {
-                multiLever.MoveTo(_curRight);
-            }
+            if (isMultiLever) multiLever.MoveTo(_curRight);
         }
+
         /**
          * for animation
          */

@@ -27,63 +27,76 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using System;
 using UnityEngine;
 
-namespace Spine.Unity {
+namespace Spine.Unity
+{
+    public class RegionlessAttachmentLoader : AttachmentLoader
+    {
+        private static AtlasRegion emptyRegion;
 
-	public class RegionlessAttachmentLoader : AttachmentLoader {
+        private static AtlasRegion EmptyRegion
+        {
+            get
+            {
+                if (emptyRegion == null)
+                {
+                    var hiddenShader = Shader.Find("Spine/Special/HiddenPass");
+                    if (hiddenShader == null)
+                        Debug.LogError("Shader \"Spine/Special/HiddenPass\" not found while loading SkeletonDataAsset" +
+                                       " with 0 Atlas Assets. Please add this shader to Project Settings - Graphics - Always" +
+                                       " Included Shaders, or make sure your SkeletonDataAssets all have an AtlasAsset assigned.");
+                    emptyRegion = new AtlasRegion
+                    {
+                        name = "Empty AtlasRegion",
+                        page = new AtlasPage
+                        {
+                            name = "Empty AtlasPage",
+                            rendererObject = new Material(hiddenShader) { name = "NoRender Material" }
+                        }
+                    };
+                }
 
-		static AtlasRegion emptyRegion;
-		static AtlasRegion EmptyRegion {
-			get {
-				if (emptyRegion == null) {
-					Shader hiddenShader = Shader.Find("Spine/Special/HiddenPass");
-					if (hiddenShader == null) {
-						Debug.LogError("Shader \"Spine/Special/HiddenPass\" not found while loading SkeletonDataAsset" +
-							" with 0 Atlas Assets. Please add this shader to Project Settings - Graphics - Always" +
-							" Included Shaders, or make sure your SkeletonDataAssets all have an AtlasAsset assigned.");
-					}
-					emptyRegion = new AtlasRegion {
-						name = "Empty AtlasRegion",
-						page = new AtlasPage {
-							name = "Empty AtlasPage",
-							rendererObject = new Material(hiddenShader) { name = "NoRender Material" }
-						}
-					};
-				}
-				return emptyRegion;
-			}
-		}
+                return emptyRegion;
+            }
+        }
 
-		public RegionAttachment NewRegionAttachment (Skin skin, string name, string path, Sequence sequence) {
-			RegionAttachment attachment = new RegionAttachment(name) {
-				Region = EmptyRegion
-			};
-			return attachment;
-		}
+        public RegionAttachment NewRegionAttachment(Skin skin, string name, string path, Sequence sequence)
+        {
+            var attachment = new RegionAttachment(name)
+            {
+                Region = EmptyRegion
+            };
+            return attachment;
+        }
 
-		public MeshAttachment NewMeshAttachment (Skin skin, string name, string path, Sequence sequence) {
-			MeshAttachment attachment = new MeshAttachment(name) {
-				Region = EmptyRegion
-			};
-			return attachment;
-		}
+        public MeshAttachment NewMeshAttachment(Skin skin, string name, string path, Sequence sequence)
+        {
+            var attachment = new MeshAttachment(name)
+            {
+                Region = EmptyRegion
+            };
+            return attachment;
+        }
 
-		public BoundingBoxAttachment NewBoundingBoxAttachment (Skin skin, string name) {
-			return new BoundingBoxAttachment(name);
-		}
+        public BoundingBoxAttachment NewBoundingBoxAttachment(Skin skin, string name)
+        {
+            return new BoundingBoxAttachment(name);
+        }
 
-		public PathAttachment NewPathAttachment (Skin skin, string name) {
-			return new PathAttachment(name);
-		}
+        public PathAttachment NewPathAttachment(Skin skin, string name)
+        {
+            return new PathAttachment(name);
+        }
 
-		public PointAttachment NewPointAttachment (Skin skin, string name) {
-			return new PointAttachment(name);
-		}
+        public PointAttachment NewPointAttachment(Skin skin, string name)
+        {
+            return new PointAttachment(name);
+        }
 
-		public ClippingAttachment NewClippingAttachment (Skin skin, string name) {
-			return new ClippingAttachment(name);
-		}
-	}
+        public ClippingAttachment NewClippingAttachment(Skin skin, string name)
+        {
+            return new ClippingAttachment(name);
+        }
+    }
 }

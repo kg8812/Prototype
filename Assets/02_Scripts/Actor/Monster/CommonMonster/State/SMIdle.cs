@@ -1,11 +1,9 @@
-﻿using UnityEngine;
-
-namespace Apis.CommonMonster2
+﻿namespace Apis.CommonMonster2
 {
-    public class SMIdle: ICommonMonsterState<CommonMonster2>
+    public class SMIdle : ICommonMonsterState<CommonMonster2>
     {
         private CommonMonster2 _cM;
-        
+
         public void OnEnter(CommonMonster2 m)
         {
             _cM = m;
@@ -19,17 +17,14 @@ namespace Apis.CommonMonster2
 
         public void FixedUpdate()
         {
-            
         }
 
         public void OnExit()
         {
-            
         }
 
         public void OnCancel()
         {
-            
         }
     }
 }

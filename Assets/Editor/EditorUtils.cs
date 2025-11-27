@@ -5,20 +5,20 @@ using UnityEngine;
 public static class UIExtensions
 {
     // UI의 앵커를 현재 사이즈에 맞춰서 조절하는 기능입니다.
-    [MenuItem ("CONTEXT/RectTransform/Set Anchor by corners")]
-    static void SetAnchor (MenuCommand command) 
+    [MenuItem("CONTEXT/RectTransform/Set Anchor by corners")]
+    private static void SetAnchor(MenuCommand command)
     {
         var rt = command.context.GetComponent<RectTransform>();
         var rtParent = command.context.GetComponent<RectTransform>().parent.GetComponent<RectTransform>();
 
-        Vector3[] rtCorners = new Vector3[4];  
-        Vector3[] rtParentCorners = new Vector3[4];  
+        var rtCorners = new Vector3[4];
+        var rtParentCorners = new Vector3[4];
         rt.GetWorldCorners(rtCorners);
         rtParent.GetWorldCorners(rtParentCorners);
 
         var rtP1 = rtCorners[0];
         var rtP2 = rtCorners[2];
-        
+
         var rtParentP1 = rtParentCorners[0];
         var rtParentP2 = rtParentCorners[2];
 
@@ -32,7 +32,7 @@ public static class UIExtensions
 
         rt.anchorMin = min;
         rt.anchorMax = max;
-        
+
         rt.sizeDelta = Vector3.zero;
         rt.anchoredPosition = Vector2.zero;
     }

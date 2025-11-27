@@ -12,7 +12,7 @@ namespace Apis
         public Image[] uis;
         public TextMeshProUGUI[] texts;
 
-        private float duration = 0.6f;
+        private readonly float duration = 0.6f;
 
         private void Start()
         {
@@ -23,7 +23,7 @@ namespace Apis
         {
             uis[id].DOFade(1, duration);
         }
-        
+
         public void ShowKeyUIText(int id)
         {
             texts[id].DOFade(1, duration);

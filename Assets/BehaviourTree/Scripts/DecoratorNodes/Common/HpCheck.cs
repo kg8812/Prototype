@@ -1,28 +1,29 @@
-
 namespace Apis.BehaviourTreeTool
 {
     public class HpCheck : CommonDecoratorNode
     {
-        public float hpPercent;
         public enum UpOrDown
         {
-            Up,Down
-        };
+            Up,
+            Down
+        }
+
+        public float hpPercent;
         public UpOrDown upOrDown;
 
         public override void OnStart()
-        {          
+        {
         }
-    
+
         public override void OnStop()
         {
         }
-    
+
         public override State OnUpdate()
         {
-            float hp = _actor.CurHp / _actor.MaxHp;
+            var hp = _actor.CurHp / _actor.MaxHp;
 
-            switch(upOrDown)
+            switch (upOrDown)
             {
                 case UpOrDown.Up:
                     if (hp > hpPercent / 100f) return child.Update();
@@ -31,11 +32,13 @@ namespace Apis.BehaviourTreeTool
                     if (hp < hpPercent / 100f) return child.Update();
                     break;
             }
+
             return State.Failure;
         }
+
         public override bool Check()
         {
-            float hp = _actor.CurHp / _actor.MaxHp;
+            var hp = _actor.CurHp / _actor.MaxHp;
 
             switch (upOrDown)
             {
@@ -46,6 +49,7 @@ namespace Apis.BehaviourTreeTool
                     if (hp < hpPercent / 100f) return CheckChild;
                     break;
             }
+
             return false;
         }
     }

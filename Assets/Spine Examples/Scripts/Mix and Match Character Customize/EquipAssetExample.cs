@@ -27,15 +27,15 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	public class EquipAssetExample : ScriptableObject {
-		public EquipSystemExample.EquipType equipType;
-		public Sprite sprite;
-		public string description;
-		public int yourStats;
-	}
+namespace Spine.Unity.Examples
+{
+    public class EquipAssetExample : ScriptableObject
+    {
+        public EquipSystemExample.EquipType equipType;
+        public Sprite sprite;
+        public string description;
+        public int yourStats;
+    }
 }

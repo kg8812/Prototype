@@ -1,5 +1,4 @@
 ﻿using System;
-using Apis;
 using UnityEngine;
 
 namespace Apis
@@ -12,10 +11,12 @@ namespace Apis
         public Vector3 offset;
         public AttackObject obj;
     }
-    
+
     public enum TimeType
     {
-        Immediately, Periodically, Randomly
+        Immediately,
+        Periodically,
+        Randomly
     }
 
     public enum ProjectileInitialVelocityType

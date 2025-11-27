@@ -35,110 +35,115 @@
 #define NEWPLAYMODECALLBACKS
 #endif
 
+using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-namespace Spine.Unity.Editor {
-
-	public partial class SpineEditorUtilities {
-		public static class DataReloadHandler {
-
-			internal static Dictionary<int, string> savedSkeletonDataAssetAtSKeletonGraphicID = new Dictionary<int, string>();
+namespace Spine.Unity.Editor
+{
+    public partial class SpineEditorUtilities
+    {
+        public static class DataReloadHandler
+        {
+            internal static Dictionary<int, string> savedSkeletonDataAssetAtSKeletonGraphicID = new();
 
 #if NEWPLAYMODECALLBACKS
-			internal static void OnPlaymodeStateChanged (PlayModeStateChange stateChange) {
+            internal static void OnPlaymodeStateChanged(PlayModeStateChange stateChange)
+            {
 #else
 			internal static void OnPlaymodeStateChanged () {
 #endif
-				ReloadAllActiveSkeletonsEditMode();
-			}
+                ReloadAllActiveSkeletonsEditMode();
+            }
 
-			public static void ReloadAllActiveSkeletonsEditMode () {
-				if (!Preferences.reloadAfterPlayMode) return;
-				if (EditorApplication.isPaused) return;
-				if (EditorApplication.isPlaying) return;
-				if (EditorApplication.isCompiling) return;
-				if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+            public static void ReloadAllActiveSkeletonsEditMode()
+            {
+                if (!Preferences.reloadAfterPlayMode) return;
+                if (EditorApplication.isPaused) return;
+                if (EditorApplication.isPlaying) return;
+                if (EditorApplication.isCompiling) return;
+                if (EditorApplication.isPlayingOrWillChangePlaymode) return;
 
-				HashSet<SkeletonDataAsset> skeletonDataAssetsToReload = new HashSet<SkeletonDataAsset>();
+                var skeletonDataAssetsToReload = new HashSet<SkeletonDataAsset>();
 
-				SkeletonRenderer[] activeSkeletonRenderers = GameObject.FindObjectsOfType<SkeletonRenderer>();
-				foreach (SkeletonRenderer sr in activeSkeletonRenderers) {
-					SkeletonDataAsset skeletonDataAsset = sr.skeletonDataAsset;
-					if (skeletonDataAsset != null) skeletonDataAssetsToReload.Add(skeletonDataAsset);
-				}
+                var activeSkeletonRenderers = GameObject.FindObjectsOfType<SkeletonRenderer>();
+                foreach (var sr in activeSkeletonRenderers)
+                {
+                    var skeletonDataAsset = sr.skeletonDataAsset;
+                    if (skeletonDataAsset != null) skeletonDataAssetsToReload.Add(skeletonDataAsset);
+                }
 
-				// Under some circumstances (e.g. on first import) SkeletonGraphic objects
-				// have their skeletonGraphic.skeletonDataAsset reference corrupted
-				// by the instance of the ScriptableObject being destroyed but still assigned.
-				// Here we save the skeletonGraphic.skeletonDataAsset asset path in order
-				// to restore it later.
-				SkeletonGraphic[] activeSkeletonGraphics = GameObject.FindObjectsOfType<SkeletonGraphic>();
-				foreach (SkeletonGraphic skeletonGraphic in activeSkeletonGraphics) {
-					SkeletonDataAsset skeletonDataAsset = skeletonGraphic.skeletonDataAsset;
-					if (skeletonDataAsset != null) {
-						string assetPath = AssetDatabase.GetAssetPath(skeletonDataAsset);
-						int sgID = skeletonGraphic.GetInstanceID();
-						savedSkeletonDataAssetAtSKeletonGraphicID[sgID] = assetPath;
-						skeletonDataAssetsToReload.Add(skeletonDataAsset);
-					}
-				}
+                // Under some circumstances (e.g. on first import) SkeletonGraphic objects
+                // have their skeletonGraphic.skeletonDataAsset reference corrupted
+                // by the instance of the ScriptableObject being destroyed but still assigned.
+                // Here we save the skeletonGraphic.skeletonDataAsset asset path in order
+                // to restore it later.
+                var activeSkeletonGraphics = GameObject.FindObjectsOfType<SkeletonGraphic>();
+                foreach (var skeletonGraphic in activeSkeletonGraphics)
+                {
+                    var skeletonDataAsset = skeletonGraphic.skeletonDataAsset;
+                    if (skeletonDataAsset != null)
+                    {
+                        var assetPath = AssetDatabase.GetAssetPath(skeletonDataAsset);
+                        var sgID = skeletonGraphic.GetInstanceID();
+                        savedSkeletonDataAssetAtSKeletonGraphicID[sgID] = assetPath;
+                        skeletonDataAssetsToReload.Add(skeletonDataAsset);
+                    }
+                }
 
-				foreach (SkeletonDataAsset skeletonDataAsset in skeletonDataAssetsToReload) {
-					ReloadSkeletonDataAsset(skeletonDataAsset, false);
-				}
+                foreach (var skeletonDataAsset in skeletonDataAssetsToReload)
+                    ReloadSkeletonDataAsset(skeletonDataAsset, false);
 
-				foreach (SkeletonRenderer skeletonRenderer in activeSkeletonRenderers)
-					skeletonRenderer.Initialize(true);
-				foreach (SkeletonGraphic skeletonGraphic in activeSkeletonGraphics)
-					skeletonGraphic.Initialize(true);
-			}
+                foreach (var skeletonRenderer in activeSkeletonRenderers)
+                    skeletonRenderer.Initialize(true);
+                foreach (var skeletonGraphic in activeSkeletonGraphics)
+                    skeletonGraphic.Initialize(true);
+            }
 
-			public static void ReloadSceneSkeletonComponents (SkeletonDataAsset skeletonDataAsset) {
-				if (EditorApplication.isPaused) return;
-				if (EditorApplication.isPlaying) return;
-				if (EditorApplication.isCompiling) return;
-				if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+            public static void ReloadSceneSkeletonComponents(SkeletonDataAsset skeletonDataAsset)
+            {
+                if (EditorApplication.isPaused) return;
+                if (EditorApplication.isPlaying) return;
+                if (EditorApplication.isCompiling) return;
+                if (EditorApplication.isPlayingOrWillChangePlaymode) return;
 
-				SkeletonRenderer[] activeSkeletonRenderers = GameObject.FindObjectsOfType<SkeletonRenderer>();
-				foreach (SkeletonRenderer renderer in activeSkeletonRenderers) {
-					if (renderer.isActiveAndEnabled && renderer.skeletonDataAsset == skeletonDataAsset) renderer.Initialize(true);
-				}
+                var activeSkeletonRenderers = GameObject.FindObjectsOfType<SkeletonRenderer>();
+                foreach (var renderer in activeSkeletonRenderers)
+                    if (renderer.isActiveAndEnabled && renderer.skeletonDataAsset == skeletonDataAsset)
+                        renderer.Initialize(true);
 
-				SkeletonGraphic[] activeSkeletonGraphics = GameObject.FindObjectsOfType<SkeletonGraphic>();
-				foreach (SkeletonGraphic graphic in activeSkeletonGraphics) {
-					if (graphic.isActiveAndEnabled && graphic.skeletonDataAsset == skeletonDataAsset)
-						graphic.Initialize(true);
-				}
-			}
+                var activeSkeletonGraphics = GameObject.FindObjectsOfType<SkeletonGraphic>();
+                foreach (var graphic in activeSkeletonGraphics)
+                    if (graphic.isActiveAndEnabled && graphic.skeletonDataAsset == skeletonDataAsset)
+                        graphic.Initialize(true);
+            }
 
-			public static void ClearAnimationReferenceAssets (SkeletonDataAsset skeletonDataAsset) {
-				ForEachAnimationReferenceAsset(skeletonDataAsset, (referenceAsset) => referenceAsset.Clear());
-			}
+            public static void ClearAnimationReferenceAssets(SkeletonDataAsset skeletonDataAsset)
+            {
+                ForEachAnimationReferenceAsset(skeletonDataAsset, referenceAsset => referenceAsset.Clear());
+            }
 
-			public static void ReloadAnimationReferenceAssets (SkeletonDataAsset skeletonDataAsset) {
-				ForEachAnimationReferenceAsset(skeletonDataAsset, (referenceAsset) => referenceAsset.Initialize());
-			}
+            public static void ReloadAnimationReferenceAssets(SkeletonDataAsset skeletonDataAsset)
+            {
+                ForEachAnimationReferenceAsset(skeletonDataAsset, referenceAsset => referenceAsset.Initialize());
+            }
 
-			private static void ForEachAnimationReferenceAsset (SkeletonDataAsset skeletonDataAsset,
-				System.Action<AnimationReferenceAsset> func) {
-
-				string[] guids = UnityEditor.AssetDatabase.FindAssets("t:AnimationReferenceAsset");
-				foreach (string guid in guids) {
-					string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
-					if (!string.IsNullOrEmpty(path)) {
-						AnimationReferenceAsset referenceAsset = UnityEditor.AssetDatabase.LoadAssetAtPath<AnimationReferenceAsset>(path);
-						if (referenceAsset.SkeletonDataAsset == skeletonDataAsset)
-							func(referenceAsset);
-					}
-				}
-			}
-		}
-	}
+            private static void ForEachAnimationReferenceAsset(SkeletonDataAsset skeletonDataAsset,
+                Action<AnimationReferenceAsset> func)
+            {
+                var guids = AssetDatabase.FindAssets("t:AnimationReferenceAsset");
+                foreach (var guid in guids)
+                {
+                    var path = AssetDatabase.GUIDToAssetPath(guid);
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        var referenceAsset = AssetDatabase.LoadAssetAtPath<AnimationReferenceAsset>(path);
+                        if (referenceAsset.SkeletonDataAsset == skeletonDataAsset)
+                            func(referenceAsset);
+                    }
+                }
+            }
+        }
+    }
 }

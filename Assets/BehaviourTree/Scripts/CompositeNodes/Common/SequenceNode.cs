@@ -1,13 +1,11 @@
-
 namespace Apis.BehaviourTreeTool
 {
     public class SequenceNode : CommonCompositeNode
     {
-        int current;
-        
+        private int current;
+
         public override void OnStart()
         {
-
             base.OnStart();
             current = 0;
         }
@@ -22,7 +20,7 @@ namespace Apis.BehaviourTreeTool
             {
                 var child = children[current];
 
-                
+
                 switch (child.Update())
                 {
                     case State.Success:
@@ -34,14 +32,10 @@ namespace Apis.BehaviourTreeTool
                         return State.Running;
                 }
             }
-            if(current >= children.Count)
-            {
-                return State.Success;
-            }
-            else
-            {
-                return State.Running;
-            }
+
+            if (current >= children.Count) return State.Success;
+
+            return State.Running;
         }
     }
 }

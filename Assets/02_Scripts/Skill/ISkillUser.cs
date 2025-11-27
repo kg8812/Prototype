@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace Apis
 {
@@ -9,11 +8,13 @@ namespace Apis
         public ActiveSkill curSkill { get; set; }
         public ActiveSkill ActiveSkill { get; }
         public List<SkillAttachment> ActiveAttachments { get; }
+
         public void AddActiveSkillAttachment(SkillAttachment attachment)
         {
             ActiveAttachments.Add(attachment);
             ActiveSkill?.Decorate();
         }
+
         public void RemoveActiveSkillAttachment(SkillAttachment attachment)
         {
             ActiveAttachments.Remove(attachment);
@@ -24,7 +25,7 @@ namespace Apis
     public interface IPassiveSkillUser : IMonoBehaviour
     {
         // 패시브 스킬 사용자
-        public PassiveSkill PassiveSkill { get;}
+        public PassiveSkill PassiveSkill { get; }
     }
 
     public interface IWeaponSkillUser : IMonoBehaviour
@@ -37,6 +38,7 @@ namespace Apis
             WeaponSkillAttachments.Add(attachment);
             MagicSkill?.Decorate();
         }
+
         public void RemoveWeaponSkillAttachment(SkillAttachment attachment)
         {
             WeaponSkillAttachments.Remove(attachment);

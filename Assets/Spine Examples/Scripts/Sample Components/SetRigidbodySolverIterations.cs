@@ -29,25 +29,24 @@
 
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-
+namespace Spine.Unity.Examples
+{
 	/// <summary>
-	/// This component is intended to increase the physics solver iteration count
-	/// for Rigidbody Joint setups which would otherwise be too unstable.
-	///
-	/// To use this example component, add it to a GameObject which is parent of
-	/// one or more Rigidbody instances. The physics setting "solver iteration count"
-	/// will be overwritten by the provided value.
+	///     This component is intended to increase the physics solver iteration count
+	///     for Rigidbody Joint setups which would otherwise be too unstable.
+	///     To use this example component, add it to a GameObject which is parent of
+	///     one or more Rigidbody instances. The physics setting "solver iteration count"
+	///     will be overwritten by the provided value.
 	/// </summary>
 	[DisallowMultipleComponent]
-	public class SetRigidbodySolverIterations : MonoBehaviour {
-		public int solverIterations = 30;
+    public class SetRigidbodySolverIterations : MonoBehaviour
+    {
+        public int solverIterations = 30;
 
-		void Awake () {
-			Rigidbody[] rigidbodies = this.GetComponentsInChildren<Rigidbody>();
-			foreach (Rigidbody rigidbody in rigidbodies) {
-				rigidbody.solverIterations = solverIterations;
-			}
-		}
-	}
+        private void Awake()
+        {
+            var rigidbodies = GetComponentsInChildren<Rigidbody>();
+            foreach (var rigidbody in rigidbodies) rigidbody.solverIterations = solverIterations;
+        }
+    }
 }

@@ -1,14 +1,36 @@
-using System.Collections;
-using System.Collections.Generic;
-using Apis;
+using Command;
 using UnityEngine;
 
-namespace PlayerState {
+namespace PlayerState
+{
     public class Attack : EventState, IAnimate
     {
-        public override EPlayerState NextState { get => EPlayerState.Idle; set {} }
+        private bool escapeFlag;
 
-        private bool escapeFlag;    
+        public override EPlayerState NextState
+        {
+            get => EPlayerState.Idle;
+            set { }
+        }
+
+        public void OnEnterAnimate()
+        {
+            if (_player.PressingDir != 0)
+                _player.AnimController.ActivateLeg();
+            else
+                _player.AnimController.DeactivateLeg();
+
+            if (_player.weaponAtkInfo.atkCombo == 0)
+            {
+                _player.AnimController.ResetTrigger(EAnimationTrigger.Attack);
+                _player.AnimController.Trigger(EAnimationTrigger.AttackInit);
+            }
+        }
+
+        public void OnExitAnimate()
+        {
+        }
+
         public override void OnEnter(Player t)
         {
             escapeFlag = false;
@@ -24,8 +46,8 @@ namespace PlayerState {
             // TODO: AttackEvent 작업 완료 후 삭제
             // if(_player.PressingDir != 0)
             //     _player.Step(_player.Direction);
-            
-            _player.ExecuteEvent(EventType.OnAttackStateEnter,null);
+
+            _player.ExecuteEvent(EventType.OnAttackStateEnter, null);
 
             _player.Attack();
 
@@ -37,8 +59,7 @@ namespace PlayerState {
 
             _player.StateEvent.AddEvent(EventType.OnEventState, Cancel);
 
-            _player.Controller.SetCommandState(Command.ECommandType.Attack);
-
+            _player.Controller.SetCommandState(ECommandType.Attack);
         }
 
         public override void OnExit()
@@ -53,44 +74,27 @@ namespace PlayerState {
 
             _player.OnAttack = false;
 
-            _player.Controller.SetCommandState(Command.ECommandType.None);
+            _player.Controller.SetCommandState(ECommandType.None);
         }
+
         public override bool EscapeCondition()
         {
             return escapeFlag;
         }
 
-        private void Escape(EventParameters e) => escapeFlag = true;
+        private void Escape(EventParameters e)
+        {
+            escapeFlag = true;
+        }
 
-        private void Cancel(EventParameters e){
-            var currentState  =_player.GetState();
+        private void Cancel(EventParameters e)
+        {
+            var currentState = _player.GetState();
             Debug.Log("Cancel");
 
             _player.SetState(EPlayerState.Idle);
 
             _player.ResetGravity();
-        } 
-
-        public void OnEnterAnimate()
-        {
-            if(_player.PressingDir != 0)
-            {
-                _player.AnimController.ActivateLeg();
-            }
-            else
-            {
-                _player.AnimController.DeactivateLeg();
-            }
-
-            if(_player.weaponAtkInfo.atkCombo == 0) 
-            {
-                _player.AnimController.ResetTrigger(EAnimationTrigger.Attack);
-                _player.AnimController.Trigger(EAnimationTrigger.AttackInit);
-            }
-        }
-
-        public void OnExitAnimate()
-        {
         }
     }
 }

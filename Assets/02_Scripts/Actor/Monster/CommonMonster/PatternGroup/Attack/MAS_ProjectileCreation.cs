@@ -1,11 +1,12 @@
-﻿using Apis;
+﻿using System;
+using Default;
 using UnityEngine;
 
 namespace Apis.CommonMonster2
 {
     [CreateAssetMenu(fileName = "New MAS_ProjectileCreation",
         menuName = "Scriptable/Monster/Attack/MAS_ProjectileCreation")]
-    [System.Serializable]
+    [Serializable]
     public class MAS_ProjectileCreation : MAS_AttackObjectCreation
     {
         public ProjectileInitialVelocityType initVecType;
@@ -24,10 +25,12 @@ namespace Apis.CommonMonster2
 
         protected virtual void SetVelocityToPlayer(Projectile createdProj)
         {
-            float initPower = createdProj.firstVelocity.magnitude;
-            Debug.Log($"set vel to player{(GameManager.instance.ControllingEntity.Position - createdProj.transform.position).normalized * initPower}");
+            var initPower = createdProj.firstVelocity.magnitude;
+            Debug.Log(
+                $"set vel to player{(GameManager.instance.ControllingEntity.Position - createdProj.transform.position).normalized * initPower}");
             createdProj.firstVelocity =
-                (GameManager.instance.ControllingEntity.Position - createdProj.transform.position).normalized * initPower;
+                (GameManager.instance.ControllingEntity.Position - createdProj.transform.position).normalized *
+                initPower;
         }
 
 
@@ -48,18 +51,15 @@ namespace Apis.CommonMonster2
         protected virtual void SetPosition(Projectile createdProj, AttackObjectData atkData)
         {
             if (atkData.transformName != "")
-            {
                 // TODO 미리 commonMonster에 position 리스트 만들어두고 id 방식으로 전환
-                createdProj.transform.position = Default.Utils.FindChild<Transform>(_monster.gameObject, atkData.transformName, true).position;
-            }
+                createdProj.transform.position =
+                    Utils.FindChild<Transform>(_monster.gameObject, atkData.transformName, true).position;
             else
-            {
                 createdProj.transform.position = _monster.Position +
                                                  new Vector3(atkData.isConsiderDirection
-                                                     ? (atkData.offset.x *
-                                                        (_monster.Direction == EActorDirection.Right ? 1 : -1))
+                                                     ? atkData.offset.x *
+                                                       (_monster.Direction == EActorDirection.Right ? 1 : -1)
                                                      : atkData.offset.x, atkData.offset.y, atkData.offset.z);
-            }
         }
 
         protected override void CreateAttackObject(CommonMonster2 monster, AttackObjectData atk)
@@ -71,22 +71,19 @@ namespace Apis.CommonMonster2
             SetFirstVelocity(_curProj);
             if (storeInProjectileList)
             {
-                if (_curProj.TryGetComponent<Rigidbody2D>(out var rigid))
-                {
-                    rigid.linearVelocity = Vector2.zero;
-                }
+                if (_curProj.TryGetComponent<Rigidbody2D>(out var rigid)) rigid.linearVelocity = Vector2.zero;
                 monster.Projectiles.Add(_curProj);
+
                 void RemoveProjectile(EventParameters _)
                 {
                     _cM.Projectiles.Remove(_curProj);
                     _curProj.RemoveEvent(EventType.OnDestroy, RemoveProjectile);
                 }
+
                 _curProj.AddEvent(EventType.OnDestroy, RemoveProjectile);
             }
-            if (isFireImmediately)
-            {
-                _curProj.Fire();
-            }
+
+            if (isFireImmediately) _curProj.Fire();
         }
     }
 }

@@ -9,19 +9,19 @@ namespace Apis
     {
         private List<Actor> targets;
 
+        private Tween tween;
+
         protected override void Awake()
         {
             base.Awake();
-            targets = new();
+            targets = new List<Actor>();
         }
 
         protected override void AttackInvoke(EventParameters parameters)
         {
             base.AttackInvoke(parameters);
             if (parameters?.target is Actor target && !targets.Contains(target) && target.IsAffectedByCC)
-            {
                 targets.Add(target);
-            }
         }
 
         public override void Init(AttackObjectInfo atkObjectInfo)
@@ -31,17 +31,12 @@ namespace Apis
             targets.Clear();
         }
 
-        private Tween tween;
-
         public override void Destroy()
         {
             base.Destroy();
             targets.ForEach(x =>
             {
-                if (x is IMovable mover)
-                {
-                    mover.MoveCCOff();
-                }
+                if (x is IMovable mover) mover.MoveCCOff();
             });
             targets.Clear();
             tween?.Kill();
@@ -54,11 +49,8 @@ namespace Apis
 
             tween.onUpdate += () =>
             {
-                float distance = transform.position.x - lastPos.x;
-                for (int i = 0; i < targets.Count; i++)
-                {
-                    targets[i].transform.Translate(Vector2.right * distance);
-                }
+                var distance = transform.position.x - lastPos.x;
+                for (var i = 0; i < targets.Count; i++) targets[i].transform.Translate(Vector2.right * distance);
 
                 lastPos = transform.position;
             };

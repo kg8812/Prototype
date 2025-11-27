@@ -1,30 +1,24 @@
 using System;
-using Apis;
 using Apis.UI;
 using NewNewInvenSpace;
-using UI;
-using UnityEngine.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace Apis
 {
-    public class ItemSlot: UIAsset_Toggle
+    public class ItemSlot : UIAsset_Toggle
     {
         // public static bool IsDragging;
         // public static UI_DragItem DragImg;
         // public static ItemSlot ToChangeSlot;
-        
+
         [SerializeField] private Image itemImg;
         [SerializeField] private Image changeImg;
         [SerializeField] private Image backgroundImg;
         [SerializeField] private Color frozenColor;
 
         [HideInInspector] public int index;
-        // [HideInInspector] public InventoryGroup inventoryGroup;
-
-        public InventoryList InventoryList { get; set; }
         // tab 메뉴에만 해당.(예외처리)
         // [HideInInspector] public UI_InventoryContent tabInventory;
 
@@ -36,7 +30,11 @@ namespace Apis
 
         // true = start / false = end
         public Action<ItemSlot, bool> OnDragChanged;
+
         public Action<ItemSlot, bool> OnPointerChanged;
+        // [HideInInspector] public InventoryGroup inventoryGroup;
+
+        public InventoryList InventoryList { get; set; }
 
 
         public void UpdateItem()
@@ -48,7 +46,7 @@ namespace Apis
         {
             if (ind != index) return;
             curItem = item;
-            
+
             if (item != null)
             {
                 itemImg.sprite = item.Image;
@@ -96,7 +94,7 @@ namespace Apis
                     ChangedToggle(true);
                     tabInventory.TryChange(this);
                 }
-                
+
             }
             */
         }
@@ -135,10 +133,11 @@ namespace Apis
                     ChangedToggle(true);
                     tabInventory.TryChange(this);
                 }
-                
+
             }
             */
         }
+
         public override void FrozenToggle(bool isOn)
         {
             base.FrozenToggle(isOn);
@@ -157,8 +156,6 @@ namespace Apis
 
 
         #region DragSection
-
-        
 
         public override void OnBeginDrag(PointerEventData eventData)
         {
@@ -179,7 +176,7 @@ namespace Apis
         {
             OnPointerChanged?.Invoke(this, false);
         }
-        
+
         #endregion
     }
 }

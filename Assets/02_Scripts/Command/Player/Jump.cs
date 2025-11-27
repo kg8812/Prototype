@@ -7,17 +7,17 @@ namespace Command
     {
         protected override void Invoke(Player go)
         {
-            if(!InvokeCondition(go)) return;
+            if (!InvokeCondition(go)) return;
 
             go.SetState(EPlayerState.Jump);
         }
 
         public override bool InvokeCondition(Player player)
         {
-            return player.GetAbleState(EPlayerState.Jump) 
-            && (player.CoyoteCurrentJump < player.playerStat.JumpMax)
-            && !player.IsDropable(out var _)
-            && player.CoolDown.GetCd(EPlayerCd.DashToJump);
+            return player.GetAbleState(EPlayerState.Jump)
+                   && player.CoyoteCurrentJump < player.playerStat.JumpMax
+                   && !player.IsDropable(out _)
+                   && player.CoolDown.GetCd(EPlayerCd.DashToJump);
         }
     }
 }

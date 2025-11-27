@@ -1,16 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Linq;
 
 #if UNITY_VISUAL_SCRIPTING
-[Unity.VisualScripting.IncludeInSettings(true)]
+[IncludeInSettings(true)]
 #elif BOLT_VISUAL_SCRIPTING
 [Ludiq.IncludeInSettings(true)]
 #endif
 public class ES3AutoSaveMgr : MonoBehaviour
 {
-	public static ES3AutoSaveMgr _current = null;
+    public static ES3AutoSaveMgr _current;
+
     public static ES3AutoSaveMgr Current
     {
         get
@@ -30,33 +33,42 @@ public class ES3AutoSaveMgr : MonoBehaviour
                     if ((_current = root.GetComponentInChildren<ES3AutoSaveMgr>()) != null)
                         return _current;
             }
+
             return _current;
         }
     }
 
-    public static Dictionary<Scene, ES3AutoSaveMgr> managers = new Dictionary<Scene, ES3AutoSaveMgr>();
+    public static Dictionary<Scene, ES3AutoSaveMgr> managers = new();
 
     // Included for backwards compatibility.
-    public static ES3AutoSaveMgr Instance
+    public static ES3AutoSaveMgr Instance => Current;
+
+    public enum LoadEvent
     {
-        get { return Current; }
+        None,
+        Awake,
+        Start
     }
 
-    public enum LoadEvent { None, Awake, Start }
-	public enum SaveEvent { None, OnApplicationQuit, OnApplicationPause }
+    public enum SaveEvent
+    {
+        None,
+        OnApplicationQuit,
+        OnApplicationPause
+    }
 
-	public string key = System.Guid.NewGuid().ToString();
+    public string key = Guid.NewGuid().ToString();
     public bool immediatelyCommitToFile = true;
-	public SaveEvent saveEvent = SaveEvent.OnApplicationQuit;
-	public LoadEvent loadEvent = LoadEvent.Start;
-	public ES3SerializableSettings settings = new ES3SerializableSettings("SaveFile.es3", ES3.Location.Cache);
+    public SaveEvent saveEvent = SaveEvent.OnApplicationQuit;
+    public LoadEvent loadEvent = LoadEvent.Start;
+    public ES3SerializableSettings settings = new("SaveFile.es3", ES3.Location.Cache);
 
-	public HashSet<ES3AutoSave> autoSaves = new HashSet<ES3AutoSave>();
+    public HashSet<ES3AutoSave> autoSaves = new();
 
-    List<long> destroyedIds = new List<long>();
+    private readonly List<long> destroyedIds = new();
 
     public void Save()
-	{
+    {
         if (autoSaves == null || autoSaves.Count == 0)
             return;
 
@@ -74,25 +86,23 @@ public class ES3AutoSaveMgr : MonoBehaviour
         {
             var gameObjects = new List<GameObject>();
             foreach (var autoSave in autoSaves)
-            {
                 // If the ES3AutoSave component is disabled, don't save it.
                 if (autoSave != null && autoSave.enabled)
                     gameObjects.Add(autoSave.gameObject);
-            }
 
             // Save in the same order as their depth in the hierarchy.
             ES3.Save(key, gameObjects.OrderBy(x => GetDepth(x.transform)).ToArray(), settings);
 
-            if(destroyedIds != null && destroyedIds.Count > 0)
+            if (destroyedIds != null && destroyedIds.Count > 0)
                 ES3.Save($"{key}_destroyed", destroyedIds, settings);
         }
 
-        if(immediatelyCommitToFile && settings.location == ES3.Location.Cache && ES3.FileExists(settings))
+        if (immediatelyCommitToFile && settings.location == ES3.Location.Cache && ES3.FileExists(settings))
             ES3.StoreCachedFile(settings);
-	}
+    }
 
-	public void Load()
-	{
+    public void Load()
+    {
         ManageSlots();
 
         try
@@ -101,71 +111,73 @@ public class ES3AutoSaveMgr : MonoBehaviour
             if (settings.location == ES3.Location.Cache && !ES3.FileExists(settings))
                 ES3.CacheFile(settings);
         }
-        catch { }
+        catch
+        {
+        }
 
 
         // Ensure that the reference manager for this scene has been initialised.
-        var mgr = ES3ReferenceMgr.GetManagerFromScene(this.gameObject.scene, false);
+        var mgr = ES3ReferenceMgr.GetManagerFromScene(gameObject.scene, false);
         mgr.Awake();
 
-        ES3.Load<GameObject[]>(key, new GameObject[0], settings);
+        ES3.Load(key, new GameObject[0], settings);
 
         // Destroy any objects for which the destroyed state was saved.
-        foreach(var id in ES3.Load($"{key}_destroyed", new List<long>(), settings))
+        foreach (var id in ES3.Load($"{key}_destroyed", new List<long>(), settings))
         {
             var go = mgr.Get(id, true);
-            if(go != null)
+            if (go != null)
             {
                 var autoSave = ((GameObject)go).GetComponent<ES3AutoSave>();
-                if(autoSave != null)
+                if (autoSave != null)
                     DestroyAutoSave(autoSave);
                 Destroy(go);
             }
         }
     }
 
-    void Start()
-	{
-		if(loadEvent == LoadEvent.Start)
-			Load();
-	}
+    private void Start()
+    {
+        if (loadEvent == LoadEvent.Start)
+            Load();
+    }
 
     public void Awake()
     {
-        managers[this.gameObject.scene] = this;
+        managers[gameObject.scene] = this;
         GetAutoSaves();
 
         if (loadEvent == LoadEvent.Awake)
             Load();
     }
 
-    void OnApplicationQuit()
-	{
-		if(saveEvent == SaveEvent.OnApplicationQuit)
-			Save();
-	}
+    private void OnApplicationQuit()
+    {
+        if (saveEvent == SaveEvent.OnApplicationQuit)
+            Save();
+    }
 
-	void OnApplicationPause(bool paused)
-	{
-		if(	(saveEvent == SaveEvent.OnApplicationPause || 
-			(Application.isMobilePlatform && saveEvent == SaveEvent.OnApplicationQuit)) && paused)
-			Save();
-	}
+    private void OnApplicationPause(bool paused)
+    {
+        if ((saveEvent == SaveEvent.OnApplicationPause ||
+             (Application.isMobilePlatform && saveEvent == SaveEvent.OnApplicationQuit)) && paused)
+            Save();
+    }
 
-	/* Register an ES3AutoSave with the ES3AutoSaveMgr, if there is one */
-	public static void AddAutoSave(ES3AutoSave autoSave)
-	{
+    /* Register an ES3AutoSave with the ES3AutoSaveMgr, if there is one */
+    public static void AddAutoSave(ES3AutoSave autoSave)
+    {
         if (autoSave == null)
             return;
 
         ES3AutoSaveMgr mgr;
         if (managers.TryGetValue(autoSave.gameObject.scene, out mgr))
             mgr.autoSaves.Add(autoSave);
-	}
+    }
 
-	/* Remove an ES3AutoSave from the ES3AutoSaveMgr, for example if it's GameObject has been destroyed */
-	public static void DestroyAutoSave(ES3AutoSave autoSave)
-	{
+    /* Remove an ES3AutoSave from the ES3AutoSaveMgr, for example if it's GameObject has been destroyed */
+    public static void DestroyAutoSave(ES3AutoSave autoSave)
+    {
         if (autoSave == null)
             return;
 
@@ -177,7 +189,7 @@ public class ES3AutoSaveMgr : MonoBehaviour
             // Get the reference ID of the GameObject and add it to the destroyed list if it's not a prefab instance.
             if (autoSave.saveDestroyed)
             {
-                var refMgr = ES3ReferenceMgr.GetManagerFromScene(autoSave.gameObject.scene, true);
+                var refMgr = ES3ReferenceMgr.GetManagerFromScene(autoSave.gameObject.scene);
                 if (refMgr != null)
                 {
                     var id = refMgr.Add(autoSave.gameObject);
@@ -186,21 +198,21 @@ public class ES3AutoSaveMgr : MonoBehaviour
                 }
             }
         }
-	}
+    }
 
     /* Gathers all of the ES3AutoSave Components in the scene and registers them with the manager */
     public void GetAutoSaves()
     {
         autoSaves = new HashSet<ES3AutoSave>();
 
-        foreach (var go in this.gameObject.scene.GetRootGameObjects())
+        foreach (var go in gameObject.scene.GetRootGameObjects())
             autoSaves.UnionWith(go.GetComponentsInChildren<ES3AutoSave>(true));
     }
 
     // Gets the depth of a Transform in the hierarchy.
-    static int GetDepth(Transform t)
+    private static int GetDepth(Transform t)
     {
-        int depth = 0;
+        var depth = 0;
 
         while (t.parent != null)
         {
@@ -212,7 +224,7 @@ public class ES3AutoSaveMgr : MonoBehaviour
     }
 
     // Changes the path for this ES3AutoSave if we're using save slots.
-    void ManageSlots()
+    private void ManageSlots()
     {
 #if ES3_TMPRO && ES3_UGUI
         if (ES3SlotManager.selectedSlotPath != null)

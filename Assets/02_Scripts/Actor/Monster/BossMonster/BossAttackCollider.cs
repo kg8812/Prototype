@@ -1,6 +1,3 @@
-using Apis;
-using UnityEngine;
-
 namespace Apis
 {
     public class BossAttackCollider : AttackObject
@@ -17,10 +14,7 @@ namespace Apis
         {
             base.Init(atkObjectInfo);
 
-            if (_attacker is BossMonster b)
-            {
-                boss = b;
-            }
+            if (_attacker is BossMonster b) boss = b;
         }
     }
 }

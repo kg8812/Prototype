@@ -1,24 +1,19 @@
-using System;
-using System.Collections;
 using Default;
-using UnityEngine;
-using UnityEngine.Events;
-using Sirenix.OdinInspector;
 using EventData;
-
-
+using Sirenix.OdinInspector;
+using UnityEngine;
 
 public partial class Player : IPhysicsTransition
 {
     [TabGroup("기획쪽 수정 변수들/group1", "충돌 관련 스탯")] [LabelText("몬스터 충돌(입력 종료) 밀려나는 세기")] [SerializeField]
-    float resistForce;
+    private float resistForce;
 
     [TabGroup("기획쪽 수정 변수들/group1", "충돌 관련 스탯")]
     [LabelText("몬스터 충돌(중심 이동) 밀려나는 세기")]
     [Tooltip("범위: 0.01 ~ 1")]
     [Range(0.01f, 1f)]
     [SerializeField]
-    float dragFactor;
+    private float dragFactor;
 
     [TabGroup("기획쪽 수정 변수들/group1", "충돌 관련 스탯")] [LabelText("피격 무적 시간")] [SerializeField]
     public float hitInvincibleTime;
@@ -33,29 +28,24 @@ public partial class Player : IPhysicsTransition
     public float knockBackAngle = 20; // DEG
 
     [TabGroup("기획쪽 수정 변수들/group1", "충돌 관련 스탯")] [LabelText("기본 넉백 데이터")] [SerializeField]
-    public KnockBackData knockBackData = new KnockBackData()
+    public KnockBackData knockBackData = new()
     {
         knockBackType = KnockBackData.KnockBackType.Default,
         directionType = KnockBackData.DirectionType.AbsoluteAngle,
         symmetryType = KnockBackData.SymmetryType.None,
-        knockBackTime = 1, 
-        knockBackForce = 2, 
+        knockBackTime = 1,
+        knockBackForce = 2,
         knockBackAngle = 20
     };
 
     private ActorPhysicsTransitionHandler _physicsTransitionHandler;
 
-    public ActorPhysicsTransitionHandler PhysicsTransitionHandler => _physicsTransitionHandler ??= gameObject.GetOrAddComponent<ActorPhysicsTransitionHandler>();
+    public float ResistForce => resistForce;
 
-    public float ResistForce
-    {
-        get { return resistForce; }
-    }
+    public float DragFactor => dragFactor;
 
-    public float DragFactor
-    {
-        get { return dragFactor; }
-    }
+    public ActorPhysicsTransitionHandler PhysicsTransitionHandler => _physicsTransitionHandler ??=
+        gameObject.GetOrAddComponent<ActorPhysicsTransitionHandler>();
 
     protected override void OnHitReaction(EventParameters eventParameters)
     {
@@ -63,37 +53,5 @@ public partial class Player : IPhysicsTransition
 
         // base는 점멸효과만 발생
         base.OnHitReaction(eventParameters);
-
-        PlayHitEffect(ShakeDuration, BlinkDuration);
-
-        KnockBackData curKnockBackData = GetKnockBackData(eventParameters);
-
-        
-        if (eventParameters.atkData.isHitReaction && !HitImmune)
-        {
-            StateInfo info = new()
-            {
-                eventParameters = eventParameters
-            };
-            AddInfo(EPlayerState.KnockBack, info);
-            /* 넉백 관련 상태 진입 */
-            switch (curKnockBackData.knockBackType)
-            {
-                case KnockBackData.KnockBackType.Default:
-                    SetState(EPlayerState.Damaged);
-                    // SetState(EPlayerState.KnockBack);
-                    break;
-                case KnockBackData.KnockBackType.Groggy:
-                    // SetState(EPlayerState.KnockBack);
-                    break;
-                default:
-                    break;
-            }
-        }
-        // else if(eventParameters.hitData.isHitContinue)
-        // {
-        //     Debug.Log("wfewf");
-        //     // SetState(EPlayerState.Damaged);
-        // }
     }
 }

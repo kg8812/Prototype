@@ -1,4 +1,3 @@
-using Apis;
 using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -11,12 +10,12 @@ namespace Apis.BehaviourTreeTool
         public float distance;
         public bool isBackDash;
 
-        [LabelText("End모션 스킵여부")]  public bool isSkip = false;
-        bool success;
+        [LabelText("End모션 스킵여부")] public bool isSkip;
 
-        Tweener tweener;
+        private bool isFinished;
+        private bool success;
 
-        bool isFinished;
+        private Tweener tweener;
 
         public override void OnStart()
         {
@@ -24,20 +23,20 @@ namespace Apis.BehaviourTreeTool
             success = false;
             isFinished = false;
             OnAlert.AddListener(Alert);
-           
-            _actor.animator.SetBool("IsDashEnd",!isSkip);
+
+            _actor.animator.SetBool("IsDashEnd", !isSkip);
             _actor.animator.ResetTrigger("DashEnd");
-            string trigger = isBackDash ? "BackDash" : "Dash";
+            var trigger = isBackDash ? "BackDash" : "Dash";
             _actor.animator.SetTrigger(trigger);
         }
 
-        void Dash()
+        private void Dash()
         {
             if (_actor is not IMovable mover) return;
-            
+
             mover.Rb.DOKill();
             mover.Rb.linearVelocity = Vector3.zero;
-            
+
             tweener = mover.ActorMovement.DashTemp(time, distance, isBackDash).SetAutoKill(true).SetEase(Ease.Linear);
             _actor.ExecuteEvent(EventType.OnDash, new EventParameters(_actor));
 
@@ -54,10 +53,7 @@ namespace Apis.BehaviourTreeTool
             tweener.onUpdate += () =>
             {
                 var direction = new Vector2((int)_actor.Direction * (isBackDash ? -1 : 1), 0);
-                if (Physics2D.Raycast(_actor.Position, direction, 0.75f, LayerMasks.Wall))
-                {
-                   tweener.Kill();
-                }
+                if (Physics2D.Raycast(_actor.Position, direction, 0.75f, LayerMasks.Wall)) tweener.Kill();
             };
         }
 
@@ -77,27 +73,18 @@ namespace Apis.BehaviourTreeTool
 
         public override State OnUpdate()
         {
-            if (!isFinished)
-            {
-                return State.Running;
-            }
+            if (!isFinished) return State.Running;
 
             return success ? State.Success : State.Failure;
         }
 
-        void Alert(string alert)
+        private void Alert(string alert)
         {
             if (!isStarted) return;
-            
-            if (alert == "DashEnd")
-            {
-                isFinished = true;
-            }
 
-            if (alert == "DashStart")
-            {
-                Dash();
-            }
+            if (alert == "DashEnd") isFinished = true;
+
+            if (alert == "DashStart") Dash();
         }
     }
 }

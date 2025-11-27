@@ -1,7 +1,7 @@
-using Apis;
-using Default;
 using System.Collections.Generic;
 using System.Linq;
+using Apis;
+using Default;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,7 +11,19 @@ namespace UI
     {
         [HideInInspector] public List<UI_BuffIcon> icons = new();
         [HideInInspector] public UI_BuffDesc description;
-        Actor _actor;
+        private Actor _actor;
+
+        private readonly Dictionary<int, UI_BuffIcon> groupIcons = new();
+
+        public void Notify(UI_BuffIcon value)
+        {
+            if (value.Count == 0)
+            {
+                RemoveSubItem(value);
+                icons.Remove(value);
+            }
+        }
+
         public override void Init()
         {
             base.Init();
@@ -27,6 +39,7 @@ namespace UI
             actor?.AddEvent(EventType.OnBuffGroupAdd, SetBuffIcon);
             actor?.AddEvent(EventType.OnBuffGroupRemove, RemoveBuffIcon);
         }
+
         protected override void Deactivated()
         {
             base.Deactivated();
@@ -36,32 +49,24 @@ namespace UI
             _actor.RemoveEvent(EventType.OnBuffGroupRemove, RemoveBuffIcon);
         }
 
-        public void Notify(UI_BuffIcon value)
-        {
-            if (value.Count == 0)
-            {
-                RemoveSubItem(value);
-                icons.Remove(value);
-            }
-        }
         public void SetDescPivot(Vector2 pivot)
         {
             description.rect.pivot = pivot;
         }
-        
+
         // 현재 subBuffCollector쪽에 서브버프 추가될때마다 아이콘 추가되도록 연결 되어있음
-        
+
         public void Invoke(BuffInfo info)
         {
-            if (!info.buff.ShowIcon || info.typeList == null && info.subList == null) return;
+            if (!info.buff.ShowIcon || (info.typeList == null && info.subList == null)) return;
 
             if (info.subList != null)
             {
                 if (info.subList.Count == 0) return;
                 if (icons.All(x => x.SubList != info.subList))
                 {
-                    UI_BuffIcon icon = GameManager.UI.MakeSubItem("UI_BuffIcon", transform).GetComponent<UI_BuffIcon>();                  
-                    
+                    var icon = GameManager.UI.MakeSubItem("UI_BuffIcon", transform).GetComponent<UI_BuffIcon>();
+
                     icons.Add(icon);
                     icon.Init(info.subList);
                     icon.Attach(this);
@@ -73,26 +78,24 @@ namespace UI
                 if (info.typeList == null || info.typeList.Count == 0) return;
                 if (icons.All(x => x.TypeList != info.typeList))
                 {
-                    UI_BuffIcon icon = GameManager.UI.MakeSubItem("UI_BuffIcon", transform).GetComponent<UI_BuffIcon>();
+                    var icon = GameManager.UI.MakeSubItem("UI_BuffIcon", transform).GetComponent<UI_BuffIcon>();
 
                     icons.Add(icon);
                     icon.Init(info.typeList);
                     icon.Attach(this);
                     description.transform.SetAsLastSibling();
-
                 }
             }
         }
 
-        readonly Dictionary<int, UI_BuffIcon> groupIcons = new();
-        
         // 효과 아이콘 (buffGroup으로 효과 추가할 때)
         private void SetBuffIcon(EventParameters parameters)
         {
-            if (parameters == null || !BuffDatabase.DataLoad.TryGetBuffGroupData(parameters.buffData.buffGroupId,out var group)) return;
+            if (parameters == null ||
+                !BuffDatabase.DataLoad.TryGetBuffGroupData(parameters.buffData.buffGroupId, out var group)) return;
             if (!group.showIcon) return;
 
-            UI_BuffIcon icon = GameManager.UI.MakeSubItem("UI_BuffIcon", transform).GetComponent<UI_BuffIcon>();
+            var icon = GameManager.UI.MakeSubItem("UI_BuffIcon", transform).GetComponent<UI_BuffIcon>();
 
             groupIcons.Add(parameters.buffData.buffGroupId, icon);
             icon.Init(group);
@@ -103,12 +106,11 @@ namespace UI
         {
             if (parameters == null) return;
 
-            if(groupIcons.ContainsKey(parameters.buffData.buffGroupId))
+            if (groupIcons.ContainsKey(parameters.buffData.buffGroupId))
             {
                 RemoveSubItem(groupIcons[parameters.buffData.buffGroupId]);
                 groupIcons.Remove(parameters.buffData.buffGroupId);
             }
-
         }
     }
 }

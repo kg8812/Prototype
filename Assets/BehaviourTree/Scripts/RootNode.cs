@@ -5,13 +5,10 @@ namespace Apis.BehaviourTreeTool
     public class RootNode : TreeNode
     {
         [HideInInspector] public TreeNode child;
-        
+
         public override void OnStart()
         {
-            BehaviourTree.Traverse(this, (n) =>
-            {
-                n.state = State.Null;
-            });
+            BehaviourTree.Traverse(this, n => { n.state = State.Null; });
         }
 
         public override void OnStop()
@@ -27,12 +24,9 @@ namespace Apis.BehaviourTreeTool
 
         public override TreeNode Clone()
         {
-            RootNode node = Instantiate(this);
+            var node = Instantiate(this);
 
-            if (child != null)
-            {
-                node.child = child.Clone();
-            }
+            if (child != null) node.child = child.Clone();
 
             return node;
         }

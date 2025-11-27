@@ -3,27 +3,27 @@ using System.Collections;
 using System.Collections.Generic;
 using Default;
 using Spine.Unity;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class PlayerAnimator: MonoBehaviour
+public class PlayerAnimator : MonoBehaviour
 {
-    private Player _player;
     [SerializeField] private Animator _animator;
-    public Animator Animator => _animator;
+
+    private Player _player;
 
     private Dictionary<EAnimationBool, int> boolHash;
-    private Dictionary<EAnimationInt, int> intHash;
     private Dictionary<EAnimationFloat, int> floatHash;
-    private Dictionary<EAnimationTrigger, int> triggerHash;
+    private Dictionary<EAnimationInt, int> intHash;
 
-    private UnityAction<string> _OnTransitionEvent;
-    public UnityAction<string> OnTransitionEvent => _OnTransitionEvent;
+    private EAnimationTrigger recentTrigger = EAnimationTrigger.IdleOn;
 
     private SkeletonMecanimRootMotion rootMotion;
+    private Dictionary<EAnimationTrigger, int> triggerHash;
+    public Animator Animator => _animator;
+    public UnityAction<string> OnTransitionEvent { get; }
 
-    public void Awake() 
+    public void Awake()
     {
         _player = gameObject.GetComponent<Player>();
 
@@ -36,21 +36,39 @@ public class PlayerAnimator: MonoBehaviour
         Hashing();
     }
 
-    public void Start() 
+    public void Start()
     {
     }
 
     public void FixedUpdate()
     {
-        
     }
 
-    public int GetHash(EAnimationBool key) => boolHash[key];
-    public int GetHash(EAnimationTrigger key) => triggerHash[key];
-    public int GetHash(EAnimationInt key) => intHash[key];
-    public int GetHash(EAnimationFloat key) => floatHash[key];
-    public int GetHash(string key) => Animator.StringToHash(key);
-    
+    public int GetHash(EAnimationBool key)
+    {
+        return boolHash[key];
+    }
+
+    public int GetHash(EAnimationTrigger key)
+    {
+        return triggerHash[key];
+    }
+
+    public int GetHash(EAnimationInt key)
+    {
+        return intHash[key];
+    }
+
+    public int GetHash(EAnimationFloat key)
+    {
+        return floatHash[key];
+    }
+
+    public int GetHash(string key)
+    {
+        return Animator.StringToHash(key);
+    }
+
     private void Hashing()
     {
         foreach (EAnimationBool par in Enum.GetValues(typeof(EAnimationBool)))
@@ -65,46 +83,45 @@ public class PlayerAnimator: MonoBehaviour
         foreach (EAnimationTrigger par in Enum.GetValues(typeof(EAnimationTrigger)))
             triggerHash.Add(par, Animator.StringToHash(par.ToString()));
     }
- 
+
     public void ResetTrigger(EAnimationTrigger key)
     {
-        if(!triggerHash.ContainsKey(key)) return;
+        if (!triggerHash.ContainsKey(key)) return;
 
         _animator.ResetTrigger(triggerHash[key]);
     }
 
     public void SetTrigger(EAnimationTrigger key)
     {
-        if(!triggerHash.ContainsKey(key)) return;
+        if (!triggerHash.ContainsKey(key)) return;
 
         _animator.SetTrigger(triggerHash[key]);
     }
 
     public void SetBool(EAnimationBool key, bool value)
     {
-        if(!boolHash.ContainsKey(key)) return;
+        if (!boolHash.ContainsKey(key)) return;
 
         _animator.SetBool(boolHash[key], value);
     }
 
     public void SetInteger(EAnimationInt key, int value)
     {
-        if(!intHash.ContainsKey(key)) return;
+        if (!intHash.ContainsKey(key)) return;
 
         _animator.SetInteger(intHash[key], value);
     }
 
     public void SetFloat(EAnimationFloat key, float value)
     {
-        if(!floatHash.ContainsKey(key)) return;
+        if (!floatHash.ContainsKey(key)) return;
 
         _animator.SetFloat(floatHash[key], value);
     }
 
-    private EAnimationTrigger recentTrigger = EAnimationTrigger.IdleOn;
     public void Trigger(EAnimationTrigger key)
     {
-        if(!triggerHash.ContainsKey(key)) return;
+        if (!triggerHash.ContainsKey(key)) return;
 
         _animator.ResetTrigger(triggerHash[recentTrigger]);
 
@@ -130,6 +147,7 @@ public class PlayerAnimator: MonoBehaviour
             yield return new WaitUntil(() => _animator.GetCurrentAnimatorStateInfo(0).IsName(animName));
             onEnd.Invoke();
         }
+
         GameManager.instance.StartCoroutineWrapper(WaitTransit());
     }
 
@@ -140,7 +158,7 @@ public class PlayerAnimator: MonoBehaviour
 
     public void SetRootmotionOffset(float x, float y)
     {
-        if(rootMotion == null) return;
+        if (rootMotion == null) return;
 
         rootMotion.rootMotionTranslateXPerY = x;
         rootMotion.rootMotionTranslateYPerX = y;
@@ -148,18 +166,17 @@ public class PlayerAnimator: MonoBehaviour
 
     public Vector2 GetRootmotionOffset()
     {
-        if(rootMotion == null) return Vector2.zero;
+        if (rootMotion == null) return Vector2.zero;
 
         return new Vector2(rootMotion.rootMotionTranslateXPerY, rootMotion.rootMotionTranslateYPerX);
     }
 
     public void AddRootmotionOffset(float x, float y)
     {
-        if(rootMotion == null) return;
+        if (rootMotion == null) return;
 
         rootMotion.rootMotionTranslateXPerY += x;
         rootMotion.rootMotionTranslateYPerX += y;
-
     }
 
     public void SetRootMotionScale(float x, float y)
@@ -169,7 +186,7 @@ public class PlayerAnimator: MonoBehaviour
         rootMotion.rootMotionScaleX = x;
         rootMotion.rootMotionScaleY = y;
     }
-    
+
     public Vector2 GetRootMotionScale()
     {
         if (rootMotion == null) return Vector2.zero;

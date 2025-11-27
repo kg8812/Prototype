@@ -27,57 +27,58 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	public class HandleEventWithAudioExample : MonoBehaviour {
+namespace Spine.Unity.Examples
+{
+    public class HandleEventWithAudioExample : MonoBehaviour
+    {
+        public SkeletonAnimation skeletonAnimation;
 
-		public SkeletonAnimation skeletonAnimation;
-		[SpineEvent(dataField: "skeletonAnimation", fallbackToTextField: true)]
-		public string eventName;
+        [SpineEvent(dataField: "skeletonAnimation", fallbackToTextField: true)]
+        public string eventName;
 
-		[Space]
-		public AudioSource audioSource;
-		public AudioClip audioClip;
-		public float basePitch = 1f;
-		public float randomPitchOffset = 0.1f;
+        [Space] public AudioSource audioSource;
 
-		[Space]
-		public bool logDebugMessage = false;
+        public AudioClip audioClip;
+        public float basePitch = 1f;
+        public float randomPitchOffset = 0.1f;
 
-		Spine.EventData eventData;
+        [Space] public bool logDebugMessage;
 
-		void OnValidate () {
-			if (skeletonAnimation == null) GetComponent<SkeletonAnimation>();
-			if (audioSource == null) GetComponent<AudioSource>();
-		}
+        private EventData eventData;
 
-		void Start () {
-			if (audioSource == null) return;
-			if (skeletonAnimation == null) return;
-			skeletonAnimation.Initialize(false);
-			if (!skeletonAnimation.valid) return;
+        private void Start()
+        {
+            if (audioSource == null) return;
+            if (skeletonAnimation == null) return;
+            skeletonAnimation.Initialize(false);
+            if (!skeletonAnimation.valid) return;
 
-			eventData = skeletonAnimation.Skeleton.Data.FindEvent(eventName);
-			skeletonAnimation.AnimationState.Event += HandleAnimationStateEvent;
-		}
+            eventData = skeletonAnimation.Skeleton.Data.FindEvent(eventName);
+            skeletonAnimation.AnimationState.Event += HandleAnimationStateEvent;
+        }
 
-		private void HandleAnimationStateEvent (TrackEntry trackEntry, Event e) {
-			if (logDebugMessage) Debug.Log("Event fired! " + e.Data.Name);
-			//bool eventMatch = string.Equals(e.Data.Name, eventName, System.StringComparison.Ordinal); // Testing recommendation: String compare.
-			bool eventMatch = (eventData == e.Data); // Performance recommendation: Match cached reference instead of string.
-			if (eventMatch) {
-				Play();
-			}
-		}
+        private void OnValidate()
+        {
+            if (skeletonAnimation == null) GetComponent<SkeletonAnimation>();
+            if (audioSource == null) GetComponent<AudioSource>();
+        }
 
-		public void Play () {
-			audioSource.pitch = basePitch + Random.Range(-randomPitchOffset, randomPitchOffset);
-			audioSource.clip = audioClip;
-			audioSource.Play();
-		}
-	}
+        private void HandleAnimationStateEvent(TrackEntry trackEntry, Event e)
+        {
+            if (logDebugMessage) Debug.Log("Event fired! " + e.Data.Name);
+            //bool eventMatch = string.Equals(e.Data.Name, eventName, System.StringComparison.Ordinal); // Testing recommendation: String compare.
+            var eventMatch =
+                eventData == e.Data; // Performance recommendation: Match cached reference instead of string.
+            if (eventMatch) Play();
+        }
 
+        public void Play()
+        {
+            audioSource.pitch = basePitch + Random.Range(-randomPitchOffset, randomPitchOffset);
+            audioSource.clip = audioClip;
+            audioSource.Play();
+        }
+    }
 }

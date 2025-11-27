@@ -1,9 +1,5 @@
-using System.Collections.Generic;
 using Apis;
-using Apis;
-using Directing;
 using Managers;
-using Save.Schema;
 using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
@@ -13,10 +9,10 @@ public class Initializer : SerializedMonoBehaviour
 {
     public static string staticSceneName = "";
     [Title("테스트용")] [SerializeField] private string sceneName;
-    
+
     private void Awake()
     {
-        Screen.SetResolution(1920,1080,true);
+        Screen.SetResolution(1920, 1080, true);
         Addressables.InitializeAsync();
         GameManager.Item.LoadItems();
     }
@@ -27,10 +23,7 @@ public class Initializer : SerializedMonoBehaviour
         GameManager.UI.CreateUI("UI_MiniMap", UIType.Main);
         GameManager.Save.LoadExceptSlot();
 
-        if (staticSceneName != "")
-        {
-            sceneName = staticSceneName;
-        }
+        if (staticSceneName != "") sceneName = staticSceneName;
 
         staticSceneName = "";
 
@@ -40,8 +33,9 @@ public class Initializer : SerializedMonoBehaviour
 #if UNITY_EDITOR
 
     [MenuItem("AssetDataBase/DataClear")]
-    #endif
-    [Button(ButtonSizes.Large),GUIColor(0.8f,0,0)]
+#endif
+    [Button(ButtonSizes.Large)]
+    [GUIColor(0.8f, 0, 0)]
     public static void DataClear()
     {
         SaveManager.ClearDataFiles();

@@ -5,9 +5,9 @@ namespace Apis
 {
     public class DotDmgUpdate : IBuffUpdate
     {
-        List<SubBuff> buffs;
-        readonly Actor actor;
-        float time;
+        private readonly Actor actor;
+        private List<SubBuff> buffs;
+        private float time;
 
         public DotDmgUpdate(List<SubBuff> buffList, Actor actor)
         {
@@ -23,21 +23,21 @@ namespace Apis
         public void Update()
         {
             time += Time.deltaTime;
-            
+
             if (time > 1)
             {
                 float amount = 0;
-                for (int i = 0; i < buffs.Count; i++)
+                for (var i = 0; i < buffs.Count; i++)
                 {
                     if (buffs[i] is not Debuff_DotDmg dot) continue;
-                    
+
                     amount += dot.Dmg;
                 }
-                
+
                 actor.CurHp -= amount;
                 time = 0;
             }
-        }        
+        }
     }
 
     public class BuffNoUpdate : IBuffUpdate
@@ -45,7 +45,7 @@ namespace Apis
         public void Notify(List<SubBuff> value)
         {
         }
-     
+
 
         public void Update()
         {

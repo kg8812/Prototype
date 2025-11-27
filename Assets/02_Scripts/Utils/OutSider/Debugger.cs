@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace UtilSpace
 {
-    public class Debugger: SingletonPersistent<Debugger>
+    public class Debugger : SingletonPersistent<Debugger>
     {
         [SerializeField] private TextMeshProUGUI gameStateText;
         [SerializeField] private TextMeshProUGUI timeScaleText;
@@ -19,20 +19,16 @@ namespace UtilSpace
             canv.worldCamera = CameraManager.instance.UICam;
         }
 
-        private void SetStateText(GameStateType gameStateType)
-        {
-            
-            gameStateText.text = gameStateType.ToString();
-        }
-
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Alpha0))
-            {
-                canv.enabled = !canv.enabled;
-            }
+            if (Input.GetKeyDown(KeyCode.Alpha0)) canv.enabled = !canv.enabled;
 
             timeScaleText.text = $"speed: {Time.timeScale}";
+        }
+
+        private void SetStateText(GameStateType gameStateType)
+        {
+            gameStateText.text = gameStateType.ToString();
         }
     }
 }

@@ -3,9 +3,8 @@ using UnityEngine.Animations;
 
 public class AnimAttackBehaviour : StateMachineBehaviour
 {
-    
     // OnStateEnter is called when a transition starts and the state machine starts to evaluate this state
-    Player _player;
+    private Player _player;
     // override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     // {
     //
@@ -17,7 +16,8 @@ public class AnimAttackBehaviour : StateMachineBehaviour
     // //   animator.SetInteger("IncomingState", (int)EPlayerState.Attack);
     // }
 
-    public override void OnStateMachineEnter(Animator animator, int stateMachinePathHash, AnimatorControllerPlayable controller)
+    public override void OnStateMachineEnter(Animator animator, int stateMachinePathHash,
+        AnimatorControllerPlayable controller)
     {
         base.OnStateMachineEnter(animator, stateMachinePathHash, controller);
         _player = animator.transform.parent.GetComponent<Player>();
@@ -27,9 +27,6 @@ public class AnimAttackBehaviour : StateMachineBehaviour
     {
         base.OnStateMachineExit(animator, stateMachinePathHash);
         _player?.AfterWeaponAtk();
-        if (_player != null)
-        {
-            _player.weaponAtkInfo.atkCombo = 0;
-        }
+        if (_player != null) _player.weaponAtkInfo.atkCombo = 0;
     }
 }

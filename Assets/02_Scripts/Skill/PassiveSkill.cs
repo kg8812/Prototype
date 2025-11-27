@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace Apis
 {
     public abstract class PassiveSkill : Skill
@@ -12,7 +10,7 @@ namespace Apis
         public override bool Use()
         {
             if (!base.Use()) return false;
-            
+
             Active();
 
             return true;

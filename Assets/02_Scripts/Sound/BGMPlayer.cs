@@ -7,6 +7,5 @@ public class BGMPlayer : MonoBehaviour
 
     private void OnEnable()
     {
-        
     }
 }

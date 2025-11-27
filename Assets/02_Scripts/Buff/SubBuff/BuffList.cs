@@ -3,11 +3,13 @@ using System.Linq;
 
 namespace Apis
 {
-    public class BuffList : ISubject<BuffList>,IObserver<SubBuffList>
+    public class BuffList : ISubject<BuffList>, IObserver<SubBuffList>
     {
-        readonly Actor actor;
+        private readonly Actor actor;
 
-        public Dictionary<Buff, SubBuffList> buffs = new Dictionary<Buff, SubBuffList>();
+        private List<IObserver<BuffList>> _observers;
+
+        public Dictionary<Buff, SubBuffList> buffs = new();
 
         public BuffList(Actor actor)
         {
@@ -18,20 +20,47 @@ namespace Apis
         {
             get
             {
-                int count = 0;
+                var count = 0;
 
-                foreach(var item in buffs.Values)
-                {
-                    count += item.Count;
-                }
+                foreach (var item in buffs.Values) count += item.Count;
                 return count;
             }
         }
-        public List<SubBuff> this[Buff buff] => buffs[buff].List;
 
-        void AddSub(Buff buff,SubBuff subBuff,Dictionary<Buff,SubBuffList> temp)
+        public List<SubBuff> this[Buff buff] => buffs[buff].List;
+        private List<IObserver<BuffList>> observers => _observers ??= new List<IObserver<BuffList>>();
+
+
+        public void Notify(SubBuffList value)
         {
-            bool wasMaxStack = false;
+            if (value != null && value.Count == 0)
+            {
+                var temp = buffs.ToDictionary(kv => kv.Key, kv => kv.Value);
+                temp.Remove(value.buff);
+                buffs = temp;
+            }
+
+            NotifyObservers();
+        }
+
+        public void Attach(IObserver<BuffList> observer)
+        {
+            observers.Add(observer);
+        }
+
+        public void Detach(IObserver<BuffList> observer)
+        {
+            observers.Remove(observer);
+        }
+
+        public void NotifyObservers()
+        {
+            observers.ForEach(x => x.Notify(this));
+        }
+
+        private void AddSub(Buff buff, SubBuff subBuff, Dictionary<Buff, SubBuffList> temp)
+        {
+            var wasMaxStack = false;
             if (buff.BuffMaxStack > 0 && buff.BuffMaxStack <= temp[buff].Count)
             {
                 var sub = temp[buff].List[0];
@@ -39,18 +68,16 @@ namespace Apis
                 sub.OnRemove();
                 wasMaxStack = true;
             }
+
             temp[buff].Add(subBuff);
             subBuff.OnAdd();
 
-            if (buff.BuffMaxStack > 0 && buff.BuffMaxStack <= temp[buff].Count && !wasMaxStack)
-            {
-                subBuff.OnMaxStack();
-            }
-            
+            if (buff.BuffMaxStack > 0 && buff.BuffMaxStack <= temp[buff].Count && !wasMaxStack) subBuff.OnMaxStack();
         }
+
         public void Add(Buff buff, SubBuff subBuff)
         {
-            Buff b = buffs.Keys.FirstOrDefault(x => x.BuffIndex == buff.BuffIndex);
+            var b = buffs.Keys.FirstOrDefault(x => x.BuffIndex == buff.BuffIndex);
 
             if (b == null)
             {
@@ -60,7 +87,7 @@ namespace Apis
 
                 temp[buff].CurTime = temp[buff].Duration;
 
-                AddSub(buff,subBuff,temp);
+                AddSub(buff, subBuff, temp);
                 temp[buff].Attach(this);
                 NotifyObservers();
 
@@ -70,18 +97,17 @@ namespace Apis
             else
             {
                 buffs[b].CurTime = buffs[b].Duration;
-                AddSub(b,subBuff,buffs);
+                AddSub(b, subBuff, buffs);
                 NotifyObservers();
             }
-
         }
 
         public bool RemoveSubBuff(Buff buff, SubBuff subBuff)
         {
             if (buffs.ContainsKey(buff))
             {
-                bool success = buffs[buff].RemoveSubBuff(subBuff);
-               
+                var success = buffs[buff].RemoveSubBuff(subBuff);
+
                 return success;
             }
 
@@ -92,8 +118,8 @@ namespace Apis
         {
             if (buffs.ContainsKey(buff))
             {
-                SubBuff subBuff = buffs[buff].RemoveSubBuff();
-                
+                var subBuff = buffs[buff].RemoveSubBuff();
+
                 return subBuff;
             }
 
@@ -110,6 +136,7 @@ namespace Apis
 
             return false;
         }
+
         public bool Remove()
         {
             foreach (var x in buffs.Keys)
@@ -121,50 +148,16 @@ namespace Apis
 
             return false;
         }
+
         public void Clear()
         {
-            foreach (var x in buffs.Keys)
-            {
-                buffs[x].Clear();
-            }
+            foreach (var x in buffs.Keys) buffs[x].Clear();
             buffs.Clear();
         }
+
         public void Update()
-        {          
-            foreach (var x in buffs.Keys)
-            {
-                buffs[x].Update();
-            }
-        }
-
-        private List<IObserver<BuffList>> _observers;
-        List<IObserver<BuffList>> observers => _observers ??= new();
-        public void Attach(IObserver<BuffList> observer)
         {
-            observers.Add(observer);
-        }
-
-        public void Detach(IObserver<BuffList> observer)
-        {
-            observers.Remove(observer);
-        }
-
-        public void NotifyObservers()
-        {
-            observers.ForEach(x => x.Notify(this));
-        }
-
-        
-        public void Notify(SubBuffList value)
-        {
-            if (value != null && value.Count == 0)
-            {
-                var temp = buffs.ToDictionary(kv => kv.Key, kv => kv.Value);
-                temp.Remove(value.buff);
-                buffs = temp;
-            }
-
-            NotifyObservers();
+            foreach (var x in buffs.Keys) buffs[x].Update();
         }
     }
 }

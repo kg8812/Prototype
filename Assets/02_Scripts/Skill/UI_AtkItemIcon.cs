@@ -1,4 +1,3 @@
-using Apis;
 using Default;
 using Sirenix.OdinInspector;
 using TMPro;
@@ -9,25 +8,6 @@ namespace Apis
 {
     public class UI_AtkItemIcon : UI_Base
     {
-        enum Images
-        {
-            Front,
-            SkillIcon,
-            DurationImage,
-            Frame,
-        }
-
-        enum Texts
-        {
-            SkillCdText
-        }
-
-        protected enum GameObjects
-        {
-            SkillCd,
-            Deactive
-        }
-
         protected Image skillIcon; // 아이콘
         private GameObject deactive; // 비활성화 아이콘
         protected Image skillCdFront; // 쿨타임 이미지
@@ -37,6 +17,16 @@ namespace Apis
         [HideInInspector] public Image activatedFrame; // 액티브 프레임
 
         [HideInInspector] public bool showCDImage;
+
+        private IAttackItem item;
+        [ReadOnly] public ActiveSkill Skill;
+
+        protected IUpdate updateType;
+
+        public void Update()
+        {
+            if ((object)Skill != null) updateType?.Update();
+        }
 
         public override void Init()
         {
@@ -60,9 +50,61 @@ namespace Apis
             SetItem(item);
         }
 
-        private IAttackItem item;
-        [ReadOnly] public ActiveSkill Skill;
-        
+        public void ChangeType(IUpdate update)
+        {
+            updateType = update;
+            update.Change();
+        }
+
+        public void SetItem(IAttackItem item)
+        {
+            if (item == null)
+            {
+                WhenItemIsNull();
+                return;
+            }
+
+            this.item = item;
+            WhenItemIsSet();
+        }
+
+        public void WhenItemIsNull()
+        {
+            ChangeType(new NoUpdate(this));
+            durationImage.gameObject.SetActive(false);
+            skillCd.SetActive(false);
+            skillCdFront.fillAmount = 0;
+            deactive.SetActive(true);
+            skillCdText.text = "";
+            Skill = null;
+            activatedFrame.gameObject.SetActive(false);
+        }
+
+        public void WhenItemIsSet()
+        {
+            deactive.SetActive(false);
+            activatedFrame.gameObject.SetActive(false);
+        }
+
+        private enum Images
+        {
+            Front,
+            SkillIcon,
+            DurationImage,
+            Frame
+        }
+
+        private enum Texts
+        {
+            SkillCdText
+        }
+
+        protected enum GameObjects
+        {
+            SkillCd,
+            Deactive
+        }
+
         public interface IUpdate
         {
             public void Update();
@@ -72,11 +114,13 @@ namespace Apis
 
         public class NoUpdate : IUpdate
         {
-            private UI_AtkItemIcon _icon;
+            private readonly UI_AtkItemIcon _icon;
+
             public NoUpdate(UI_AtkItemIcon icon)
             {
                 _icon = icon;
             }
+
             public void Update()
             {
             }
@@ -88,9 +132,10 @@ namespace Apis
                 _icon.skillCd.gameObject.SetActive(false);
             }
         }
+
         public class NormalCdUpdate : IUpdate
         {
-            private UI_AtkItemIcon _icon;
+            private readonly UI_AtkItemIcon _icon;
 
             public NormalCdUpdate(UI_AtkItemIcon icon)
             {
@@ -101,17 +146,11 @@ namespace Apis
             {
                 if (Mathf.Approximately(_icon.Skill.CurCd, 0) || !_icon.showCDImage)
                 {
-                    if (_icon.skillCd.activeSelf)
-                    {
-                        _icon.skillCd.SetActive(false);
-                    }
+                    if (_icon.skillCd.activeSelf) _icon.skillCd.SetActive(false);
                 }
                 else
                 {
-                    if (!_icon.skillCd.activeSelf)
-                    {
-                        _icon.skillCd.SetActive(true);
-                    }
+                    if (!_icon.skillCd.activeSelf) _icon.skillCd.SetActive(true);
 
                     _icon.skillCdFront.fillAmount = Mathf.Clamp01(_icon.Skill.CurCd / _icon.Skill.Cd);
                 }
@@ -127,7 +166,7 @@ namespace Apis
 
         public class CastingUpdate : IUpdate
         {
-            private UI_AtkItemIcon _icon;
+            private readonly UI_AtkItemIcon _icon;
 
             public CastingUpdate(UI_AtkItemIcon icon)
             {
@@ -136,10 +175,7 @@ namespace Apis
 
             public void Update()
             {
-                if (_icon.skillCd.activeSelf)
-                {
-                    _icon.skillCd.SetActive(false);
-                }
+                if (_icon.skillCd.activeSelf) _icon.skillCd.SetActive(false);
                 _icon.skillCdFront.fillAmount = 0;
                 _icon.durationImage.fillAmount = Mathf.Clamp01(_icon.Skill.CurCastTime / _icon.Skill.CastTime);
                 //_icon.skillCdText.text = _icon.Skill.CurCastTime > 0 ? _icon.Skill.CurCastTime.ToString("0.0") : "";
@@ -154,7 +190,7 @@ namespace Apis
 
         public class ChargingUpdate : IUpdate
         {
-            private UI_AtkItemIcon _icon;
+            private readonly UI_AtkItemIcon _icon;
 
             public ChargingUpdate(UI_AtkItemIcon icon)
             {
@@ -163,10 +199,7 @@ namespace Apis
 
             public void Update()
             {
-                if (_icon.skillCd.activeSelf)
-                {
-                    _icon.skillCd.SetActive(false);
-                }
+                if (_icon.skillCd.activeSelf) _icon.skillCd.SetActive(false);
                 _icon.skillCdFront.fillAmount = 0;
                 _icon.durationImage.fillAmount = Mathf.Clamp01(_icon.Skill.CurChargeTime / _icon.Skill.ChargeTime);
                 //_icon.skillCdText.text = _icon.Skill.CurChargeTime < _icon.Skill.ChargeTime ? _icon.Skill.CurChargeTime.ToString("0.0") : "";
@@ -181,7 +214,7 @@ namespace Apis
 
         public class DurationUpdate : IUpdate
         {
-            private UI_AtkItemIcon _icon;
+            private readonly UI_AtkItemIcon _icon;
 
             public DurationUpdate(UI_AtkItemIcon icon)
             {
@@ -204,7 +237,7 @@ namespace Apis
 
         public class StackUpdate : IUpdate
         {
-            private UI_AtkItemIcon _icon;
+            private readonly UI_AtkItemIcon _icon;
 
             public StackUpdate(UI_AtkItemIcon icon)
             {
@@ -217,18 +250,12 @@ namespace Apis
                     Mathf.Approximately(_icon.Skill.CurCd, _icon.Skill.Cd) || !_icon.showCDImage)
                 {
                     _icon.skillCdFront.fillAmount = 0;
-                    if (_icon.skillCd.activeSelf)
-                    {
-                        _icon.skillCd.SetActive(false);
-                    }
+                    if (_icon.skillCd.activeSelf) _icon.skillCd.SetActive(false);
                 }
                 else
                 {
                     _icon.skillCdFront.fillAmount = Mathf.Clamp01(_icon.Skill.CurCd / _icon.Skill.Cd);
-                    if (!_icon.skillCd.activeSelf)
-                    {
-                        _icon.skillCd.SetActive(true);
-                    }
+                    if (!_icon.skillCd.activeSelf) _icon.skillCd.SetActive(true);
                 }
 
                 _icon.skillCdText.text = _icon.Skill.MaxStack > 1 ? _icon.Skill.CurStack.ToString() : "";
@@ -237,49 +264,6 @@ namespace Apis
             public void Change()
             {
                 _icon.durationImage.gameObject.SetActive(false);
-            }
-        }
-
-        protected IUpdate updateType;
-
-        public void ChangeType(IUpdate update)
-        {
-            updateType = update;
-            update.Change();
-        }
-
-        public void SetItem(IAttackItem item)
-        {
-            if (item == null)
-            {
-                WhenItemIsNull();
-                return;
-            }
-            this.item = item;
-            WhenItemIsSet();
-        }
-        public void WhenItemIsNull()
-        {
-            ChangeType(new NoUpdate(this));
-            durationImage.gameObject.SetActive(false);
-            skillCd.SetActive(false);
-            skillCdFront.fillAmount = 0;
-            deactive.SetActive(true);
-            skillCdText.text = "";
-            Skill = null;
-            activatedFrame.gameObject.SetActive(false);
-        }
-
-        public void WhenItemIsSet()
-        {
-            deactive.SetActive(false);
-            activatedFrame.gameObject.SetActive(false);
-        }
-        public void Update()
-        {
-            if ((object)Skill != null)
-            {
-                updateType?.Update();
             }
         }
     }

@@ -6,11 +6,12 @@ namespace Apis.BehaviourTreeTool
     {
         public string message;
 
-        bool isAlert;
-
         public float maxTime;
 
-        float startTime;
+        private bool isAlert;
+
+        private float startTime;
+
         public override void OnStart()
         {
             base.OnStart();
@@ -19,29 +20,23 @@ namespace Apis.BehaviourTreeTool
             isAlert = false;
             OnAlert.AddListener(Invoke);
         }
-    
+
         public override void OnStop()
         {
             base.OnStop();
             OnAlert.RemoveListener(Invoke);
         }
-    
+
         public override State OnUpdate()
         {
-            if(maxTime > 0 && startTime + maxTime < Time.time)
-            {
-                return State.Success;
-            }
-            
+            if (maxTime > 0 && startTime + maxTime < Time.time) return State.Success;
+
             return isAlert ? State.Success : State.Running;
         }
 
-        void Invoke(string message)
+        private void Invoke(string message)
         {
-            if(message == this.message)
-            {
-                isAlert = true;
-            }
+            if (message == this.message) isAlert = true;
         }
     }
 }

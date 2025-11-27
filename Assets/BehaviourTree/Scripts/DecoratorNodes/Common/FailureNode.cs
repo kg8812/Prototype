@@ -1,4 +1,3 @@
-
 namespace Apis.BehaviourTreeTool
 {
     public class FailureNode : CommonDecoratorNode
@@ -15,6 +14,7 @@ namespace Apis.BehaviourTreeTool
         {
             return State.Failure;
         }
+
         public override bool Check()
         {
             return false;

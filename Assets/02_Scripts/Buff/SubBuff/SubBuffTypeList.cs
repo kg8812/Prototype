@@ -1,7 +1,7 @@
-using Apis.DataType;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Apis.DataType;
 using Sirenix.Utilities;
 using UnityEngine;
 
@@ -9,15 +9,7 @@ namespace Apis
 {
     public class SubSingleStack : IBuffCollectionUpdate
     {
-        public float Duration
-        {
-            get; set;
-        }
-        readonly SubBuffTypeList subBuffList;
-        public float CurTime
-        {
-            get; set;
-        }
+        private readonly SubBuffTypeList subBuffList;
 
         public SubSingleStack(SubBuffTypeList subBuffList)
         {
@@ -25,6 +17,11 @@ namespace Apis
             Duration = subBuffList.Duration;
             CurTime = Duration;
         }
+
+        public float Duration { get; set; }
+
+        public float CurTime { get; set; }
+
         public void Notify(List<SubBuff> value)
         {
         }
@@ -36,12 +33,9 @@ namespace Apis
 
         public void Update()
         {
-            if (Duration < 0 || Mathf.Approximately(Duration,0)) return;
+            if (Duration < 0 || Mathf.Approximately(Duration, 0)) return;
 
-            if (CurTime > 0)
-            {
-                CurTime -= Time.deltaTime;
-            }
+            if (CurTime > 0) CurTime -= Time.deltaTime;
 
             if (CurTime < 0)
             {
@@ -50,22 +44,60 @@ namespace Apis
             }
         }
     }
+
     public class SubBuffTypeList : ISubject<List<SubBuff>>
     {
-        public CustomQueue<SubBuff> queue = new ();
+        private readonly IBuffUpdate _buffUpdate;
 
-        readonly IBuffCollectionUpdate _stackStrategy;
-        readonly IBuffUpdate _buffUpdate;
-        readonly float _duration;
-        public float CurTime => _stackStrategy.CurTime;
-        public float Duration => _duration;
+        private readonly IBuffCollectionUpdate _stackStrategy;
+        private readonly SubBuffType _type;
+        private readonly Actor actor;
 
-        List<SubBuff> list;
-        public List<SubBuff> List => list ??= new();
-        readonly int maxStack;
-        readonly Actor actor;
+        public readonly Buff dummyBuff;
+        private readonly int maxStack;
         public readonly SubBuffOptionDataType option;
-        readonly SubBuffType _type;
+
+        private List<IObserver<List<SubBuff>>> _observers;
+
+        private List<SubBuff> list;
+        public CustomQueue<SubBuff> queue = new();
+
+        public SubBuffTypeList(SubBuffType type, Actor actor)
+        {
+            BuffDatabase.DataLoad.TryGetSubBuffIndex(type, out var index);
+            BuffDatabase.DataLoad.TryGetSubBuffOption(index, out option);
+
+            _type = type;
+            maxStack = option.maxStack;
+            Duration = option.duration;
+            this.actor = actor;
+
+            _stackStrategy = new SubSingleStack(this);
+
+            var str = "Apis." + type;
+            var tp = Type.GetType(str);
+
+            if (tp != null && tp.IsSubclassOf(typeof(Debuff_DotDmg)))
+                _buffUpdate = new DotDmgUpdate(list, actor);
+            else
+                _buffUpdate = new BuffNoUpdate();
+            Attach(_stackStrategy);
+            Attach(_buffUpdate);
+
+            BuffDataType data = new(type)
+            {
+                buffPower = option.amount, buffDuration = Duration, buffDispellType = 1,
+                stackDecrease = option.stackDecrease,
+                showIcon = option.showIcon
+            };
+
+            dummyBuff = new Buff(data, null);
+        }
+
+        public float CurTime => _stackStrategy.CurTime;
+        public float Duration { get; }
+
+        public List<SubBuff> List => list ??= new List<SubBuff>();
 
         public int Count
         {
@@ -81,15 +113,12 @@ namespace Apis
                 }
             }
         }
-        
-         List<IObserver<List<SubBuff>>> _observers;
-         List<IObserver<List<SubBuff>>> Observers => _observers ??= new();
+
+        private List<IObserver<List<SubBuff>>> Observers => _observers ??= new List<IObserver<List<SubBuff>>>();
+
         public void Attach(IObserver<List<SubBuff>> observer)
         {
-            if (!Observers.Contains(observer))
-            {
-                Observers.Add(observer);
-            }
+            if (!Observers.Contains(observer)) Observers.Add(observer);
         }
 
         public void Detach(IObserver<List<SubBuff>> observer)
@@ -99,67 +128,26 @@ namespace Apis
 
         public void NotifyObservers()
         {
-            foreach (var x in Observers)
-            {
-                x.Notify(list);
-            }
+            foreach (var x in Observers) x.Notify(list);
         }
 
-        public readonly Buff dummyBuff;
-        
-        public SubBuffTypeList(SubBuffType type, Actor actor)
+        private void AddSub(SubBuff subBuff)
         {
-            BuffDatabase.DataLoad.TryGetSubBuffIndex(type, out int index);
-            BuffDatabase.DataLoad.TryGetSubBuffOption(index, out option);
-
-            _type = type;
-            maxStack = option.maxStack;
-            _duration = option.duration;
-            this.actor = actor;
-
-            _stackStrategy = new SubSingleStack(this);           
-
-            string str = "Apis." + type;
-            Type tp = Type.GetType(str);
-
-            if (tp != null && tp.IsSubclassOf(typeof(Debuff_DotDmg)))
-            {
-                _buffUpdate = new DotDmgUpdate(list, actor);
-            }
-            else
-            {
-                _buffUpdate = new BuffNoUpdate();
-            }
-            Attach(_stackStrategy);
-            Attach(_buffUpdate);
-
-            BuffDataType data = new(type)
-            {
-                buffPower = option.amount, buffDuration = _duration,buffDispellType = 1,stackDecrease = option.stackDecrease,
-                showIcon = option.showIcon
-            };
-            
-            dummyBuff = new(data, null);
-        }
-
-        void AddSub(SubBuff subBuff)
-        {
-            bool wasMaxStack = false;
+            var wasMaxStack = false;
 
             if (maxStack > 0 && Count >= maxStack)
             {
                 wasMaxStack = true;
-                SubBuff temp = queue.Dequeue();
+                var temp = queue.Dequeue();
                 temp.OnRemove();
             }
+
             queue.Enqueue(subBuff);
             ResetList();
             subBuff.OnAdd();
-            if (maxStack > 0 && Count >= maxStack && !wasMaxStack)
-            {
-                subBuff.OnMaxStack();
-            }
+            if (maxStack > 0 && Count >= maxStack && !wasMaxStack) subBuff.OnMaxStack();
         }
+
         public void Add(SubBuff subBuff)
         {
             AddSub(subBuff);
@@ -167,20 +155,20 @@ namespace Apis
 
         public SubBuff Add(GameObject target)
         {
-            _stackStrategy.CurTime = _duration;
-            SubBuff sub = SubBuffResources.Get(dummyBuff);
+            _stackStrategy.CurTime = Duration;
+            var sub = SubBuffResources.Get(dummyBuff);
             if (sub == null) return null;
             sub.Actor = actor;
             sub.target = target;
             AddSub(sub);
-            
+
             return sub;
         }
-        
+
         public SubBuff RemoveSubBuff()
         {
             if (Count <= 0) return null;
-            SubBuff subBuff = queue.Dequeue();
+            var subBuff = queue.Dequeue();
             switch (option.stackDecrease)
             {
                 case 0:
@@ -199,37 +187,34 @@ namespace Apis
         {
             SubBuff sub = null;
             foreach (var x in queue)
-            {
                 if (x.buff == buff)
                 {
                     sub = x;
                     break;
                 }
-            }
 
             queue.Remove(sub);
             ResetList();
             sub?.OnRemove();
             return sub;
         }
+
         public void RemoveBuff(Buff buff)
         {
             List<SubBuff> removeList = new();
             queue.ForEach(x =>
             {
-                if (x.buff == buff)
-                {
-                    removeList.Add(x);
-                }
+                if (x.buff == buff) removeList.Add(x);
             });
             if (removeList.Count == 0) return;
-            
+
             removeList.ForEach(x =>
             {
                 queue.Remove(x);
                 x.OnRemove();
             });
         }
+
         public void Clear()
         {
             queue.Clear();
@@ -238,23 +223,20 @@ namespace Apis
             ResetList();
 
             if (tempList != null)
-            {
                 foreach (var x in tempList)
-                {
                     x.OnRemove();
-                }
-            }
-           
         }
-        void ResetList()
+
+        private void ResetList()
         {
             list = queue.ToList();
             if (list.Count == 0)
             {
-                var temp = actor.SubBuffManager.Collector.subBuffs.ToDictionary(kv => kv.Key,kv => kv.Value);
+                var temp = actor.SubBuffManager.Collector.subBuffs.ToDictionary(kv => kv.Key, kv => kv.Value);
                 temp.Remove(_type);
                 actor.SubBuffManager.Collector.subBuffs = temp;
             }
+
             NotifyObservers();
         }
 
@@ -263,10 +245,7 @@ namespace Apis
             _stackStrategy.Update();
             _buffUpdate.Update();
 
-            foreach (var x in list)
-            {
-                x.Update();
-            }
+            foreach (var x in list) x.Update();
         }
     }
 }

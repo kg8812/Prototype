@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Apis;
 using NewNewInvenSpace;
 using UnityEngine;
 using InvenType = NewNewInvenSpace.InvenType;
@@ -21,13 +20,6 @@ namespace Apis
         private AtkItemInventoryGroup _attackItem;
         private GuitarInventoryGroup _guitarInven;
         private PresetManager _presetManager;
-        
-
-        protected override void Awake()
-        {
-            base.Awake();
-            GameManager.instance.OnPlayerDestroy.AddListener(_ => HardReset());
-        }
 
         private ItemStorage _storage;
 
@@ -35,10 +27,7 @@ namespace Apis
         {
             get
             {
-                if (_storage == null)
-                {
-                    _storage = new ItemStorage("ItemStorage");
-                }
+                if (_storage == null) _storage = new ItemStorage("ItemStorage");
                 return _storage;
             }
         }
@@ -48,15 +37,13 @@ namespace Apis
             get
             {
                 if (_presetManager == null)
-                {
-                    _presetManager = new(
-                        new Dictionary<InvenGroupType, InventoryGroup>()
+                    _presetManager = new PresetManager(
+                        new Dictionary<InvenGroupType, InventoryGroup>
                         {
-                            { InvenGroupType.Acc , Acc},
-                            { InvenGroupType.AtkItem, AttackItem}
+                            { InvenGroupType.Acc, Acc },
+                            { InvenGroupType.AtkItem, AttackItem }
                         }
                     );
-                }
 
                 return _presetManager;
             }
@@ -66,10 +53,7 @@ namespace Apis
         {
             get
             {
-                if (_acc == null)
-                {
-                    _acc = new AccInventoryGroup(accEquipMaxCnt, accEquipCnt, accInvenCnt, accInvenCnt);
-                }
+                if (_acc == null) _acc = new AccInventoryGroup(accEquipMaxCnt, accEquipCnt, accInvenCnt, accInvenCnt);
 
                 return _acc;
             }
@@ -80,9 +64,7 @@ namespace Apis
             get
             {
                 if (_attackItem == null)
-                {
                     _attackItem = new AtkItemInventoryGroup(wpEquipMaxCnt, wpEquipCnt, wpInvenCnt, wpInvenCnt);
-                }
 
                 return _attackItem;
             }
@@ -92,13 +74,17 @@ namespace Apis
         {
             get
             {
-                if (_guitarInven == null)
-                {
-                    _guitarInven = new GuitarInventoryGroup(guitarInvenMaxCnt, guitarInvenCnt);
-                }
+                if (_guitarInven == null) _guitarInven = new GuitarInventoryGroup(guitarInvenMaxCnt, guitarInvenCnt);
 
                 return _guitarInven;
             }
+        }
+
+
+        protected override void Awake()
+        {
+            base.Awake();
+            GameManager.instance.OnPlayerDestroy.AddListener(_ => HardReset());
         }
 
         public void HardReset()
@@ -110,7 +96,5 @@ namespace Apis
             AttackItem.Invens[InvenType.Storage].Clear();
             GuitarInven.AllClear();
         }
-        
-        
     }
 }

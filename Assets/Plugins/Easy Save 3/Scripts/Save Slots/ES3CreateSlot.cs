@@ -1,22 +1,24 @@
 #if ES3_TMPRO && ES3_UGUI
 
-using System;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Linq;
 
 /// <summary>
-/// A script attached to the Create Slot button to manage slot creation.
+///     A script attached to the Create Slot button to manage slot creation.
 /// </summary>
 public class ES3CreateSlot : MonoBehaviour
 {
     [Tooltip("The button used to bring up the 'Create Slot' dialog.")]
     public Button createButton;
+
     [Tooltip("The ES3SlotDialog Component of the Create Slot dialog")]
     public ES3SlotDialog createDialog;
+
     [Tooltip("The TMP_Text input text field of the create slot dialog.")]
     public TMP_InputField inputField;
+
     [Tooltip("The ES3SlotManager this Create Slot Dialog belongs to.")]
     public ES3SlotManager mgr;
 
@@ -68,7 +70,8 @@ public class ES3CreateSlot : MonoBehaviour
         if (ES3.FileExists(slotPath))
         {
             // Check whether a slot exists with this name which has been marked for deletion.
-            var slotMarkedForDeletion = mgr.slots.Select(go => go.GetComponent<ES3Slot>()).FirstOrDefault(slot => mgr.GetSlotPath(slot.nameLabel.text) == slotPath && slot.markedForDeletion);
+            var slotMarkedForDeletion = mgr.slots.Select(go => go.GetComponent<ES3Slot>()).FirstOrDefault(slot =>
+                mgr.GetSlotPath(slot.nameLabel.text) == slotPath && slot.markedForDeletion);
 
             // If there's not a slot with this path marked for deletion, force user to choose another name.
             if (slotMarkedForDeletion == null)
@@ -77,8 +80,8 @@ public class ES3CreateSlot : MonoBehaviour
                 return;
             }
             // Otherwise, delete the slot so that it can be created from scratch.
-            else
-                slotMarkedForDeletion.DeleteSlot();
+
+            slotMarkedForDeletion.DeleteSlot();
         }
 
         // Create the slot.

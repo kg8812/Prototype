@@ -1,15 +1,20 @@
-﻿using UnityEngine;
-using UnityEngine.Events;
+﻿using UnityEngine.Events;
 using UnityEngine.EventSystems;
 
 namespace Apis.UI
 {
-    public class UIAsset_Toggle: UIEffector
+    public class UIAsset_Toggle : UIEffector
     {
         // 자기 자신을 클릭해서 off 할 수 있는 지 여부.
         // focus parent의 can none focus가 false라면 꺼지면 안됨.
         public bool canOffOwn;
         public UnityEvent<bool> OnValueChanged;
+
+        protected override void Start()
+        {
+            base.Start();
+            if (EqualSt(ElState, UIElementState.Select)) ToggleOn();
+        }
 
         public override void Init()
         {
@@ -17,55 +22,31 @@ namespace Apis.UI
             OnValueChanged ??= new UnityEvent<bool>();
         }
 
-        protected override void Start()
-        {
-            base.Start();
-            if (EqualSt(ElState, UIElementState.Select))
-            {
-                ToggleOn();
-            }
-        }
-
         public override void KeyControl()
         {
             if (canOffOwn || !IsSelected)
-            {
                 if (InputManager.GetKeyDown(KeySettingManager.GetUIKeyCode(Define.UIKey.Select)))
-                {
                     OnPointerClick(null);
-                }
-            }
-            
         }
-        
+
         public override void GamePadControl()
         {
             base.GamePadControl();
             if (canOffOwn || !IsSelected)
-            {
                 if (InputManager.GetButtonDown(KeySettingManager.GetUIButton(Define.UIKey.Select)))
-                {
                     OnPointerClick(null);
-                }
-            }
         }
 
         public override void SelectOn()
         {
             base.SelectOn();
-            if (IsSelected)
-            {
-                ToggleOn();
-            }
+            if (IsSelected) ToggleOn();
         }
 
         public override void SelectOff(bool force = false)
         {
             base.SelectOff(force);
-            if (!IsSelected)
-            {
-                ToggleOff();
-            }
+            if (!IsSelected) ToggleOff();
         }
 
 
@@ -80,7 +61,7 @@ namespace Apis.UI
             {
                 if (IsSelected)
                 {
-                    if(canOffOwn)
+                    if (canOffOwn)
                         SelectOff();
                 }
                 else

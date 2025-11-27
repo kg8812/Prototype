@@ -20,7 +20,8 @@ namespace ES3Types
         public override object Read<T>(ES3Reader reader)
         {
             var listType = ES3Reflection.MakeGenericType(typeof(List<>), genericArguments[0]);
-            var list = ES3Reflection.GetMethod(typeof(ES3Reader), "ReadProperty", new Type[] { listType }, new Type[0]).Invoke(reader);
+            var list =
+ ES3Reflection.GetMethod(typeof(ES3Reader), "ReadProperty", new Type[] { listType }, new Type[0]).Invoke(reader);
 
             var observableList = ES3Reflection.CreateInstance(type);
             reader.SetPrivateField("m_List", list, observableList);

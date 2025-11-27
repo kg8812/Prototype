@@ -27,40 +27,43 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using Spine.Unity;
 using System.Collections;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	public class Raptor : MonoBehaviour {
+namespace Spine.Unity.Examples
+{
+    public class Raptor : MonoBehaviour
+    {
+        private SkeletonAnimation skeletonAnimation;
 
-		#region Inspector
-		public AnimationReferenceAsset walk;
-		public AnimationReferenceAsset gungrab;
-		public AnimationReferenceAsset gunkeep;
-		#endregion
+        private void Start()
+        {
+            skeletonAnimation = GetComponent<SkeletonAnimation>();
+            StartCoroutine(GunGrabRoutine());
+        }
 
-		SkeletonAnimation skeletonAnimation;
+        private IEnumerator GunGrabRoutine()
+        {
+            // Play the walk animation on track 0.
+            skeletonAnimation.AnimationState.SetAnimation(0, walk, true);
 
-		void Start () {
-			skeletonAnimation = GetComponent<SkeletonAnimation>();
-			StartCoroutine(GunGrabRoutine());
-		}
+            // Repeatedly play the gungrab and gunkeep animation on track 1.
+            while (true)
+            {
+                yield return new WaitForSeconds(Random.Range(0.5f, 3f));
+                skeletonAnimation.AnimationState.SetAnimation(1, gungrab, false);
 
-		IEnumerator GunGrabRoutine () {
-			// Play the walk animation on track 0.
-			skeletonAnimation.AnimationState.SetAnimation(0, walk, true);
+                yield return new WaitForSeconds(Random.Range(0.5f, 3f));
+                skeletonAnimation.AnimationState.SetAnimation(1, gunkeep, false);
+            }
+        }
 
-			// Repeatedly play the gungrab and gunkeep animation on track 1.
-			while (true) {
-				yield return new WaitForSeconds(Random.Range(0.5f, 3f));
-				skeletonAnimation.AnimationState.SetAnimation(1, gungrab, false);
+        #region Inspector
 
-				yield return new WaitForSeconds(Random.Range(0.5f, 3f));
-				skeletonAnimation.AnimationState.SetAnimation(1, gunkeep, false);
-			}
+        public AnimationReferenceAsset walk;
+        public AnimationReferenceAsset gungrab;
+        public AnimationReferenceAsset gunkeep;
 
-		}
-
-	}
+        #endregion
+    }
 }

@@ -2,7 +2,7 @@
 
 namespace Apis
 {
-    public abstract class MonsterMovementStrategy: ScriptableObject
+    public abstract class MonsterMovementStrategy : ScriptableObject
     {
         public abstract void Movement(Monster monster);
     }

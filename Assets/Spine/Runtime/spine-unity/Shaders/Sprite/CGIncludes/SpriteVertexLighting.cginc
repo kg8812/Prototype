@@ -7,7 +7,7 @@
 #if defined(_ALPHAPREMULTIPLY_ON)
 	#undef _STRAIGHT_ALPHA_INPUT
 #else
-	#define _STRAIGHT_ALPHA_INPUT
+#define _STRAIGHT_ALPHA_INPUT
 #endif
 #include "../../CGIncludes/Spine-Skeleton-Tint-Common.cginc"
 
@@ -33,49 +33,49 @@
 
 //In D3D9 only have a max of 9 TEXCOORD so can't have diffuse ramping or fog or rim lighting if processing lights per pixel
 #if defined(SHADER_API_D3D9) && defined(PER_PIXEL_LIGHTING)
-	#if defined(_NORMALMAP)
+#if defined(_NORMALMAP)
 		#undef _DIFFUSE_RAMP
 		#undef _FOG
 		#undef _RIM_LIGHTING
-	#elif defined(_DIFFUSE_RAMP)
+#elif defined(_DIFFUSE_RAMP)
 		#undef _FOG
 		#undef _RIM_LIGHTING
-	#elif defined(_RIM_LIGHTING)
+#elif defined(_RIM_LIGHTING)
 		#undef _FOG
 		#undef _DIFFUSE_RAMP
-	#else
+#else
 		#undef _DIFFUSE_RAMP
 		#undef _RIM_LIGHTING
-	#endif
+#endif
 #endif
 
 #if defined(PER_PIXEL_LIGHTING)
-	#if defined(_NORMALMAP) && defined(_DIFFUSE_RAMP)
+#if defined(_NORMALMAP) && defined(_DIFFUSE_RAMP)
 		#define ATTENUATIONS TEXCOORD9
-		#if defined(_RIM_LIGHTING)
+#if defined(_RIM_LIGHTING)
 			#define _POS_WORLD_INDEX TEXCOORD10
 			#define _FOG_COORD_INDEX 11
-		#else
+#else
 			#define _FOG_COORD_INDEX 10
-		#endif
-	#elif defined(_NORMALMAP) != defined(_DIFFUSE_RAMP)
+#endif
+#elif defined(_NORMALMAP) != defined(_DIFFUSE_RAMP)
 		#define ATTENUATIONS TEXCOORD8
-		#if defined(_RIM_LIGHTING)
+#if defined(_RIM_LIGHTING)
 			#define _POS_WORLD_INDEX TEXCOORD9
 			#define _FOG_COORD_INDEX 10
-		#else
+#else
 			#define _FOG_COORD_INDEX 9
-		#endif
-	#else //!_DIFFUSE_RAMP && !_NORMALMAP
-		#if defined(_RIM_LIGHTING)
+#endif
+#else //!_DIFFUSE_RAMP && !_NORMALMAP
+#if defined(_RIM_LIGHTING)
 			#define _POS_WORLD_INDEX TEXCOORD8
 			#define _FOG_COORD_INDEX 9
-		#else
+#else
 			#define _FOG_COORD_INDEX 8
-		#endif
-	#endif
+#endif
+#endif
 #else //!PER_PIXEL_LIGHTING
-	#define _FOG_COORD_INDEX 2
+#define _FOG_COORD_INDEX 2
 #endif
 
 ////////////////////////////////////////
@@ -84,11 +84,11 @@
 
 struct VertexOutput
 {
-	float4 pos : SV_POSITION;
-	fixed4 color : COLOR;
-	float3 texcoord : TEXCOORD0;
+    float4 pos : SV_POSITION;
+    fixed4 color : COLOR;
+    float3 texcoord : TEXCOORD0;
 
-#if defined(PER_PIXEL_LIGHTING)
+    #if defined(PER_PIXEL_LIGHTING)
 
 	half4 VertexLightInfo0 : TEXCOORD1;
 	half4 VertexLightInfo1 : TEXCOORD2;
@@ -96,36 +96,36 @@ struct VertexOutput
 	half4 VertexLightInfo3 : TEXCOORD4;
 	half4 VertexLightInfo4 : TEXCOORD5;
 
-	#if defined(_NORMALMAP)
+    #if defined(_NORMALMAP)
 		half4 normalWorld : TEXCOORD6;
 		half4 tangentWorld : TEXCOORD7;
 		half4 binormalWorld : TEXCOORD8;
-	#else
+    #else
 		half3 normalWorld : TEXCOORD6;
 		half3 VertexLightInfo5 : TEXCOORD7;
-	#endif
-	#if defined(_DIFFUSE_RAMP)
+    #endif
+    #if defined(_DIFFUSE_RAMP)
 		half4 LightAttenuations : ATTENUATIONS;
-	#endif
-	#if defined(_RIM_LIGHTING)
+    #endif
+    #if defined(_RIM_LIGHTING)
 		float4 posWorld : _POS_WORLD_INDEX;
-	#endif
+    #endif
 
-#else //!PER_PIXEL_LIGHTING
+    #else //!PER_PIXEL_LIGHTING
 
-	half3 FullLighting : TEXCOORD1;
+    half3 FullLighting : TEXCOORD1;
 
-#endif // !PER_PIXEL_LIGHTING
+    #endif // !PER_PIXEL_LIGHTING
 
-#if defined(_FOG)
+    #if defined(_FOG)
 	UNITY_FOG_COORDS(_FOG_COORD_INDEX)
-#endif // _FOG
+    #endif // _FOG
 
-#if defined(_TINT_BLACK_ON)
+    #if defined(_TINT_BLACK_ON)
 	float3 darkColor : TEXCOORD9;
-#endif
+    #endif
 
-	UNITY_VERTEX_OUTPUT_STEREO
+    UNITY_VERTEX_OUTPUT_STEREO
 };
 
 ////////////////////////////////////////
@@ -134,47 +134,47 @@ struct VertexOutput
 
 struct VertexLightInfo
 {
-	half3 lightDirection;
-	fixed3 lightColor;
+    half3 lightDirection;
+    fixed3 lightColor;
 
-#if defined(_DIFFUSE_RAMP)
+    #if defined(_DIFFUSE_RAMP)
 	float attenuation;
-#endif // _DIFFUSE_RAMP
+    #endif // _DIFFUSE_RAMP
 };
 
 inline VertexLightInfo getVertexLightAttenuatedInfo(int index, float3 viewPos)
 {
-	VertexLightInfo lightInfo;
+    VertexLightInfo lightInfo;
 
-	//For directional lights unity_LightPosition.w is set to zero
-	lightInfo.lightDirection = unity_LightPosition[index].xyz - viewPos.xyz * unity_LightPosition[index].w;
-	float lengthSq = dot(lightInfo.lightDirection, lightInfo.lightDirection);
+    //For directional lights unity_LightPosition.w is set to zero
+    lightInfo.lightDirection = unity_LightPosition[index].xyz - viewPos.xyz * unity_LightPosition[index].w;
+    float lengthSq = dot(lightInfo.lightDirection, lightInfo.lightDirection);
 
-	// don't produce NaNs if some vertex position overlaps with the light
-	lengthSq = max(lengthSq, 0.000001);
+    // don't produce NaNs if some vertex position overlaps with the light
+    lengthSq = max(lengthSq, 0.000001);
 
-	lightInfo.lightDirection *= rsqrt(lengthSq);
+    lightInfo.lightDirection *= rsqrt(lengthSq);
 
-	float attenuation = 1.0 / (1.0 + lengthSq * unity_LightAtten[index].z);
+    float attenuation = 1.0 / (1.0 + lengthSq * unity_LightAtten[index].z);
 
-#if defined(SPOT_LIGHTS)
-	//Spot light attenuation - for non-spot lights unity_LightAtten.x is set to -1 and y is set to 1
-	{
-		float rho = max (0, dot(lightInfo.lightDirection, unity_SpotDirection[index].xyz));
-		float spotAtt = (rho - unity_LightAtten[index].x) * unity_LightAtten[index].y;
-		attenuation *= saturate(spotAtt);
-	}
-#endif // SPOT_LIGHTS
+    #if defined(SPOT_LIGHTS)
+    //Spot light attenuation - for non-spot lights unity_LightAtten.x is set to -1 and y is set to 1
+    {
+        float rho = max(0, dot(lightInfo.lightDirection, unity_SpotDirection[index].xyz));
+        float spotAtt = (rho - unity_LightAtten[index].x) * unity_LightAtten[index].y;
+        attenuation *= saturate(spotAtt);
+    }
+    #endif // SPOT_LIGHTS
 
-	//If using a diffuse ramp texture then need to pass through the lights attenuation, otherwise premultiply the light color with it
-#if defined(_DIFFUSE_RAMP)
+    //If using a diffuse ramp texture then need to pass through the lights attenuation, otherwise premultiply the light color with it
+    #if defined(_DIFFUSE_RAMP)
 	lightInfo.lightColor = unity_LightColor[index].rgb;
 	lightInfo.attenuation = attenuation;
-#else
-	lightInfo.lightColor = unity_LightColor[index].rgb * attenuation;
-#endif // _DIFFUSE_RAMP
+    #else
+    lightInfo.lightColor = unity_LightColor[index].rgb * attenuation;
+    #endif // _DIFFUSE_RAMP
 
-	return lightInfo;
+    return lightInfo;
 }
 
 //Magic constants used to tweak ambient to approximate pixel shader spherical harmonics
@@ -185,7 +185,7 @@ static const float equatorColorBlur = 0.33;
 
 fixed3 calculateAmbientLight(half3 normalWorld)
 {
-#if defined(_SPHERICAL_HARMONICS)
+    #if defined(_SPHERICAL_HARMONICS)
 	float upDot = dot(normalWorld, worldUp);
 
 	//Fade between a flat lerp from sky to ground and a 3 way lerp based on how bright the equator light is.
@@ -207,12 +207,12 @@ fixed3 calculateAmbientLight(half3 normalWorld)
 	//Mix the two colors together based on how bright the equator light is
 	return lerp(skyGroundColor, equatorColor, saturate(equatorBright + minEquatorMix));
 
-#else // !_SPHERICAL_HARMONICS
+    #else // !_SPHERICAL_HARMONICS
 
-	//Flat ambient is just the sky color
-	return unity_AmbientSky.rgb;
+    //Flat ambient is just the sky color
+    return unity_AmbientSky.rgb;
 
-#endif // !_SPHERICAL_HARMONICS
+    #endif // !_SPHERICAL_HARMONICS
 }
 
 ////////////////////////////////////////
@@ -232,10 +232,10 @@ inline fixed3 calculateLightDiffuse(fixed3 lightColor, half3 viewNormal, half3 l
 
 inline fixed3 calculateLightDiffuse(fixed3 attenuatedLightColor, half3 viewNormal, half3 lightViewDir)
 {
-	float angleDot = max(0, dot(viewNormal, lightViewDir));
-	fixed3 lightDiffuse = attenuatedLightColor * angleDot;
+    float angleDot = max(0, dot(viewNormal, lightViewDir));
+    fixed3 lightDiffuse = attenuatedLightColor * angleDot;
 
-	return lightDiffuse;
+    return lightDiffuse;
 }
 
 #endif // _NORMALMAP
@@ -332,9 +332,9 @@ inline fixed3 calculateLightDiffuse(fixed3 attenuatedLightColor, half3 viewNorma
 
 inline fixed3 calculateLightDiffuse(int index, float3 viewPos, half3 viewNormal)
 {
-	VertexLightInfo lightInfo = getVertexLightAttenuatedInfo(index, viewPos);
-	float angleDot = max(0, dot(viewNormal, lightInfo.lightDirection));
-	return lightInfo.lightColor * angleDot;
+    VertexLightInfo lightInfo = getVertexLightAttenuatedInfo(index, viewPos);
+    float angleDot = max(0, dot(viewNormal, lightInfo.lightDirection));
+    return lightInfo.lightColor * angleDot;
 }
 
 #endif // !PER_PIXEL_LIGHTING
@@ -345,34 +345,34 @@ inline fixed3 calculateLightDiffuse(int index, float3 viewPos, half3 viewNormal)
 
 VertexOutput vert(VertexInput input)
 {
-	VertexOutput output;
+    VertexOutput output;
 
-	UNITY_SETUP_INSTANCE_ID(input);
+    UNITY_SETUP_INSTANCE_ID(input);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-	output.pos = calculateLocalPos(input.vertex);
-	output.color = calculateVertexColor(input.color);
-#if defined(_TINT_BLACK_ON)
+    output.pos = calculateLocalPos(input.vertex);
+    output.color = calculateVertexColor(input.color);
+    #if defined(_TINT_BLACK_ON)
 	output.darkColor = GammaToTargetSpace(half3(input.tintBlackRG.r, input.tintBlackRG.g, input.tintBlackB.r))
 		+ (_Black.rgb * input.color.a);
-#endif
-	output.texcoord = float3(calculateTextureCoord(input.texcoord), 0);
+    #endif
+    output.texcoord = float3(calculateTextureCoord(input.texcoord), 0);
 
-	float3 viewPos = UnityObjectToViewPos(input.vertex);
-#if defined(FIXED_NORMALS_BACKFACE_RENDERING) || defined(_RIM_LIGHTING)
+    float3 viewPos = UnityObjectToViewPos(input.vertex);
+    #if defined(FIXED_NORMALS_BACKFACE_RENDERING) || defined(_RIM_LIGHTING)
 	float4 powWorld = calculateWorldPos(input.vertex);
-#endif
+    #endif
 
-	float backFaceSign = 1;
-#if defined(FIXED_NORMALS_BACKFACE_RENDERING)
+    float backFaceSign = 1;
+    #if defined(FIXED_NORMALS_BACKFACE_RENDERING)
 	backFaceSign = calculateBackfacingSign(powWorld.xyz);
-#endif
+    #endif
 
-#if defined(PER_PIXEL_LIGHTING)
+    #if defined(PER_PIXEL_LIGHTING)
 
-	#if defined(_RIM_LIGHTING)
+    #if defined(_RIM_LIGHTING)
 		output.posWorld = powWorld;
-	#endif
+    #endif
 
 	PACK_VERTEX_LIGHT(0, output, viewPos)
 	PACK_VERTEX_LIGHT(1, output, viewPos)
@@ -381,33 +381,33 @@ VertexOutput vert(VertexInput input)
 
 	output.normalWorld.xyz = calculateSpriteWorldNormal(input, backFaceSign);
 
-	#if defined(_NORMALMAP)
+    #if defined(_NORMALMAP)
 		output.tangentWorld.xyz = calculateWorldTangent(input.tangent);
 		output.binormalWorld.xyz = calculateSpriteWorldBinormal(input, output.normalWorld, output.tangentWorld, backFaceSign);
-	#endif
+    #endif
 
-#else // !PER_PIXEL_LIGHTING
+    #else // !PER_PIXEL_LIGHTING
 
-	//Just pack full lighting
-	float3 viewNormal = calculateSpriteViewNormal(input, backFaceSign);
-	//Get Ambient diffuse
-	float3 normalWorld = calculateSpriteWorldNormal(input, backFaceSign);
-	fixed3 ambient = calculateAmbientLight(normalWorld);
+    //Just pack full lighting
+    float3 viewNormal = calculateSpriteViewNormal(input, backFaceSign);
+    //Get Ambient diffuse
+    float3 normalWorld = calculateSpriteWorldNormal(input, backFaceSign);
+    fixed3 ambient = calculateAmbientLight(normalWorld);
 
-	fixed3 diffuse = calculateLightDiffuse(0, viewPos, viewNormal);
-	diffuse += calculateLightDiffuse(1, viewPos, viewNormal);
-	diffuse += calculateLightDiffuse(2, viewPos, viewNormal);
-	diffuse += calculateLightDiffuse(3, viewPos, viewNormal);
+    fixed3 diffuse = calculateLightDiffuse(0, viewPos, viewNormal);
+    diffuse += calculateLightDiffuse(1, viewPos, viewNormal);
+    diffuse += calculateLightDiffuse(2, viewPos, viewNormal);
+    diffuse += calculateLightDiffuse(3, viewPos, viewNormal);
 
-	output.FullLighting = ambient + diffuse;
+    output.FullLighting = ambient + diffuse;
 
-#endif // !PER_PIXEL_LIGHTING
+    #endif // !PER_PIXEL_LIGHTING
 
-#if defined(_FOG)
+    #if defined(_FOG)
 	UNITY_TRANSFER_FOG(output, output.pos);
-#endif // _FOG
+    #endif // _FOG
 
-	return output;
+    return output;
 }
 
 ////////////////////////////////////////
@@ -415,28 +415,29 @@ VertexOutput vert(VertexInput input)
 //
 fixed4 frag(VertexOutput input) : SV_Target
 {
-	fixed4 texureColor = calculateTexturePixel(input.texcoord.xy);
-	RETURN_UNLIT_IF_ADDITIVE_SLOT_TINT(texureColor, input.color, input.darkColor, _Color.a, _Black.a) // shall be called before ALPHA_CLIP
-	ALPHA_CLIP(texureColor, input.color)
+    fixed4 texureColor = calculateTexturePixel(input.texcoord.xy);
+    RETURN_UNLIT_IF_ADDITIVE_SLOT_TINT(texureColor, input.color, input.darkColor, _Color.a, _Black.a)
+    // shall be called before ALPHA_CLIP
+    ALPHA_CLIP(texureColor, input.color)
 
-#if defined(_TINT_BLACK_ON)
+    #if defined(_TINT_BLACK_ON)
 	texureColor = fragTintedColor(texureColor, input.darkColor, input.color, _Color.a, _Black.a);
-#endif
+    #endif
 
-#if defined(PER_PIXEL_LIGHTING)
+    #if defined(PER_PIXEL_LIGHTING)
 
-	#if defined(_NORMALMAP)
+    #if defined(_NORMALMAP)
 		half3 normalWorld = calculateNormalFromBumpMap(input.texcoord.xy, input.tangentWorld.xyz, input.binormalWorld.xyz, input.normalWorld.xyz);
-	#else
+    #else
 		half3 normalWorld = input.normalWorld.xyz;
-	#endif
+    #endif
 
 	//Get Ambient diffuse
 	fixed3 ambient = calculateAmbientLight(normalWorld);
 
 	half3 normalView = normalize(mul((float3x3)UNITY_MATRIX_V, normalWorld));
 
-#if defined(SPECULAR)
+    #if defined(SPECULAR)
 
 	SpecularCommonData specData = getSpecularData(input.texcoord.xy, texureColor, input.color);
 
@@ -451,7 +452,7 @@ fixed4 frag(VertexOutput input) : SV_Target
 
 	APPLY_EMISSION_SPECULAR(pixel, input.texcoord)
 
-#else
+    #else
 
 	//Find vertex light diffuse
 	fixed3 diffuse = fixed3(0,0,0);
@@ -468,24 +469,24 @@ fixed4 frag(VertexOutput input) : SV_Target
 
 	fixed4 pixel = calculateLitPixel(texureColor, input.color, lighting);
 
-#endif
+    #endif
 
-#if defined(_RIM_LIGHTING)
+    #if defined(_RIM_LIGHTING)
 	pixel.rgb = applyRimLighting(input.posWorld, normalWorld, pixel);
-#endif
+    #endif
 
-#else // !PER_PIXEL_LIGHTING
+    #else // !PER_PIXEL_LIGHTING
 
-	APPLY_EMISSION(input.FullLighting, input.texcoord.xy)
+    APPLY_EMISSION(input.FullLighting, input.texcoord.xy)
 
-	fixed4 pixel = calculateLitPixel(texureColor, input.color, input.FullLighting);
+    fixed4 pixel = calculateLitPixel(texureColor, input.color, input.FullLighting);
 
-#endif // !PER_PIXEL_LIGHTING
+    #endif // !PER_PIXEL_LIGHTING
 
-	COLORISE(pixel)
-	APPLY_FOG(pixel, input)
+    COLORISE(pixel)
+    APPLY_FOG(pixel, input)
 
-	return pixel;
+    return pixel;
 }
 
 #endif // SPRITE_VERTEX_LIGHTING_INCLUDED

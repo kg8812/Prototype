@@ -1,11 +1,21 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-namespace PlayerState {
+namespace PlayerState
+{
     public class Jump : EventState, IAnimate
     {
-        public override EPlayerState NextState { get => EPlayerState.Idle; set{} }
+        public override EPlayerState NextState
+        {
+            get => EPlayerState.Idle;
+            set { }
+        }
+
+        public void OnEnterAnimate()
+        {
+            _player.AnimController.Trigger(EAnimationTrigger.Jump);
+        }
+
+        public void OnExitAnimate()
+        {
+        }
 
         public override bool EscapeCondition()
         {
@@ -18,17 +28,17 @@ namespace PlayerState {
 
             _player.StateEvent.ExecuteEventOnce(EventType.OnJump, null);
 
-            _player.ExecuteEvent(EventType.OnJump,new EventParameters(_player));
+            _player.ExecuteEvent(EventType.OnJump, new EventParameters(_player));
 
             _player.MoveComponent.ForceActorMovement.Jump(_player.JumpForce);
 
-            if(_player.CoyoteCurrentJump == 0) _player.CoyoteCurrentJump.Value = 1;
+            if (_player.CoyoteCurrentJump == 0) _player.CoyoteCurrentJump.Value = 1;
 
-            else if(_player.CoyoteCurrentJump > 0) _player.CoyoteCurrentJump.Value++;
+            else if (_player.CoyoteCurrentJump > 0) _player.CoyoteCurrentJump.Value++;
 
             _player.CoolDown.StartCd(EPlayerCd.JumpToAttack, _player.JumpAttackCoolTime);
-        
-            _player.StateEvent.AddEvent(EventType.OnEventState, (e) => _player.CoolDown.StopCd(EPlayerCd.JumpToAttack));
+
+            _player.StateEvent.AddEvent(EventType.OnEventState, e => _player.CoolDown.StopCd(EPlayerCd.JumpToAttack));
         }
 
         public override void FixedUpdate()
@@ -39,15 +49,6 @@ namespace PlayerState {
         public override void OnExit()
         {
             base.OnExit();
-        }
-
-        public void OnEnterAnimate()
-        {
-            _player.AnimController.Trigger(EAnimationTrigger.Jump);
-        }
-
-        public void OnExitAnimate()
-        {
         }
     }
 }

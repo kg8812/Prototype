@@ -1,27 +1,28 @@
 ﻿using Directing;
-using UI;
 using Managers;
+using UI;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
 
 namespace Scenes.Tutorial
 {
-    public class FadePortal: MonoBehaviour
+    public class FadePortal : MonoBehaviour
     {
         [SerializeField] private Transform toPos;
         [SerializeField] private UnityEvent otherevent;
 
-        private bool portaled = false;
+        private bool portaled;
 
         private void OnTriggerEnter2D(Collider2D other)
         {
             if (portaled) return;
             Debug.Log(other.gameObject.name);
-            if (other.gameObject.CompareTag("Player") && !other.isTrigger)
-            {
-                Portaled();
-            }
+            if (other.gameObject.CompareTag("Player") && !other.isTrigger) Portaled();
+        }
+
+        private void OnTriggerExit2D(Collider2D other)
+        {
+            if (other.gameObject.CompareTag("Player") && !other.isTrigger) portaled = false;
         }
 
         public void Portaled()
@@ -36,15 +37,7 @@ namespace Scenes.Tutorial
                 CameraManager.instance.ToggleCameraFix(false);
                 CameraManager.instance.InitPlayerCamPosition();
                 otherevent.Invoke();
-            },null,0.2f);
-        }
-        
-        private void OnTriggerExit2D(Collider2D other)
-        {
-            if (other.gameObject.CompareTag("Player") && !other.isTrigger)
-            {
-                portaled = false;
-            }
+            }, null, 0.2f);
         }
     }
 }

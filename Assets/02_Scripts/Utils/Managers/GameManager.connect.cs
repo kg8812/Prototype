@@ -1,14 +1,33 @@
 using Apis;
-using UnityEngine;
-using Apis;
 using Apis.Components;
 using Apis.Managers;
 using Default;
 using Managers;
+using UnityEngine;
 
 public partial class GameManager : Singleton<GameManager>
 {
     private static DatabaseManager _data;
+
+    private static DropManager _drop;
+
+    private static SceneLoadManager _scene;
+
+    private static UIManager _ui;
+
+    private static SoundManager _sound;
+
+
+    private static TriggerManager _trigger;
+
+
+    private static SaveManager _save;
+
+    private static FactoryManager _factory;
+
+    private static ItemFactoryManager _item;
+
+    private static AttackObject _atkObj;
 
     public static DatabaseManager Data
     {
@@ -24,8 +43,6 @@ public partial class GameManager : Singleton<GameManager>
         }
     }
 
-    private static DropManager _drop;
-
     public static DropManager Drop
     {
         get
@@ -39,8 +56,6 @@ public partial class GameManager : Singleton<GameManager>
             return _drop;
         }
     }
-
-    private static SceneLoadManager _scene;
 
     public static SceneLoadManager Scene
     {
@@ -56,8 +71,6 @@ public partial class GameManager : Singleton<GameManager>
         }
     }
 
-    private static UIManager _ui;
-
     public static UIManager UI
     {
         get
@@ -71,8 +84,6 @@ public partial class GameManager : Singleton<GameManager>
             return _ui;
         }
     }
-
-    private static SoundManager _sound;
 
     public static SoundManager Sound
     {
@@ -88,9 +99,6 @@ public partial class GameManager : Singleton<GameManager>
         }
     }
 
-
-    private static TriggerManager _trigger;
-
     public static TriggerManager Trigger
     {
         get
@@ -104,9 +112,6 @@ public partial class GameManager : Singleton<GameManager>
             return _trigger;
         }
     }
-    
-
-    static SaveManager _save;
 
     public static SaveManager Save
     {
@@ -117,8 +122,6 @@ public partial class GameManager : Singleton<GameManager>
         }
     }
 
-    private static FactoryManager _factory;
-
     public static FactoryManager Factory
     {
         get
@@ -126,15 +129,10 @@ public partial class GameManager : Singleton<GameManager>
             _factory ??= new FactoryManager();
 
             return _factory;
-
         }
     }
 
-    private static ItemFactoryManager _item;
-
     public static ItemFactoryManager Item => _item ??= new ItemFactoryManager();
-
-    private static AttackObject _atkObj;
 
     public static AttackObject AtkObj
     {

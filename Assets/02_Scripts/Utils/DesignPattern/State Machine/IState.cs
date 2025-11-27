@@ -9,5 +9,4 @@ public interface IState<T>
     void Update(); // 상태의 업데이트 함수
     void FixedUpdate(); // 상태의 물리용 업데이트 함수
     void OnExit(); // 상태에서 벗어날 때 호출하는 함수
-
 }

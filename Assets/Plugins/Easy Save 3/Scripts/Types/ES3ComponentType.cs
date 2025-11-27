@@ -1,33 +1,37 @@
 using System;
-using UnityEngine;
-using System.Collections;
 using ES3Internal;
+using UnityEngine;
+using UnityEngine.Scripting;
+using Object = UnityEngine.Object;
 
 namespace ES3Types
 {
-    [UnityEngine.Scripting.Preserve]
+    [Preserve]
     public abstract class ES3ComponentType : ES3UnityObjectType
     {
-        public ES3ComponentType(Type type) : base(type) { }
+        protected const string gameObjectPropertyName = "goID";
+
+        public ES3ComponentType(Type type) : base(type)
+        {
+        }
 
         protected abstract void WriteComponent(object obj, ES3Writer writer);
         protected abstract void ReadComponent<T>(ES3Reader reader, object obj);
-
-        protected const string gameObjectPropertyName = "goID";
 
         protected override void WriteUnityObject(object obj, ES3Writer writer)
         {
             var instance = obj as Component;
             if (obj != null && instance == null)
-                throw new ArgumentException("Only types of UnityEngine.Component can be written with this method, but argument given is type of " + obj.GetType());
+                throw new ArgumentException(
+                    "Only types of UnityEngine.Component can be written with this method, but argument given is type of " +
+                    obj.GetType());
 
             var refMgr = ES3ReferenceMgrBase.GetManagerFromScene(instance.gameObject.scene);
 
             if (refMgr != null)
-            {
                 // Write the reference of the GameObject so we know what one to attach it to.
-                writer.WriteProperty(gameObjectPropertyName, refMgr.Add(instance.gameObject).ToString(), ES3Type_string.Instance);
-            }
+                writer.WriteProperty(gameObjectPropertyName, refMgr.Add(instance.gameObject).ToString(),
+                    ES3Type_string.Instance);
             WriteComponent(instance, writer);
         }
 
@@ -41,7 +45,7 @@ namespace ES3Types
             throw new NotImplementedException();
         }
 
-        /* 
+        /*
          *  It's IMPORTANT that we override ReadObject in ES3UnityObjectType rather than use ReadUnityObject because otherwise the first IF statement will never be called,
          *  and we will never get the reference ID for the Component we're loading, so if we create a new Component we cannot assign it's correct reference ID.
          */
@@ -49,21 +53,19 @@ namespace ES3Types
         {
             var refMgr = ES3ReferenceMgrBase.Current;
             long id = -1;
-            UnityEngine.Object instance = null;
+            Object instance = null;
 
             foreach (string propertyName in reader.Properties)
-            {
                 if (propertyName == ES3ReferenceMgrBase.referencePropertyName)
                 {
                     id = reader.Read_ref();
                     instance = refMgr.Get(id, true);
-
                     /*if (instance != null)
                         break;*/
                 }
                 else if (propertyName == gameObjectPropertyName)
                 {
-                    long goID = reader.Read_ref();
+                    var goID = reader.Read_ref();
 
                     // If we already have an instance for this Component, don't attempt to create a new GameObject for it.
                     if (instance != null)
@@ -75,10 +77,12 @@ namespace ES3Types
                     {
                         go = new GameObject("Easy Save 3 Loaded GameObject");
 #if UNITY_EDITOR
-                        go.AddComponent<ES3InspectorInfo>().SetMessage("This GameObject was created because Easy Save could not find a GameObject in the scene with the same instance ID as the GameObject the Component we are loading is attached to.\nTo prevent this from being created, use the LoadInto methods to tell Easy Save what Component the data should be loaded in to.");
+                        go.AddComponent<ES3InspectorInfo>().SetMessage(
+                            "This GameObject was created because Easy Save could not find a GameObject in the scene with the same instance ID as the GameObject the Component we are loading is attached to.\nTo prevent this from being created, use the LoadInto methods to tell Easy Save what Component the data should be loaded in to.");
 #endif
                         refMgr.Add(go, goID);
                     }
+
                     instance = GetOrAddComponent(go, type);
                     refMgr.Add(instance, id);
                     break;
@@ -90,17 +94,18 @@ namespace ES3Types
                     {
                         var go = new GameObject("Easy Save 3 Loaded GameObject");
 #if UNITY_EDITOR
-                        go.AddComponent<ES3InspectorInfo>().SetMessage("This GameObject was created because Easy Save could not find a GameObject in the scene with the same instance ID as the GameObject the Component we are loading is attached to.\nTo prevent this from being created, use the LoadInto methods to tell Easy Save what Component the data should be loaded in to.");
+                        go.AddComponent<ES3InspectorInfo>().SetMessage(
+                            "This GameObject was created because Easy Save could not find a GameObject in the scene with the same instance ID as the GameObject the Component we are loading is attached to.\nTo prevent this from being created, use the LoadInto methods to tell Easy Save what Component the data should be loaded in to.");
 #endif
                         instance = GetOrAddComponent(go, type);
                         refMgr.Add(instance, id);
                         refMgr.Add(go);
                     }
+
                     break;
                 }
-            }
 
-            if(instance != null)
+            if (instance != null)
                 ReadComponent<T>(reader, instance);
 
             return instance;
@@ -123,10 +128,11 @@ namespace ES3Types
 
         public static Component CreateComponent(Type type)
         {
-            GameObject go = new GameObject("Easy Save 3 Loaded Component");
+            var go = new GameObject("Easy Save 3 Loaded Component");
 #if UNITY_EDITOR
             // If we're running in the Editor, add a description explaining why this object was created.
-            go.AddComponent<ES3InspectorInfo>().SetMessage("This GameObject was created because Easy Save tried to load a Component with an instance ID which does not exist in this scene.\nTo prevent this from being created, use the LoadInto methods to tell Easy Save what Component the data should be loaded in to.\nThis can also happen if you load a class which references another object, but that object has not yet been loaded. In this case, you should load the object the class references before loading the class.");
+            go.AddComponent<ES3InspectorInfo>().SetMessage(
+                "This GameObject was created because Easy Save tried to load a Component with an instance ID which does not exist in this scene.\nTo prevent this from being created, use the LoadInto methods to tell Easy Save what Component the data should be loaded in to.\nThis can also happen if you load a class which references another object, but that object has not yet been loaded. In this case, you should load the object the class references before loading the class.");
 #endif
             if (type == typeof(Transform))
                 return go.GetComponent(type);

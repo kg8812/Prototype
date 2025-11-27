@@ -10,37 +10,42 @@ namespace Apis
 {
     public class Accessory : Item
     {
+        // public override string Name => name;
+        //
+        // public override string FlavourText => flavourText;
+        //
+        // public override string Description => description;
+
+        protected BonusStat _bonusStat;
+
+        private AccessoryDataType data;
+
+        [LabelText("테이블 데이터")] [SerializeField]
+        private int dataId;
+
+        protected bool isCd;
+        protected bool isDuration;
+
+        protected Action OnDurationStart;
+
+        protected Action OnDurationEnd;
         // 악세사리 클래스                         
         // protected new string name;
         // protected string flavourText;
         // protected string description;
 
         public override int ItemId => dataId;
-        // public override string Name => name;
-        //
-        // public override string FlavourText => flavourText;
-        //
-        // public override string Description => description;
-        
-        protected BonusStat _bonusStat;
 
-        public virtual BonusStat BonusStat => _bonusStat ??= new();
-        
-        AccessoryDataType data;
+        public virtual BonusStat BonusStat => _bonusStat ??= new BonusStat();
 
-        [LabelText("테이블 데이터")]
-        [SerializeField] int dataId;
-        
         public int Index => dataId;
         public AccessoryDataType Data => data;
-        private int grade;
-        public int Grade => grade;
+        public int Grade { get; private set; }
 
-        protected bool isCd;
-        protected bool isDuration;
-
-        protected Action OnDurationStart;
-        protected Action OnDurationEnd;
+        private void OnDestroy()
+        {
+            if (Image != null) Addressables.Release(Image);
+        }
 
         public override void Init()
         {
@@ -50,15 +55,12 @@ namespace Apis
             // name = LanguageManager.Str(data.accName);
             // flavourText = LanguageManager.Str(data.accFlavorText);
             // description = LanguageManager.Str(data.accDesc);
-            
-            if (Image == null)
-            {
-                Image = ResourceUtil.Load<Sprite>(data.iconPath);
-            }
+
+            if (Image == null) Image = ResourceUtil.Load<Sprite>(data.iconPath);
 
             isCd = false;
             isDuration = false;
-            grade = data.grade;
+            Grade = data.grade;
         }
 
         public override void Activate()
@@ -71,14 +73,6 @@ namespace Apis
             GameManager.Item.Acc.Return(this);
         }
 
-        private void OnDestroy()
-        {
-            if (Image != null)
-            {
-                Addressables.Release(Image);
-            }
-        }
-
         protected IEnumerator CDCoroutine(float cd)
         {
             if (isCd) yield break;
@@ -86,6 +80,7 @@ namespace Apis
             yield return new WaitForSeconds(cd);
             isCd = false;
         }
+
         protected IEnumerator DurationCoroutine(float duration)
         {
             if (isDuration) yield break;

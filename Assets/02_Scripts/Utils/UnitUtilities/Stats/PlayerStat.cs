@@ -1,8 +1,5 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using Sirenix.OdinInspector;
-using UnityEngine;
 
 [Serializable]
 public struct PlayerStat
@@ -46,7 +43,7 @@ public struct PlayerStat
 
     public static PlayerStat operator +(PlayerStat a, PlayerStat b)
     {
-        PlayerStat c = new PlayerStat(a);
+        var c = new PlayerStat(a);
         c.JumpPower += b.JumpPower;
         c.JumpMax += b.JumpMax;
         c.currentPotionCapacity += b.currentPotionCapacity;
@@ -63,7 +60,7 @@ public struct PlayerStat
 
     public static PlayerStat operator -(PlayerStat a, PlayerStat b)
     {
-        PlayerStat c = new PlayerStat(a);
+        var c = new PlayerStat(a);
         c.JumpPower -= b.JumpPower;
         c.JumpMax -= b.JumpMax;
         c.currentPotionCapacity -= b.currentPotionCapacity;

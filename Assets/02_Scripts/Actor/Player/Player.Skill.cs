@@ -1,29 +1,28 @@
 using System;
 using System.Collections.Generic;
 using Apis;
-using Sirenix.OdinInspector;
 using UI;
-using UnityEngine;
 
-public partial class Player : IActiveSkillUser , IPassiveSkillUser
+public partial class Player : IActiveSkillUser, IPassiveSkillUser
 {
+    private List<SkillAttachment> _activeAttachments;
+
+    private ActiveSkill _baseActiveSkill;
+    private PassiveSkill _basePassiveSkill;
+
+
+    private Action<ActiveSkill> _onActiveSkillChange;
+    private Action<PassiveSkill> _onPassiveSkillChange;
     private Grab grab;
-    ActiveSkill activeSkill;
-    PassiveSkill passiveSkill;
 
     public ActiveSkill curSkill { get; set; }
-    
-    public ActiveSkill ActiveSkill => activeSkill;
 
-    private List<SkillAttachment> _activeAttachments;
-    public List<SkillAttachment> ActiveAttachments => _activeAttachments ??= new();
+    public ActiveSkill ActiveSkill { get; private set; }
 
-    public PassiveSkill PassiveSkill => passiveSkill;
+    public List<SkillAttachment> ActiveAttachments => _activeAttachments ??= new List<SkillAttachment>();
 
-    
-    Action<ActiveSkill> _onActiveSkillChange;
-    Action<PassiveSkill> _onPassiveSkillChange;
-    
+    public PassiveSkill PassiveSkill { get; private set; }
+
     public event Action<ActiveSkill> OnActiveSkillChange
     {
         add
@@ -44,60 +43,54 @@ public partial class Player : IActiveSkillUser , IPassiveSkillUser
         remove => _onPassiveSkillChange -= value;
     }
 
-    private ActiveSkill _baseActiveSkill;
-    private PassiveSkill _basePassiveSkill;
-    
     public void ChangeActiveSkill(ActiveSkill active)
     {
-        if (active == activeSkill) return;
-        
-        activeSkill?.UnEquip();
-        activeSkill = active;
-        activeSkill?.Equip(this);
+        if (active == ActiveSkill) return;
+
+        ActiveSkill?.UnEquip();
+        ActiveSkill = active;
+        ActiveSkill?.Equip(this);
         SetMainSkillIcon();
         _onActiveSkillChange?.Invoke(active);
     }
 
     public void ResetActiveSkill()
     {
-        if (activeSkill == _baseActiveSkill) return;
-        
-        activeSkill?.UnEquip();
-        activeSkill = _baseActiveSkill;
-        activeSkill?.Equip(this);
+        if (ActiveSkill == _baseActiveSkill) return;
+
+        ActiveSkill?.UnEquip();
+        ActiveSkill = _baseActiveSkill;
+        ActiveSkill?.Equip(this);
         SetMainSkillIcon();
-        _onActiveSkillChange?.Invoke(activeSkill);
+        _onActiveSkillChange?.Invoke(ActiveSkill);
     }
 
     public void ChangePassiveSkill(PassiveSkill passive)
     {
-        if (passiveSkill == passive) return;
-        
-        passiveSkill?.UnEquip();
-        passiveSkill = passive;
-        passiveSkill?.Equip(this);
+        if (PassiveSkill == passive) return;
+
+        PassiveSkill?.UnEquip();
+        PassiveSkill = passive;
+        PassiveSkill?.Equip(this);
         _onPassiveSkillChange?.Invoke(passive);
     }
 
     public void ResetPassiveSkill()
     {
-        if (passiveSkill == _basePassiveSkill) return;
-        
-        passiveSkill?.UnEquip();
-        passiveSkill = _basePassiveSkill;
-        passiveSkill?.Equip(this);
-        _onPassiveSkillChange?.Invoke(passiveSkill);
+        if (PassiveSkill == _basePassiveSkill) return;
+
+        PassiveSkill?.UnEquip();
+        PassiveSkill = _basePassiveSkill;
+        PassiveSkill?.Equip(this);
+        _onPassiveSkillChange?.Invoke(PassiveSkill);
     }
-    void SetMainSkillIcon()
+
+    private void SetMainSkillIcon()
     {
         var icon = UI_MainHud.Instance.mainSkillIcon;
-        if (activeSkill == null)
-        {
+        if (ActiveSkill == null)
             icon.WhenItemIsNull();
-        }
         else
-        {
             icon.WhenItemIsSet();
-        }
     }
 }

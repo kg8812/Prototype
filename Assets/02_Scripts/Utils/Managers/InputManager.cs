@@ -1,8 +1,5 @@
 using System.Collections.Generic;
-using Apis;
-using Save.Schema;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 
 public interface IController
@@ -25,7 +22,7 @@ public class DefaultController : IController
 
 public class InputManager
 {
-    public static List<KeyCode> pushDownedKeyInFrame = new List<KeyCode>();
+    public static List<KeyCode> pushDownedKeyInFrame = new();
     public static List<KeyCode> pushedKeyInFrame = new();
     public static List<KeyCode> pushUpedKeyInFrame = new();
 
@@ -40,13 +37,13 @@ public class InputManager
      * 하지만 pushedKeyInFrame에 키코드가 추가되어있어, 다음 컨트롤러에서 입력을 안받음.
      * GetKeyDown을 되도록이면 가장 마지막에 판단해줬으면..(예외사항이 esc밖에 없긴함)
      */
-
     public static void ClearPushedButtons()
     {
         pushedDownedButtonInFrame.Clear();
         pushedButtonInFrame.Clear();
         pushedUpButtonInFrame.Clear();
     }
+
     public static void ClearPushedKeycode()
     {
         pushDownedKeyInFrame.Clear();
@@ -56,10 +53,7 @@ public class InputManager
 
     public static bool GetButtonDown(ButtonControl button)
     {
-        if (pushedDownedButtonInFrame.Contains(button))
-        {
-            return false;
-        }
+        if (pushedDownedButtonInFrame.Contains(button)) return false;
 
         if (button.wasPressedThisFrame)
         {
@@ -69,12 +63,10 @@ public class InputManager
 
         return false;
     }
-     public static bool GetButton(ButtonControl button)
+
+    public static bool GetButton(ButtonControl button)
     {
-        if (pushedButtonInFrame.Contains(button))
-        {
-            return false;
-        }
+        if (pushedButtonInFrame.Contains(button)) return false;
 
         if (button.isPressed)
         {
@@ -84,12 +76,10 @@ public class InputManager
 
         return false;
     }
-     public static bool GetButtonUp(ButtonControl button)
+
+    public static bool GetButtonUp(ButtonControl button)
     {
-        if (pushedUpButtonInFrame.Contains(button))
-        {
-            return false;
-        }
+        if (pushedUpButtonInFrame.Contains(button)) return false;
 
         if (button.wasReleasedThisFrame)
         {
@@ -104,12 +94,10 @@ public class InputManager
     {
         return pushedButtonInFrame.Count > 0;
     }
+
     public static bool GetKeyDown(KeyCode keyCode)
     {
-        if (pushDownedKeyInFrame.Contains(keyCode))
-        {
-            return false;
-        }
+        if (pushDownedKeyInFrame.Contains(keyCode)) return false;
 
         if (Input.GetKeyDown(keyCode))
         {
@@ -122,10 +110,7 @@ public class InputManager
 
     public static bool GetKey(KeyCode keyCode)
     {
-        if (pushedKeyInFrame.Contains(keyCode))
-        {
-            return false;
-        }
+        if (pushedKeyInFrame.Contains(keyCode)) return false;
 
         if (Input.GetKey(keyCode))
         {
@@ -135,13 +120,10 @@ public class InputManager
 
         return false;
     }
-    
+
     public static bool GetKeyUp(KeyCode keyCode)
     {
-        if (pushUpedKeyInFrame.Contains(keyCode))
-        {
-            return false;
-        }
+        if (pushUpedKeyInFrame.Contains(keyCode)) return false;
 
         if (Input.GetKeyUp(keyCode))
         {
@@ -154,7 +136,7 @@ public class InputManager
 
     public static bool AnyKey()
     {
-        if(pushedKeyInFrame.Count > 0)
+        if (pushedKeyInFrame.Count > 0)
             return true;
         return false;
     }

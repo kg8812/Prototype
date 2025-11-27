@@ -9,22 +9,26 @@ namespace Apis
 
         public class PermanentApply : IApplyType
         {
-            readonly Buff buff;
+            private readonly Buff buff;
+
             public PermanentApply(Buff buff)
             {
                 this.buff = buff;
             }
+
             public void Apply(Actor actor, EventParameters _)
             {
                 if (buff.ActivatedSubBuff == null) return;
 
-                buff._activatedSubBuff.target = actor.gameObject;
+                buff.ActivatedSubBuff.target = actor.gameObject;
                 buff.ActivatedSubBuff.PermanentApply();
             }
         }
+
         public class NormalApply : IApplyType
         {
-            readonly Buff buff;
+            private readonly Buff buff;
+
             public NormalApply(Buff buff)
             {
                 this.buff = buff;
@@ -38,17 +42,18 @@ namespace Apis
 
         public class TempApply : IApplyType
         {
-            readonly Buff buff;
+            private readonly Buff buff;
+
             public TempApply(Buff buff)
             {
                 this.buff = buff;
             }
+
             public void Apply(Actor actor, EventParameters parameters)
             {
                 if (parameters != null)
                     buff.ActivatedSubBuff?.TempApply(parameters);
             }
         }
-        
     }
 }

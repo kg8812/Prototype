@@ -27,125 +27,148 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using Spine.Unity.AttachmentTools;
 using System.Collections;
+using Spine.Unity.AttachmentTools;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
+namespace Spine.Unity.Examples
+{
+    // This is an example script that shows you how to change images on your skeleton using UnityEngine.Sprites.
+    public class MixAndMatch : MonoBehaviour
+    {
+        private Skin customSkin;
 
-	// This is an example script that shows you how to change images on your skeleton using UnityEngine.Sprites.
-	public class MixAndMatch : MonoBehaviour {
+        private IEnumerator Start()
+        {
+            yield return new WaitForSeconds(1f); // Delay for one second before applying. For testing.
+            Apply();
+        }
 
-		#region Inspector
-		[SpineSkin]
-		public string templateAttachmentsSkin = "base";
-		public Material sourceMaterial; // This will be used as the basis for shader and material property settings.
+        private void OnValidate()
+        {
+            if (sourceMaterial == null)
+            {
+                var skeletonAnimation = GetComponent<SkeletonAnimation>();
+                if (skeletonAnimation != null)
+                    sourceMaterial = skeletonAnimation.SkeletonDataAsset.atlasAssets[0].PrimaryMaterial;
+            }
+        }
 
-		[Header("Visor")]
-		public Sprite visorSprite;
-		[SpineSlot] public string visorSlot;
-		[SpineAttachment(slotField: "visorSlot", skinField: "baseSkinName")] public string visorKey = "goggles";
+        private void Apply()
+        {
+            var skeletonAnimation = GetComponent<SkeletonAnimation>();
+            var skeleton = skeletonAnimation.Skeleton;
 
-		[Header("Gun")]
-		public Sprite gunSprite;
-		[SpineSlot] public string gunSlot;
-		[SpineAttachment(slotField: "gunSlot", skinField: "baseSkinName")] public string gunKey = "gun";
+            // STEP 0: PREPARE SKINS
+            // Let's prepare a new skin to be our custom skin with equips/customizations. We get a clone so our original skins are unaffected.
+            customSkin =
+                customSkin ??
+                new Skin("custom skin"); // This requires that all customizations are done with skin placeholders defined in Spine.
+            var templateSkin = skeleton.Data.FindSkin(templateAttachmentsSkin);
 
-		[Header("Runtime Repack")]
-		public bool repack = true;
-		public BoundingBoxFollower bbFollower;
+            // STEP 1: "EQUIP" ITEMS USING SPRITES
+            // STEP 1.1 Find the original/template attachment.
+            // Step 1.2 Get a clone of the original/template attachment.
+            // Step 1.3 Apply the Sprite image to the clone.
+            // Step 1.4 Add the remapped clone to the new custom skin.
 
-		[Header("Do not assign")]
-		public Texture2D runtimeAtlas;
-		public Material runtimeMaterial;
-		#endregion
+            // Let's do this for the visor.
+            var visorSlotIndex =
+                skeleton.Data.FindSlot(visorSlot)
+                    .Index; // You can access GetAttachment and SetAttachment via string, but caching the slotIndex is faster.
+            var templateAttachment = templateSkin.GetAttachment(visorSlotIndex, visorKey); // STEP 1.1
 
-		Skin customSkin;
+            // Note: Each call to `GetRemappedClone()` with parameter `premultiplyAlpha` set to `true` creates
+            // a cached Texture copy which can be cleared by calling AtlasUtilities.ClearCache() as done in the method below.
+            var newAttachment =
+                templateAttachment.GetRemappedClone(visorSprite, sourceMaterial,
+                    pivotShiftsMeshUVCoords: false); // STEP 1.2 - 1.3
+            customSkin.SetAttachment(visorSlotIndex, visorKey, newAttachment); // STEP 1.4
 
-		void OnValidate () {
-			if (sourceMaterial == null) {
-				SkeletonAnimation skeletonAnimation = GetComponent<SkeletonAnimation>();
-				if (skeletonAnimation != null)
-					sourceMaterial = skeletonAnimation.SkeletonDataAsset.atlasAssets[0].PrimaryMaterial;
-			}
-		}
+            // And now for the gun.
+            var gunSlotIndex = skeleton.Data.FindSlot(gunSlot).Index;
+            var templateGun = templateSkin.GetAttachment(gunSlotIndex, gunKey); // STEP 1.1
+            var newGun =
+                templateGun.GetRemappedClone(gunSprite, sourceMaterial,
+                    pivotShiftsMeshUVCoords: false); // STEP 1.2 - 1.3
+            if (newGun != null) customSkin.SetAttachment(gunSlotIndex, gunKey, newGun); // STEP 1.4
 
-		IEnumerator Start () {
-			yield return new WaitForSeconds(1f); // Delay for one second before applying. For testing.
-			Apply();
-		}
+            // customSkin.RemoveAttachment(gunSlotIndex, gunKey); // To remove an item.
+            // customSkin.Clear()
+            // Use skin.Clear() To remove all customizations.
+            // Customizations will fall back to the value in the default skin if it was defined there.
+            // To prevent fallback from happening, make sure the key is not defined in the default skin.
 
-		void Apply () {
-			SkeletonAnimation skeletonAnimation = GetComponent<SkeletonAnimation>();
-			Skeleton skeleton = skeletonAnimation.Skeleton;
+            // STEP 3: APPLY AND CLEAN UP.
+            // Recommended, preferably at level-load-time: REPACK THE CUSTOM SKIN TO MINIMIZE DRAW CALLS
+            // 				IMPORTANT NOTE: the GetRepackedSkin() operation is expensive - if multiple characters
+            // 				need to call it every few seconds the overhead will outweigh the draw call benefits.
+            //
+            // 				Repacking requires that you set all source textures/sprites/atlases to be Read/Write enabled in the inspector.
+            // 				Combine all the attachment sources into one skin. Usually this means the default skin and the custom skin.
+            // 				call Skin.GetRepackedSkin to get a cloned skin with cloned attachments that all use one texture.
+            if (repack)
+            {
+                var repackedSkin = new Skin("repacked skin");
+                repackedSkin.AddSkin(skeleton.Data
+                    .DefaultSkin); // Include the "default" skin. (everything outside of skin placeholders)
+                repackedSkin.AddSkin(customSkin); // Include your new custom skin.
 
-			// STEP 0: PREPARE SKINS
-			// Let's prepare a new skin to be our custom skin with equips/customizations. We get a clone so our original skins are unaffected.
-			customSkin = customSkin ?? new Skin("custom skin"); // This requires that all customizations are done with skin placeholders defined in Spine.
-			Skin templateSkin = skeleton.Data.FindSkin(templateAttachmentsSkin);
+                // Note: materials and textures returned by GetRepackedSkin() behave like 'new Texture2D()' and need to be destroyed
+                if (runtimeMaterial)
+                    Destroy(runtimeMaterial);
+                if (runtimeAtlas)
+                    Destroy(runtimeAtlas);
+                repackedSkin = repackedSkin.GetRepackedSkin("repacked skin", sourceMaterial, out runtimeMaterial,
+                    out runtimeAtlas); // Pack all the items in the skin.
+                skeleton.SetSkin(repackedSkin); // Assign the repacked skin to your Skeleton.
+                if (bbFollower != null) bbFollower.Initialize(true);
+            }
+            else
+            {
+                skeleton.SetSkin(customSkin); // Just use the custom skin directly.
+            }
 
-			// STEP 1: "EQUIP" ITEMS USING SPRITES
-			// STEP 1.1 Find the original/template attachment.
-			// Step 1.2 Get a clone of the original/template attachment.
-			// Step 1.3 Apply the Sprite image to the clone.
-			// Step 1.4 Add the remapped clone to the new custom skin.
+            skeleton.SetSlotsToSetupPose(); // Use the pose from setup pose.
+            skeletonAnimation.Update(0); // Use the pose in the currently active animation.
 
-			// Let's do this for the visor.
-			int visorSlotIndex = skeleton.Data.FindSlot(visorSlot).Index; // You can access GetAttachment and SetAttachment via string, but caching the slotIndex is faster.
-			Attachment templateAttachment = templateSkin.GetAttachment(visorSlotIndex, visorKey); // STEP 1.1
+            // `GetRepackedSkin()` and each call to `GetRemappedClone()` with parameter `premultiplyAlpha` set to `true`
+            // cache necessarily created Texture copies which can be cleared by calling AtlasUtilities.ClearCache().
+            // You can optionally clear the textures cache after multiple repack operations.
+            // Just be aware that while this cleanup frees up memory, it is also a costly operation
+            // and will likely cause a spike in the framerate.
+            AtlasUtilities.ClearCache();
+            Resources.UnloadUnusedAssets();
+        }
 
-			// Note: Each call to `GetRemappedClone()` with parameter `premultiplyAlpha` set to `true` creates
-			// a cached Texture copy which can be cleared by calling AtlasUtilities.ClearCache() as done in the method below.
-			Attachment newAttachment = templateAttachment.GetRemappedClone(visorSprite, sourceMaterial, pivotShiftsMeshUVCoords: false); // STEP 1.2 - 1.3
-			customSkin.SetAttachment(visorSlotIndex, visorKey, newAttachment); // STEP 1.4
+        #region Inspector
 
-			// And now for the gun.
-			int gunSlotIndex = skeleton.Data.FindSlot(gunSlot).Index;
-			Attachment templateGun = templateSkin.GetAttachment(gunSlotIndex, gunKey); // STEP 1.1
-			Attachment newGun = templateGun.GetRemappedClone(gunSprite, sourceMaterial, pivotShiftsMeshUVCoords: false); // STEP 1.2 - 1.3
-			if (newGun != null) customSkin.SetAttachment(gunSlotIndex, gunKey, newGun); // STEP 1.4
+        [SpineSkin] public string templateAttachmentsSkin = "base";
 
-			// customSkin.RemoveAttachment(gunSlotIndex, gunKey); // To remove an item.
-			// customSkin.Clear()
-			// Use skin.Clear() To remove all customizations.
-			// Customizations will fall back to the value in the default skin if it was defined there.
-			// To prevent fallback from happening, make sure the key is not defined in the default skin.
+        public Material sourceMaterial; // This will be used as the basis for shader and material property settings.
 
-			// STEP 3: APPLY AND CLEAN UP.
-			// Recommended, preferably at level-load-time: REPACK THE CUSTOM SKIN TO MINIMIZE DRAW CALLS
-			// 				IMPORTANT NOTE: the GetRepackedSkin() operation is expensive - if multiple characters
-			// 				need to call it every few seconds the overhead will outweigh the draw call benefits.
-			//
-			// 				Repacking requires that you set all source textures/sprites/atlases to be Read/Write enabled in the inspector.
-			// 				Combine all the attachment sources into one skin. Usually this means the default skin and the custom skin.
-			// 				call Skin.GetRepackedSkin to get a cloned skin with cloned attachments that all use one texture.
-			if (repack) {
-				Skin repackedSkin = new Skin("repacked skin");
-				repackedSkin.AddSkin(skeleton.Data.DefaultSkin); // Include the "default" skin. (everything outside of skin placeholders)
-				repackedSkin.AddSkin(customSkin); // Include your new custom skin.
+        [Header("Visor")] public Sprite visorSprite;
 
-				// Note: materials and textures returned by GetRepackedSkin() behave like 'new Texture2D()' and need to be destroyed
-				if (runtimeMaterial)
-					Destroy(runtimeMaterial);
-				if (runtimeAtlas)
-					Destroy(runtimeAtlas);
-				repackedSkin = repackedSkin.GetRepackedSkin("repacked skin", sourceMaterial, out runtimeMaterial, out runtimeAtlas); // Pack all the items in the skin.
-				skeleton.SetSkin(repackedSkin); // Assign the repacked skin to your Skeleton.
-				if (bbFollower != null) bbFollower.Initialize(true);
-			} else {
-				skeleton.SetSkin(customSkin); // Just use the custom skin directly.
-			}
+        [SpineSlot] public string visorSlot;
 
-			skeleton.SetSlotsToSetupPose(); // Use the pose from setup pose.
-			skeletonAnimation.Update(0); // Use the pose in the currently active animation.
+        [SpineAttachment(slotField: "visorSlot", skinField: "baseSkinName")]
+        public string visorKey = "goggles";
 
-			// `GetRepackedSkin()` and each call to `GetRemappedClone()` with parameter `premultiplyAlpha` set to `true`
-			// cache necessarily created Texture copies which can be cleared by calling AtlasUtilities.ClearCache().
-			// You can optionally clear the textures cache after multiple repack operations.
-			// Just be aware that while this cleanup frees up memory, it is also a costly operation
-			// and will likely cause a spike in the framerate.
-			AtlasUtilities.ClearCache();
-			Resources.UnloadUnusedAssets();
-		}
-	}
+        [Header("Gun")] public Sprite gunSprite;
+
+        [SpineSlot] public string gunSlot;
+
+        [SpineAttachment(slotField: "gunSlot", skinField: "baseSkinName")]
+        public string gunKey = "gun";
+
+        [Header("Runtime Repack")] public bool repack = true;
+
+        public BoundingBoxFollower bbFollower;
+
+        [Header("Do not assign")] public Texture2D runtimeAtlas;
+
+        public Material runtimeMaterial;
+
+        #endregion
+    }
 }

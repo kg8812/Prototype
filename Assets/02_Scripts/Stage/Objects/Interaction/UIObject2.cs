@@ -2,9 +2,9 @@ using System;
 using Apis;
 using UnityEngine;
 
-public class UIObject2 : MonoBehaviour,IOnInteract
+public class UIObject2 : MonoBehaviour, IOnInteract
 {
-    [SerializeField] string uiCanvasName;
+    [SerializeField] private string uiCanvasName;
 
     public Func<bool> InteractCheckEvent { get; set; }
 

@@ -1,11 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
-using Save.Schema;
-using UnityEngine;
+using System;
 
 namespace Apis.DataType
 {
-    [System.Serializable]
+    [Serializable]
     public class LevelDataType
     {
         public int index;

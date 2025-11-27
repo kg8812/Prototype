@@ -1,11 +1,11 @@
 using System;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
-using System.IO;
 
 public class CompositeTypeWindow : EditorWindow
 {
-    string typeName = "NewType";
+    private string typeName = "NewType";
 
     private void OnGUI()
     {
@@ -17,29 +17,29 @@ public class CompositeTypeWindow : EditorWindow
 
         GUILayout.Space(20);
 
-        string path = "Assets/BehaviourTree/Scripts/CompositeNodes";
+        var path = "Assets/BehaviourTree/Scripts/CompositeNodes";
 
 
         if (GUILayout.Button("Create CompositeNode Type"))
         {
             if (!string.IsNullOrEmpty(typeName))
             {
-                string tempType = typeName;
-                string scriptName = typeName;
+                var tempType = typeName;
+                var scriptName = typeName;
 
                 if (typeName.Contains("CompositeNode"))
                 {
-                    int idx = typeName.IndexOf("CompositeNode", StringComparison.Ordinal);
+                    var idx = typeName.IndexOf("CompositeNode", StringComparison.Ordinal);
                     tempType = typeName[..idx];
                 }
                 else
                 {
                     scriptName = typeName + "ActionNode";
                 }
-                string folderPath = path + "/" + tempType;
+
+                var folderPath = path + "/" + tempType;
                 if (!AssetDatabase.IsValidFolder(folderPath))
                 {
-                    
                     AssetDatabase.CreateFolder(path, tempType);
                 }
                 else
@@ -47,10 +47,11 @@ public class CompositeTypeWindow : EditorWindow
                     Debug.LogError("이미 존재합니다");
                     return;
                 }
-                string templatePath = "Assets/BehaviourTree/Templates/CompositeNodeTypeTemplate.txt";
-                string scriptPath = folderPath + "/" + scriptName + ".cs";
 
-                string template = File.ReadAllText(templatePath);
+                var templatePath = "Assets/BehaviourTree/Templates/CompositeNodeTypeTemplate.txt";
+                var scriptPath = folderPath + "/" + scriptName + ".cs";
+
+                var template = File.ReadAllText(templatePath);
                 template = template.Replace("#Name#", scriptName);
 
                 File.WriteAllText(scriptPath, template);
@@ -63,7 +64,6 @@ public class CompositeTypeWindow : EditorWindow
             }
 
             Close();
-
         }
     }
 }

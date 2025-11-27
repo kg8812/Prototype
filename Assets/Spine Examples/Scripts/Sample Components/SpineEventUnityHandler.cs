@@ -27,56 +27,64 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Spine.Unity.Prototyping {
+namespace Spine.Unity.Prototyping
+{
+    public class SpineEventUnityHandler : MonoBehaviour
+    {
+        public List<EventPair> events = new();
+        private IAnimationStateComponent animationStateComponent;
 
-	public class SpineEventUnityHandler : MonoBehaviour {
+        private ISkeletonComponent skeletonComponent;
 
-		[System.Serializable]
-		public class EventPair {
-			[SpineEvent] public string spineEvent;
-			public UnityEvent unityHandler;
-			public AnimationState.TrackEntryEventDelegate eventDelegate;
-		}
-
-		public List<EventPair> events = new List<EventPair>();
-
-		ISkeletonComponent skeletonComponent;
-		IAnimationStateComponent animationStateComponent;
-
-		void Start () {
-			if (skeletonComponent == null)
-				skeletonComponent = GetComponent<ISkeletonComponent>();
-			if (skeletonComponent == null) return;
-			if (animationStateComponent == null)
-				animationStateComponent = skeletonComponent as IAnimationStateComponent;
-			if (animationStateComponent == null) return;
-			Skeleton skeleton = skeletonComponent.Skeleton;
-			if (skeleton == null) return;
+        private void Start()
+        {
+            if (skeletonComponent == null)
+                skeletonComponent = GetComponent<ISkeletonComponent>();
+            if (skeletonComponent == null) return;
+            if (animationStateComponent == null)
+                animationStateComponent = skeletonComponent as IAnimationStateComponent;
+            if (animationStateComponent == null) return;
+            var skeleton = skeletonComponent.Skeleton;
+            if (skeleton == null) return;
 
 
-			SkeletonData skeletonData = skeleton.Data;
-			AnimationState state = animationStateComponent.AnimationState;
-			foreach (EventPair ep in events) {
-				EventData eventData = skeletonData.FindEvent(ep.spineEvent);
-				ep.eventDelegate = ep.eventDelegate ?? delegate (TrackEntry trackEntry, Event e) { if (e.Data == eventData) ep.unityHandler.Invoke(); };
-				state.Event += ep.eventDelegate;
-			}
-		}
+            var skeletonData = skeleton.Data;
+            var state = animationStateComponent.AnimationState;
+            foreach (var ep in events)
+            {
+                var eventData = skeletonData.FindEvent(ep.spineEvent);
+                ep.eventDelegate = ep.eventDelegate ?? delegate(TrackEntry trackEntry, Event e)
+                {
+                    if (e.Data == eventData) ep.unityHandler.Invoke();
+                };
+                state.Event += ep.eventDelegate;
+            }
+        }
 
-		void OnDestroy () {
-			if (animationStateComponent == null) animationStateComponent = GetComponent<IAnimationStateComponent>();
-			if (animationStateComponent.IsNullOrDestroyed()) return;
+        private void OnDestroy()
+        {
+            if (animationStateComponent == null) animationStateComponent = GetComponent<IAnimationStateComponent>();
+            if (animationStateComponent.IsNullOrDestroyed()) return;
 
-			AnimationState state = animationStateComponent.AnimationState;
-			foreach (EventPair ep in events) {
-				if (ep.eventDelegate != null) state.Event -= ep.eventDelegate;
-				ep.eventDelegate = null;
-			}
-		}
+            var state = animationStateComponent.AnimationState;
+            foreach (var ep in events)
+            {
+                if (ep.eventDelegate != null) state.Event -= ep.eventDelegate;
+                ep.eventDelegate = null;
+            }
+        }
 
-	}
+        [Serializable]
+        public class EventPair
+        {
+            [SpineEvent] public string spineEvent;
+            public UnityEvent unityHandler;
+            public AnimationState.TrackEntryEventDelegate eventDelegate;
+        }
+    }
 }

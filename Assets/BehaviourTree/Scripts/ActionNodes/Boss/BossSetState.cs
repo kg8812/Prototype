@@ -1,4 +1,3 @@
-
 namespace Apis.BehaviourTreeTool
 {
     public class BossSetState : BossActionNode
@@ -10,7 +9,7 @@ namespace Apis.BehaviourTreeTool
             base.OnStart();
             boss.SetState(bossState);
         }
-        
+
         public override State OnUpdate()
         {
             return State.Success;

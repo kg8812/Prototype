@@ -5,5 +5,4 @@ public interface ISubject<T>
     public void Detach(IObserver<T> observer);
 
     public void NotifyObservers();
-    
 }

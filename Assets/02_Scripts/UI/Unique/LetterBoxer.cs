@@ -1,8 +1,8 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
-using DG.Tweening;
+﻿using DG.Tweening;
 using Managers;
+using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 namespace UI
 {
@@ -13,12 +13,12 @@ namespace UI
         [SerializeField] private Image[] letter;
         [SerializeField] private float letterSize = 100f;
 
-        private bool toggleLetter = false;
+        private bool toggleLetter;
 
         protected override void Awake()
         {
             base.Awake();
-            DontDestroyOnLoad(this.gameObject);
+            DontDestroyOnLoad(gameObject);
             // _anim = GetComponent<Animator>();
 
             letter[0].GetComponent<RectTransform>().sizeDelta = new Vector2(0, letterSize);
@@ -30,29 +30,23 @@ namespace UI
         private void Start()
         {
             letterCan.worldCamera = CameraManager.instance.UICam;
-            
         }
 
 
-        public void ToggleLetterBox(bool isOn, float duration = 1f, UnityAction onStarted = null, UnityAction onEnded = null)
+        public void ToggleLetterBox(bool isOn, float duration = 1f, UnityAction onStarted = null,
+            UnityAction onEnded = null)
         {
             if (isOn == toggleLetter) return;
             toggleLetter = isOn;
 
             DOTween.Sequence()
-                .OnStart(() =>
-                {
-                    onStarted?.Invoke();
-                })
+                .OnStart(() => { onStarted?.Invoke(); })
                 .Append(DOTween.To(
-                    () => letterTrans.sizeDelta, 
+                    () => letterTrans.sizeDelta,
                     x => letterTrans.sizeDelta = x,
-                    new Vector2(0, 1080 + (toggleLetter ? 0 : letterSize * 2)), 
+                    new Vector2(0, 1080 + (toggleLetter ? 0 : letterSize * 2)),
                     duration))
-                .OnComplete(() =>
-                {
-                    onEnded?.Invoke();
-                });
+                .OnComplete(() => { onEnded?.Invoke(); });
         }
     }
 }

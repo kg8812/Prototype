@@ -4,35 +4,34 @@ using UnityEngine.UI;
 
 public class UI_SelectOnlyShader : MonoBehaviour
 {
-    [SerializeField]
-    Image IconImage;
-    [SerializeField]
-    TextMeshProUGUI text;
+    [SerializeField] private Image IconImage;
 
-    private void Awake() {
-        Material mat = Instantiate(IconImage.material);
+    [SerializeField] private TextMeshProUGUI text;
+
+    private void Awake()
+    {
+        var mat = Instantiate(IconImage.material);
         IconImage.material = mat;
         IconImage.material.SetInt("_IsSelect", 0);
         text.color = Color.gray;
-
     }
 
 
-    public void Selected(bool isSelected) {
-
+    public void Selected(bool isSelected)
+    {
         int booltoint;
-        if (isSelected) {
+        if (isSelected)
+        {
             text.color = Color.white;
             booltoint = 1;
         }
 
-        else {
+        else
+        {
             text.color = Color.gray;
             booltoint = 0;
         }
+
         IconImage.material.SetInt("_IsSelect", booltoint);
-
     }
-
-
 }

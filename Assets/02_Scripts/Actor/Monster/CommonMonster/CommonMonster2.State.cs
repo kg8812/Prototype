@@ -1,22 +1,30 @@
 ﻿using System.Collections.Generic;
 using Sirenix.OdinInspector;
-using UnityEngine;
 
 namespace Apis.CommonMonster2
 {
     public enum MonsterState
     {
-        Idle,Death
+        Idle,
+        Death
     }
 
     public partial class CommonMonster2
     {
+        [ReadOnly] public MonsterState curState;
+
+        private bool
+            // _isActivated,
+            // _isRecognized,
+            // _isDead,     -> Actor::IsDead
+            // _ised, -> Monster::Ised
+            // _isJumped,   -> Actor::isJump
+            _isee;
+
         private StateMachine<CommonMonster2> _mState;
         private Dictionary<MonsterState, IState<CommonMonster2>> _mStates;
 
         public MonsterState PreState { get; set; }
-
-        [ReadOnly] public MonsterState curState;
 
         public MonsterState CurState
         {
@@ -24,16 +32,22 @@ namespace Apis.CommonMonster2
             set => curState = value;
         }
 
-        private bool
-            // _isActivated,
-            // _isRecognized,
-            // _isDead,     -> Actor::IsDead
-            // _isGroggyed, -> Monster::IsGroggyed
-            // _isJumped,   -> Actor::isJump
-            _isee;
-
         // For Util
         public string MStateString => CurState.ToString();
+
+        protected override void Update()
+        {
+            base.Update();
+            _playerTrans = GameManager.instance.PlayerTrans;
+            if (ReferenceEquals(_playerTrans, null)) return;
+            _mState?.Update();
+        }
+
+        protected override void FixedUpdate()
+        {
+            base.FixedUpdate();
+            _mState?.FixedUpdate();
+        }
 
         private void AwakeState()
         {
@@ -42,23 +56,8 @@ namespace Apis.CommonMonster2
             CurState = MonsterState.Idle;
             _mStates.Add(MonsterState.Idle, new SMIdle());
             _mStates.Add(MonsterState.Death, new SMDeath());
-            
+
             _mState = new StateMachine<CommonMonster2>(this, _mStates[MonsterState.Idle]);
-        }
-        
-        protected override void Update()
-        {
-            base.Update();
-            _playerTrans = GameManager.instance.PlayerTrans;
-            if (ReferenceEquals(_playerTrans, null)) return;
-            _mState?.Update();
-            
-        }
-        
-        protected override void FixedUpdate()
-        {
-            base.FixedUpdate();
-            _mState?.FixedUpdate();
         }
 
         public bool CheckChangeMonsterState(MonsterState toState)
@@ -69,11 +68,7 @@ namespace Apis.CommonMonster2
             // 일반몬스터는 죽음 상태 -> 아무 상태가 불가능 (초기화 제외)
             if (CurState == MonsterState.Death) return false;
 
-            if (toState != MonsterState.Death &&
-                SubBuffCount(SubBuffType.Debuff_Stun) > 0)
-            {
-                return false;
-            }
+            if (toState != MonsterState.Death) return false;
 
             return true;
         }
@@ -89,7 +84,7 @@ namespace Apis.CommonMonster2
         {
             if (CurState == toState) return false;
 
-            if (_mStates.TryGetValue(toState, out IState<CommonMonster2> newState))
+            if (_mStates.TryGetValue(toState, out var newState))
             {
                 PreState = CurState;
                 CurState = toState;
@@ -100,9 +95,8 @@ namespace Apis.CommonMonster2
 
             return false;
         }
-        
-        
-        
+
+
         // overring
         public override void IdleOn()
         {

@@ -4,29 +4,13 @@ namespace Apis
 {
     public abstract class SubBuffCollection : ISubject<List<SubBuff>>
     {
-        private List<IObserver<List<SubBuff>>> _observers;
-        protected List<IObserver<List<SubBuff>>> observers => _observers ??= new();
-
-        protected List<SubBuff> list;
-
-        public List<SubBuff> List
-        {
-            get => list;
-            protected set => list = value;
-        }
-        protected readonly IBuffCollectionUpdate stackDecrease;
-         readonly IBuffUpdate buffUpdate;
-
         protected readonly Actor actor;
         public readonly Buff buff;
-        public int Count => list?.Count ?? 0;
+        private readonly IBuffUpdate buffUpdate;
+        protected readonly IBuffCollectionUpdate stackDecrease;
+        private List<IObserver<List<SubBuff>>> _observers;
 
-        public float CurTime
-        {
-            get => stackDecrease.CurTime;
-            set => stackDecrease.CurTime = value;
-        }
-        public float Duration => stackDecrease.Duration;
+        protected List<SubBuff> list;
 
         public SubBuffCollection(Buff buff, Actor actor)
         {
@@ -35,26 +19,37 @@ namespace Apis
 
             stackDecrease = new SingleStackDecrease(this, buff.BuffDuration);
 
-            SubBuff subBuff = SubBuffResources.Get(buff);
+            var subBuff = SubBuffResources.Get(buff);
 
             if (subBuff is Debuff_DotDmg)
-            {
                 buffUpdate = new DotDmgUpdate(list, actor);
-            }
             else
-            {
                 buffUpdate = new BuffNoUpdate();
-            }
             Attach(stackDecrease);
             Attach(buffUpdate);
         }
 
+        protected List<IObserver<List<SubBuff>>> observers => _observers ??= new List<IObserver<List<SubBuff>>>();
+
+        public List<SubBuff> List
+        {
+            get => list;
+            protected set => list = value;
+        }
+
+        public int Count => list?.Count ?? 0;
+
+        public float CurTime
+        {
+            get => stackDecrease.CurTime;
+            set => stackDecrease.CurTime = value;
+        }
+
+        public float Duration => stackDecrease.Duration;
+
         public void Attach(IObserver<List<SubBuff>> observer)
         {
-            if (!observers.Contains(observer))
-            {
-                observers.Add(observer);
-            }
+            if (!observers.Contains(observer)) observers.Add(observer);
         }
 
         public void Detach(IObserver<List<SubBuff>> observer)
@@ -64,24 +59,19 @@ namespace Apis
 
         public virtual void NotifyObservers()
         {
-            foreach (var x in observers)
-            {
-                x.Notify(list);
-            }           
+            foreach (var x in observers) x.Notify(list);
         }
 
         public abstract void Add(SubBuff buff);
         public abstract bool RemoveSubBuff(SubBuff subBuff);
         public abstract SubBuff RemoveSubBuff();
         public abstract void Clear();
+
         public virtual void Update()
         {
             stackDecrease.Update();
             buffUpdate.Update();
-            foreach(var x in list)
-            {
-                x.Update();
-            }
-        }       
+            foreach (var x in list) x.Update();
+        }
     }
 }

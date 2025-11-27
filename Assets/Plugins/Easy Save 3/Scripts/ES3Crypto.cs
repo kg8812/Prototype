@@ -1,6 +1,7 @@
 ﻿#if !DISABLE_ENCRYPTION
 using System.IO;
 using System.Security.Cryptography;
+using System.Text;
 #if NETFX_CORE
 using Windows.Security.Cryptography;
 using Windows.Security.Cryptography.Core;
@@ -10,21 +11,23 @@ using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace ES3Internal
 {
-	public static class ES3Hash
-	{
+    public static class ES3Hash
+    {
 #if NETFX_CORE
 		public static string SHA1Hash(string input)
 		{
 			return System.Text.Encoding.UTF8.GetString(UnityEngine.Windows.Crypto.ComputeSHA1Hash(System.Text.Encoding.UTF8.GetBytes(input)));
 		}
 #else
-		public static string SHA1Hash(string input)
-		{
-			using (SHA1Managed sha1 = new SHA1Managed())
-				return System.Text.Encoding.UTF8.GetString(sha1.ComputeHash(System.Text.Encoding.UTF8.GetBytes(input)));
-		}
+        public static string SHA1Hash(string input)
+        {
+            using (var sha1 = new SHA1Managed())
+            {
+                return Encoding.UTF8.GetString(sha1.ComputeHash(Encoding.UTF8.GetBytes(input)));
+            }
+        }
 #endif
-	}
+    }
 
     public abstract class EncryptionAlgorithm
     {
@@ -35,7 +38,7 @@ namespace ES3Internal
 
         protected static void CopyStream(Stream input, Stream output, int bufferSize)
         {
-            byte[] buffer = new byte[bufferSize];
+            var buffer = new byte[bufferSize];
             int read;
             while ((read = input.Read(buffer, 0, bufferSize)) > 0)
                 output.Write(buffer, 0, read);
@@ -106,18 +109,20 @@ namespace ES3Internal
             output.Dispose();
 #else
             using (var alg = Aes.Create())
-			{
+            {
                 alg.Mode = CipherMode.CBC;
                 alg.Padding = PaddingMode.PKCS7;
                 alg.GenerateIV();
                 var key = new Rfc2898DeriveBytes(password, alg.IV, pwIterations);
-				alg.Key = key.GetBytes(keySize);
-				// Write the IV to the output stream.
-				output.Write(alg.IV, 0, ivSize);
-				using(var encryptor = alg.CreateEncryptor())
-				using(var cs = new CryptoStream(output, encryptor, CryptoStreamMode.Write))
-					CopyStream(input, cs, bufferSize);
-			}
+                alg.Key = key.GetBytes(keySize);
+                // Write the IV to the output stream.
+                output.Write(alg.IV, 0, ivSize);
+                using (var encryptor = alg.CreateEncryptor())
+                using (var cs = new CryptoStream(output, encryptor, CryptoStreamMode.Write))
+                {
+                    CopyStream(input, cs, bufferSize);
+                }
+            }
 #endif
         }
 
@@ -152,19 +157,20 @@ namespace ES3Internal
             output.Write(buffDecrypt.ToArray(), 0, (int)buffDecrypt.Length);
 #else
             using (var alg = Aes.Create())
-			{
+            {
                 var thisIV = new byte[ivSize];
                 input.Read(thisIV, 0, ivSize);
                 alg.IV = thisIV;
 
                 var key = new Rfc2898DeriveBytes(password, alg.IV, pwIterations);
-				alg.Key = key.GetBytes(keySize);
+                alg.Key = key.GetBytes(keySize);
 
-				using(var decryptor = alg.CreateDecryptor())
-				using(var cryptoStream = new CryptoStream(input, decryptor, CryptoStreamMode.Read))
-					CopyStream(cryptoStream, output, bufferSize);
-
-			}
+                using (var decryptor = alg.CreateDecryptor())
+                using (var cryptoStream = new CryptoStream(input, decryptor, CryptoStreamMode.Read))
+                {
+                    CopyStream(cryptoStream, output, bufferSize);
+                }
+            }
 #endif
             output.Position = 0;
         }
@@ -172,14 +178,15 @@ namespace ES3Internal
 
     public class UnbufferedCryptoStream : MemoryStream
     {
-        private readonly Stream stream;
         private readonly bool isReadStream;
-        private string password;
-        private int bufferSize;
-        private EncryptionAlgorithm alg;
-        private bool disposed = false;
+        private readonly Stream stream;
+        private readonly EncryptionAlgorithm alg;
+        private readonly int bufferSize;
+        private bool disposed;
+        private readonly string password;
 
-        public UnbufferedCryptoStream(Stream stream, bool isReadStream, string password, int bufferSize, EncryptionAlgorithm alg) : base()
+        public UnbufferedCryptoStream(Stream stream, bool isReadStream, string password, int bufferSize,
+            EncryptionAlgorithm alg)
         {
             this.stream = stream;
             this.isReadStream = isReadStream;

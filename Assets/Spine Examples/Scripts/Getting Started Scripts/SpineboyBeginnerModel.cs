@@ -27,98 +27,116 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
+using System;
 using System.Collections;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	[SelectionBase]
-	public class SpineboyBeginnerModel : MonoBehaviour {
+namespace Spine.Unity.Examples
+{
+    [SelectionBase]
+    public class SpineboyBeginnerModel : MonoBehaviour
+    {
+        private float lastShootTime;
 
-		#region Inspector
-		[Header("Current State")]
-		public SpineBeginnerBodyState state;
-		public bool facingLeft;
-		[Range(-1f, 1f)]
-		public float currentSpeed;
+        public event Action
+            ShootEvent; // Lets other scripts know when Spineboy is shooting. Check C# Documentation to learn more about events and delegates.
 
-		[Header("Balance")]
-		public float shootInterval = 0.12f;
-		#endregion
+        public event Action StartAimEvent; // Lets other scripts know when Spineboy is aiming.
+        public event Action StopAimEvent; // Lets other scripts know when Spineboy is no longer aiming.
 
-		float lastShootTime;
-		public event System.Action ShootEvent;  // Lets other scripts know when Spineboy is shooting. Check C# Documentation to learn more about events and delegates.
-		public event System.Action StartAimEvent;   // Lets other scripts know when Spineboy is aiming.
-		public event System.Action StopAimEvent;   // Lets other scripts know when Spineboy is no longer aiming.
+        private IEnumerator JumpRoutine()
+        {
+            if (state == SpineBeginnerBodyState.Jumping) yield break; // Don't jump when already jumping.
 
-		#region API
-		public void TryJump () {
-			StartCoroutine(JumpRoutine());
-		}
+            state = SpineBeginnerBodyState.Jumping;
 
-		public void TryShoot () {
-			float currentTime = Time.time;
+            // Fake jumping.
+            {
+                var pos = transform.localPosition;
+                const float jumpTime = 1.2f;
+                const float half = jumpTime * 0.5f;
+                const float jumpPower = 20f;
+                for (float t = 0; t < half; t += Time.deltaTime)
+                {
+                    var d = jumpPower * (half - t);
+                    transform.Translate(d * Time.deltaTime * Vector3.up);
+                    yield return null;
+                }
 
-			if (currentTime - lastShootTime > shootInterval) {
-				lastShootTime = currentTime;
-				if (ShootEvent != null) ShootEvent();   // Fire the "ShootEvent" event.
-			}
-		}
+                for (float t = 0; t < half; t += Time.deltaTime)
+                {
+                    var d = jumpPower * t;
+                    transform.Translate(d * Time.deltaTime * Vector3.down);
+                    yield return null;
+                }
 
-		public void StartAim () {
-			if (StartAimEvent != null) StartAimEvent();   // Fire the "StartAimEvent" event.
-		}
+                transform.localPosition = pos;
+            }
 
-		public void StopAim () {
-			if (StopAimEvent != null) StopAimEvent();   // Fire the "StopAimEvent" event.
-		}
+            state = SpineBeginnerBodyState.Idle;
+        }
 
-		public void TryMove (float speed) {
-			currentSpeed = speed; // show the "speed" in the Inspector.
+        #region Inspector
 
-			if (speed != 0) {
-				bool speedIsNegative = (speed < 0f);
-				facingLeft = speedIsNegative; // Change facing direction whenever speed is not 0.
-			}
+        [Header("Current State")] public SpineBeginnerBodyState state;
 
-			if (state != SpineBeginnerBodyState.Jumping) {
-				state = (speed == 0) ? SpineBeginnerBodyState.Idle : SpineBeginnerBodyState.Running;
-			}
+        public bool facingLeft;
 
-		}
-		#endregion
+        [Range(-1f, 1f)] public float currentSpeed;
 
-		IEnumerator JumpRoutine () {
-			if (state == SpineBeginnerBodyState.Jumping) yield break;   // Don't jump when already jumping.
+        [Header("Balance")] public float shootInterval = 0.12f;
 
-			state = SpineBeginnerBodyState.Jumping;
+        #endregion
 
-			// Fake jumping.
-			{
-				Vector3 pos = transform.localPosition;
-				const float jumpTime = 1.2f;
-				const float half = jumpTime * 0.5f;
-				const float jumpPower = 20f;
-				for (float t = 0; t < half; t += Time.deltaTime) {
-					float d = jumpPower * (half - t);
-					transform.Translate((d * Time.deltaTime) * Vector3.up);
-					yield return null;
-				}
-				for (float t = 0; t < half; t += Time.deltaTime) {
-					float d = jumpPower * t;
-					transform.Translate((d * Time.deltaTime) * Vector3.down);
-					yield return null;
-				}
-				transform.localPosition = pos;
-			}
+        #region API
 
-			state = SpineBeginnerBodyState.Idle;
-		}
+        public void TryJump()
+        {
+            StartCoroutine(JumpRoutine());
+        }
 
-	}
+        public void TryShoot()
+        {
+            var currentTime = Time.time;
 
-	public enum SpineBeginnerBodyState {
-		Idle,
-		Running,
-		Jumping
-	}
+            if (currentTime - lastShootTime > shootInterval)
+            {
+                lastShootTime = currentTime;
+                if (ShootEvent != null) ShootEvent(); // Fire the "ShootEvent" event.
+            }
+        }
+
+        public void StartAim()
+        {
+            if (StartAimEvent != null) StartAimEvent(); // Fire the "StartAimEvent" event.
+        }
+
+        public void StopAim()
+        {
+            if (StopAimEvent != null) StopAimEvent(); // Fire the "StopAimEvent" event.
+        }
+
+        public void TryMove(float speed)
+        {
+            currentSpeed = speed; // show the "speed" in the Inspector.
+
+            if (speed != 0)
+            {
+                var speedIsNegative = speed < 0f;
+                facingLeft = speedIsNegative; // Change facing direction whenever speed is not 0.
+            }
+
+            if (state != SpineBeginnerBodyState.Jumping)
+                state = speed == 0 ? SpineBeginnerBodyState.Idle : SpineBeginnerBodyState.Running;
+        }
+
+        #endregion
+    }
+
+    public enum SpineBeginnerBodyState
+    {
+        Idle,
+        Running,
+        Jumping
+    }
 }

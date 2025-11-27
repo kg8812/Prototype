@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
-using UnityEngine;
 
 namespace Apis.BehaviourTreeTool
 {
@@ -10,13 +9,13 @@ namespace Apis.BehaviourTreeTool
 
         public override TreeNode Clone()
         {
-            CompositeNode node = Instantiate(this);
+            var node = Instantiate(this);
             node.children = children.ConvertAll(x => x.Clone());
             return node;
         }
+
         public override void OnStart()
         {
         }
-       
     }
 }

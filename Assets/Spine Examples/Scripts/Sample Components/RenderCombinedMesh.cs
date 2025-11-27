@@ -35,213 +35,235 @@
 #define SET_VERTICES_HAS_LENGTH_PARAMETER
 #endif
 
-using System.Collections.Generic;
+using System;
 using System.Linq;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-
+namespace Spine.Unity.Examples
+{
 #if NEW_PREFAB_SYSTEM
-	[ExecuteAlways]
+    [ExecuteAlways]
 #else
 	[ExecuteInEditMode]
 #endif
-	public class RenderCombinedMesh : MonoBehaviour {
-		public SkeletonRenderer skeletonRenderer;
-		public SkeletonRenderSeparator renderSeparator;
-		public MeshRenderer[] referenceRenderers;
+    public class RenderCombinedMesh : MonoBehaviour
+    {
+        public SkeletonRenderer skeletonRenderer;
+        public SkeletonRenderSeparator renderSeparator;
+        public MeshRenderer[] referenceRenderers;
 
-		bool updateViaSkeletonCallback = false;
-		MeshFilter[] referenceMeshFilters;
-		MeshRenderer ownRenderer;
-		MeshFilter ownMeshFilter;
+        private bool updateViaSkeletonCallback;
+        private MeshFilter[] referenceMeshFilters;
+        private MeshRenderer ownRenderer;
+        private MeshFilter ownMeshFilter;
 
-		protected DoubleBuffered<Mesh> doubleBufferedMesh;
-		protected ExposedList<Vector3> positionBuffer;
-		protected ExposedList<Color32> colorBuffer;
-		protected ExposedList<Vector2> uvBuffer;
-		protected ExposedList<int> indexBuffer;
+        protected DoubleBuffered<Mesh> doubleBufferedMesh;
+        protected ExposedList<Vector3> positionBuffer;
+        protected ExposedList<Color32> colorBuffer;
+        protected ExposedList<Vector2> uvBuffer;
+        protected ExposedList<int> indexBuffer;
 
 #if UNITY_EDITOR
-		private void Reset () {
-			if (skeletonRenderer == null)
-				skeletonRenderer = this.GetComponentInParent<SkeletonRenderer>();
-			GatherRenderers();
+        private void Reset()
+        {
+            if (skeletonRenderer == null)
+                skeletonRenderer = GetComponentInParent<SkeletonRenderer>();
+            GatherRenderers();
 
-			Awake();
-			if (referenceRenderers.Length > 0)
-				ownRenderer.sharedMaterial = referenceRenderers[0].sharedMaterial;
+            Awake();
+            if (referenceRenderers.Length > 0)
+                ownRenderer.sharedMaterial = referenceRenderers[0].sharedMaterial;
 
-			LateUpdate();
-		}
+            LateUpdate();
+        }
 #endif
-		protected void GatherRenderers () {
-			referenceRenderers = this.GetComponentsInChildren<MeshRenderer>();
-			if (referenceRenderers.Length == 0 ||
-				(referenceRenderers.Length == 1 && referenceRenderers[0].gameObject == this.gameObject)) {
-				Transform parent = this.transform.parent;
-				if (parent)
-					referenceRenderers = parent.GetComponentsInChildren<MeshRenderer>();
-			}
-			referenceRenderers = referenceRenderers.Where(
-				(val, idx) => val.gameObject != this.gameObject && val.enabled).ToArray();
-		}
+        protected void GatherRenderers()
+        {
+            referenceRenderers = GetComponentsInChildren<MeshRenderer>();
+            if (referenceRenderers.Length == 0 ||
+                (referenceRenderers.Length == 1 && referenceRenderers[0].gameObject == gameObject))
+            {
+                var parent = transform.parent;
+                if (parent)
+                    referenceRenderers = parent.GetComponentsInChildren<MeshRenderer>();
+            }
 
-		void Awake () {
-			if (skeletonRenderer == null)
-				skeletonRenderer = this.GetComponentInParent<SkeletonRenderer>();
-			if (referenceRenderers == null || referenceRenderers.Length == 0) {
-				GatherRenderers();
-			}
+            referenceRenderers = referenceRenderers.Where(
+                (val, idx) => val.gameObject != gameObject && val.enabled).ToArray();
+        }
 
-			if (renderSeparator == null) {
-				if (skeletonRenderer)
-					renderSeparator = skeletonRenderer.GetComponent<SkeletonRenderSeparator>();
-				else
-					renderSeparator = this.GetComponentInParent<SkeletonRenderSeparator>();
-			}
+        private void Awake()
+        {
+            if (skeletonRenderer == null)
+                skeletonRenderer = GetComponentInParent<SkeletonRenderer>();
+            if (referenceRenderers == null || referenceRenderers.Length == 0) GatherRenderers();
 
-			int count = referenceRenderers.Length;
-			referenceMeshFilters = new MeshFilter[count];
-			for (int i = 0; i < count; ++i) {
-				referenceMeshFilters[i] = referenceRenderers[i].GetComponent<MeshFilter>();
-			}
+            if (renderSeparator == null)
+            {
+                if (skeletonRenderer)
+                    renderSeparator = skeletonRenderer.GetComponent<SkeletonRenderSeparator>();
+                else
+                    renderSeparator = GetComponentInParent<SkeletonRenderSeparator>();
+            }
 
-			ownRenderer = this.GetComponent<MeshRenderer>();
-			if (ownRenderer == null)
-				ownRenderer = this.gameObject.AddComponent<MeshRenderer>();
-			ownMeshFilter = this.GetComponent<MeshFilter>();
-			if (ownMeshFilter == null)
-				ownMeshFilter = this.gameObject.AddComponent<MeshFilter>();
-		}
+            var count = referenceRenderers.Length;
+            referenceMeshFilters = new MeshFilter[count];
+            for (var i = 0; i < count; ++i) referenceMeshFilters[i] = referenceRenderers[i].GetComponent<MeshFilter>();
 
-		void OnEnable () {
+            ownRenderer = GetComponent<MeshRenderer>();
+            if (ownRenderer == null)
+                ownRenderer = gameObject.AddComponent<MeshRenderer>();
+            ownMeshFilter = GetComponent<MeshFilter>();
+            if (ownMeshFilter == null)
+                ownMeshFilter = gameObject.AddComponent<MeshFilter>();
+        }
+
+        private void OnEnable()
+        {
 #if UNITY_EDITOR
-			if (Application.isPlaying)
-				Awake();
+            if (Application.isPlaying)
+                Awake();
 #endif
-			if (skeletonRenderer) {
-				skeletonRenderer.OnMeshAndMaterialsUpdated -= UpdateOnCallback;
-				skeletonRenderer.OnMeshAndMaterialsUpdated += UpdateOnCallback;
-				updateViaSkeletonCallback = true;
-			}
-			if (renderSeparator) {
-				renderSeparator.OnMeshAndMaterialsUpdated -= UpdateOnCallback;
-				renderSeparator.OnMeshAndMaterialsUpdated += UpdateOnCallback;
-				updateViaSkeletonCallback = true;
-			}
-		}
+            if (skeletonRenderer)
+            {
+                skeletonRenderer.OnMeshAndMaterialsUpdated -= UpdateOnCallback;
+                skeletonRenderer.OnMeshAndMaterialsUpdated += UpdateOnCallback;
+                updateViaSkeletonCallback = true;
+            }
 
-		void OnDisable () {
-			if (skeletonRenderer)
-				skeletonRenderer.OnMeshAndMaterialsUpdated -= UpdateOnCallback;
-			if (renderSeparator)
-				renderSeparator.OnMeshAndMaterialsUpdated -= UpdateOnCallback;
-		}
+            if (renderSeparator)
+            {
+                renderSeparator.OnMeshAndMaterialsUpdated -= UpdateOnCallback;
+                renderSeparator.OnMeshAndMaterialsUpdated += UpdateOnCallback;
+                updateViaSkeletonCallback = true;
+            }
+        }
 
-		void OnDestroy () {
-			for (int i = 0; i < 2; ++i) {
-				Mesh mesh = doubleBufferedMesh.GetNext();
+        private void OnDisable()
+        {
+            if (skeletonRenderer)
+                skeletonRenderer.OnMeshAndMaterialsUpdated -= UpdateOnCallback;
+            if (renderSeparator)
+                renderSeparator.OnMeshAndMaterialsUpdated -= UpdateOnCallback;
+        }
+
+        private void OnDestroy()
+        {
+            for (var i = 0; i < 2; ++i)
+            {
+                var mesh = doubleBufferedMesh.GetNext();
 #if UNITY_EDITOR
-				if (Application.isEditor && !Application.isPlaying)
-					UnityEngine.Object.DestroyImmediate(mesh);
-				else
-					UnityEngine.Object.Destroy(mesh);
+                if (Application.isEditor && !Application.isPlaying)
+                    DestroyImmediate(mesh);
+                else
+                    Destroy(mesh);
 #else
 				UnityEngine.Object.Destroy(mesh);
 #endif
-			}
-		}
+            }
+        }
 
-		void LateUpdate () {
+        private void LateUpdate()
+        {
 #if UNITY_EDITOR
-			if (!Application.isPlaying) {
-				UpdateMesh();
-				return;
-			}
+            if (!Application.isPlaying)
+            {
+                UpdateMesh();
+                return;
+            }
 #endif
 
-			if (updateViaSkeletonCallback)
-				return;
-			UpdateMesh();
-		}
+            if (updateViaSkeletonCallback)
+                return;
+            UpdateMesh();
+        }
 
-		void UpdateOnCallback (SkeletonRenderer r) {
-			UpdateMesh();
-		}
+        private void UpdateOnCallback(SkeletonRenderer r)
+        {
+            UpdateMesh();
+        }
 
-		protected void EnsureBufferSizes (int combinedVertexCount, int combinedIndexCount) {
-			if (positionBuffer == null) {
-				positionBuffer = new ExposedList<Vector3>(combinedVertexCount);
-				uvBuffer = new ExposedList<Vector2>(combinedVertexCount);
-				colorBuffer = new ExposedList<Color32>(combinedVertexCount);
-				indexBuffer = new ExposedList<int>(combinedIndexCount);
-			}
+        protected void EnsureBufferSizes(int combinedVertexCount, int combinedIndexCount)
+        {
+            if (positionBuffer == null)
+            {
+                positionBuffer = new ExposedList<Vector3>(combinedVertexCount);
+                uvBuffer = new ExposedList<Vector2>(combinedVertexCount);
+                colorBuffer = new ExposedList<Color32>(combinedVertexCount);
+                indexBuffer = new ExposedList<int>(combinedIndexCount);
+            }
 
-			if (positionBuffer.Count != combinedVertexCount) {
-				positionBuffer.Resize(combinedVertexCount);
-				uvBuffer.Resize(combinedVertexCount);
-				colorBuffer.Resize(combinedVertexCount);
-			}
-			if (indexBuffer.Count != combinedIndexCount) {
-				indexBuffer.Resize(combinedIndexCount);
-			}
-		}
+            if (positionBuffer.Count != combinedVertexCount)
+            {
+                positionBuffer.Resize(combinedVertexCount);
+                uvBuffer.Resize(combinedVertexCount);
+                colorBuffer.Resize(combinedVertexCount);
+            }
 
-		void InitMesh () {
-			if (doubleBufferedMesh == null) {
-				doubleBufferedMesh = new DoubleBuffered<Mesh>();
-				for (int i = 0; i < 2; ++i) {
-					Mesh combinedMesh = doubleBufferedMesh.GetNext();
-					combinedMesh.MarkDynamic();
-					combinedMesh.name = "RenderCombinedMesh" + i;
-					combinedMesh.subMeshCount = 1;
-				}
-			}
-		}
+            if (indexBuffer.Count != combinedIndexCount) indexBuffer.Resize(combinedIndexCount);
+        }
 
-		void UpdateMesh () {
-			InitMesh();
-			int combinedVertexCount = 0;
-			int combinedIndexCount = 0;
-			GetCombinedMeshInfo(ref combinedVertexCount, ref combinedIndexCount);
+        private void InitMesh()
+        {
+            if (doubleBufferedMesh == null)
+            {
+                doubleBufferedMesh = new DoubleBuffered<Mesh>();
+                for (var i = 0; i < 2; ++i)
+                {
+                    var combinedMesh = doubleBufferedMesh.GetNext();
+                    combinedMesh.MarkDynamic();
+                    combinedMesh.name = "RenderCombinedMesh" + i;
+                    combinedMesh.subMeshCount = 1;
+                }
+            }
+        }
 
-			EnsureBufferSizes(combinedVertexCount, combinedIndexCount);
+        private void UpdateMesh()
+        {
+            InitMesh();
+            var combinedVertexCount = 0;
+            var combinedIndexCount = 0;
+            GetCombinedMeshInfo(ref combinedVertexCount, ref combinedIndexCount);
 
-			int combinedV = 0;
-			int combinedI = 0;
-			for (int r = 0, rendererCount = referenceMeshFilters.Length; r < rendererCount; ++r) {
-				MeshFilter meshFilter = referenceMeshFilters[r];
-				Mesh mesh = meshFilter.sharedMesh;
-				if (mesh == null) continue;
+            EnsureBufferSizes(combinedVertexCount, combinedIndexCount);
 
-				int vertexCount = mesh.vertexCount;
-				Vector3[] positions = mesh.vertices;
-				Vector2[] uvs = mesh.uv;
-				Color32[] colors = mesh.colors32;
+            var combinedV = 0;
+            var combinedI = 0;
+            for (int r = 0, rendererCount = referenceMeshFilters.Length; r < rendererCount; ++r)
+            {
+                var meshFilter = referenceMeshFilters[r];
+                var mesh = meshFilter.sharedMesh;
+                if (mesh == null) continue;
 
-				System.Array.Copy(positions, 0, this.positionBuffer.Items, combinedV, vertexCount);
-				System.Array.Copy(uvs, 0, this.uvBuffer.Items, combinedV, vertexCount);
-				System.Array.Copy(colors, 0, this.colorBuffer.Items, combinedV, vertexCount);
+                var vertexCount = mesh.vertexCount;
+                var positions = mesh.vertices;
+                var uvs = mesh.uv;
+                var colors = mesh.colors32;
 
-				for (int s = 0, submeshCount = mesh.subMeshCount; s < submeshCount; ++s) {
-					int submeshIndexCount = (int)mesh.GetIndexCount(s);
-					int[] submeshIndices = mesh.GetIndices(s);
-					int[] dstIndices = this.indexBuffer.Items;
-					for (int i = 0; i < submeshIndexCount; ++i)
-						dstIndices[i + combinedI] = submeshIndices[i] + combinedV;
-					combinedI += submeshIndexCount;
-				}
-				combinedV += vertexCount;
-			}
+                Array.Copy(positions, 0, positionBuffer.Items, combinedV, vertexCount);
+                Array.Copy(uvs, 0, uvBuffer.Items, combinedV, vertexCount);
+                Array.Copy(colors, 0, colorBuffer.Items, combinedV, vertexCount);
 
-			Mesh combinedMesh = doubleBufferedMesh.GetNext();
-			combinedMesh.Clear();
+                for (int s = 0, submeshCount = mesh.subMeshCount; s < submeshCount; ++s)
+                {
+                    var submeshIndexCount = (int)mesh.GetIndexCount(s);
+                    var submeshIndices = mesh.GetIndices(s);
+                    var dstIndices = indexBuffer.Items;
+                    for (var i = 0; i < submeshIndexCount; ++i)
+                        dstIndices[i + combinedI] = submeshIndices[i] + combinedV;
+                    combinedI += submeshIndexCount;
+                }
+
+                combinedV += vertexCount;
+            }
+
+            var combinedMesh = doubleBufferedMesh.GetNext();
+            combinedMesh.Clear();
 #if SET_VERTICES_HAS_LENGTH_PARAMETER
-			combinedMesh.SetVertices(this.positionBuffer.Items, 0, this.positionBuffer.Count);
-			combinedMesh.SetUVs(0, this.uvBuffer.Items, 0, this.uvBuffer.Count);
-			combinedMesh.SetColors(this.colorBuffer.Items, 0, this.colorBuffer.Count);
-			combinedMesh.SetTriangles(this.indexBuffer.Items, 0, this.indexBuffer.Count, 0);
+            combinedMesh.SetVertices(positionBuffer.Items, 0, positionBuffer.Count);
+            combinedMesh.SetUVs(0, uvBuffer.Items, 0, uvBuffer.Count);
+            combinedMesh.SetColors(colorBuffer.Items, 0, colorBuffer.Count);
+            combinedMesh.SetTriangles(indexBuffer.Items, 0, indexBuffer.Count, 0);
 #else
 			// Note: excess already contains zero positions and indices after ExposedList.Resize().
 			combinedMesh.vertices = this.positionBuffer.Items;
@@ -249,20 +271,21 @@ namespace Spine.Unity.Examples {
 			combinedMesh.colors32 = this.colorBuffer.Items;
 			combinedMesh.triangles = this.indexBuffer.Items;
 #endif
-			ownMeshFilter.sharedMesh = combinedMesh;
-		}
+            ownMeshFilter.sharedMesh = combinedMesh;
+        }
 
-		void GetCombinedMeshInfo (ref int vertexCount, ref int indexCount) {
-			for (int r = 0, rendererCount = referenceMeshFilters.Length; r < rendererCount; ++r) {
-				MeshFilter meshFilter = referenceMeshFilters[r];
-				Mesh mesh = meshFilter.sharedMesh;
-				if (mesh == null) continue;
+        private void GetCombinedMeshInfo(ref int vertexCount, ref int indexCount)
+        {
+            for (int r = 0, rendererCount = referenceMeshFilters.Length; r < rendererCount; ++r)
+            {
+                var meshFilter = referenceMeshFilters[r];
+                var mesh = meshFilter.sharedMesh;
+                if (mesh == null) continue;
 
-				vertexCount += mesh.vertexCount;
-				for (int s = 0, submeshCount = mesh.subMeshCount; s < submeshCount; ++s) {
-					indexCount += (int)mesh.GetIndexCount(s);
-				}
-			}
-		}
-	}
+                vertexCount += mesh.vertexCount;
+                for (int s = 0, submeshCount = mesh.subMeshCount; s < submeshCount; ++s)
+                    indexCount += (int)mesh.GetIndexCount(s);
+            }
+        }
+    }
 }

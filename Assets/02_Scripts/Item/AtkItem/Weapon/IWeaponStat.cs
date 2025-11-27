@@ -1,4 +1,3 @@
-
 namespace Apis
 {
     public interface IWeaponStat

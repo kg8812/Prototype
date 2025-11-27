@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace Apis.BehaviourTreeTool
 {
     public class ChangeDir : CommonActionNode
@@ -7,7 +5,7 @@ namespace Apis.BehaviourTreeTool
         public override State OnUpdate()
         {
             _actor.Flip();
-            
+
             return State.Success;
         }
     }

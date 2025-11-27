@@ -27,92 +27,136 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace Spine.Unity.AttachmentTools {
+namespace Spine.Unity.AttachmentTools
+{
+    public static class AttachmentCloneExtensions
+    {
+        #region RemappedClone Convenience Methods
 
-	public static class AttachmentCloneExtensions {
+        /// <summary>
+        ///     Gets a clone of the attachment remapped with a sprite image.
+        /// </summary>
+        /// <returns>The remapped clone.</returns>
+        /// <param name="o">The original attachment.</param>
+        /// <param name="sprite">The sprite whose texture to use.</param>
+        /// <param name="sourceMaterial">The source material used to copy the shader and material properties from.</param>
+        /// <param name="premultiplyAlpha">
+        ///     If <c>true</c>, a premultiply alpha clone of the original texture will be created.
+        ///     See remarks below for additional info.
+        /// </param>
+        /// <param name="cloneMeshAsLinked">
+        ///     If <c>true</c> MeshAttachments will be cloned as linked meshes and will inherit
+        ///     animation from the original attachment.
+        /// </param>
+        /// <param name="useOriginalRegionSize">
+        ///     If <c>true</c> the size of the original attachment will be followed, instead of
+        ///     using the Sprite size.
+        /// </param>
+        /// <param name="pivotShiftsMeshUVCoords">
+        ///     If <c>true</c> and the original Attachment is a MeshAttachment, then
+        ///     a non-central sprite pivot will shift uv coords in the opposite direction. Vertices will not be offset in
+        ///     any case when the original Attachment is a MeshAttachment.
+        /// </param>
+        /// <param name="useOriginalRegionScale">
+        ///     If <c>true</c> and the original Attachment is a RegionAttachment, then
+        ///     the original region's scale value is used instead of the Sprite's pixels per unit property. Since uniform scale is
+        ///     used,
+        ///     x scale of the original attachment (width scale) is used, scale in y direction (height scale) is ignored.
+        /// </param>
+        /// <param name="pmaCloneTextureFormat">
+        ///     If <c>premultiplyAlpha</c> is <c>true></c>, the TextureFormat of the
+        ///     newly created PMA attachment Texture.
+        /// </param>
+        /// <param name="pmaCloneMipmaps">
+        ///     If <c>premultiplyAlpha</c> is
+        ///     <ctrue></c>, whether the newly created
+        ///         PMA attachment Texture has mipmaps enabled.
+        /// </param>
+        /// <remarks>
+        ///     When parameter <c>premultiplyAlpha</c> is set to <c>true</c>, a premultiply alpha clone of the
+        ///     original texture will be created. Additionally, this PMA Texture clone is cached for later re-use,
+        ///     which might steadily increase the Texture memory footprint when used excessively.
+        ///     See <see cref="AtlasUtilities.ClearCache()" /> on how to clear these cached textures.
+        /// </remarks>
+        public static Attachment GetRemappedClone(this Attachment o, Sprite sprite, Material sourceMaterial,
+            bool premultiplyAlpha = true, bool cloneMeshAsLinked = true, bool useOriginalRegionSize = false,
+            bool pivotShiftsMeshUVCoords = true, bool useOriginalRegionScale = false,
+            TextureFormat pmaCloneTextureFormat = AtlasUtilities.SpineTextureFormat,
+            bool pmaCloneMipmaps = AtlasUtilities.UseMipMaps)
+        {
+            var atlasRegion = premultiplyAlpha
+                ? sprite.ToAtlasRegionPMAClone(sourceMaterial, pmaCloneTextureFormat, pmaCloneMipmaps)
+                : sprite.ToAtlasRegion(new Material(sourceMaterial) { mainTexture = sprite.texture });
+            if (!pivotShiftsMeshUVCoords && o is MeshAttachment)
+            {
+                // prevent non-central sprite pivot setting offsetX/Y and shifting uv coords out of mesh bounds
+                atlasRegion.offsetX = 0;
+                atlasRegion.offsetY = 0;
+            }
 
-		#region RemappedClone Convenience Methods
-		/// <summary>
-		/// Gets a clone of the attachment remapped with a sprite image.</summary>
-		/// <returns>The remapped clone.</returns>
-		/// <param name="o">The original attachment.</param>
-		/// <param name="sprite">The sprite whose texture to use.</param>
-		/// <param name="sourceMaterial">The source material used to copy the shader and material properties from.</param>
-		/// <param name="premultiplyAlpha">If <c>true</c>, a premultiply alpha clone of the original texture will be created.
-		/// See remarks below for additional info.</param>
-		/// <param name="cloneMeshAsLinked">If <c>true</c> MeshAttachments will be cloned as linked meshes and will inherit animation from the original attachment.</param>
-		/// <param name="useOriginalRegionSize">If <c>true</c> the size of the original attachment will be followed, instead of using the Sprite size.</param>
-		/// <param name="pivotShiftsMeshUVCoords">If <c>true</c> and the original Attachment is a MeshAttachment, then
-		///	a non-central sprite pivot will shift uv coords in the opposite direction. Vertices will not be offset in
-		///	any case when the original Attachment is a MeshAttachment.</param>
-		///	<param name="useOriginalRegionScale">If <c>true</c> and the original Attachment is a RegionAttachment, then
-		///	the original region's scale value is used instead of the Sprite's pixels per unit property. Since uniform scale is used,
-		///	x scale of the original attachment (width scale) is used, scale in y direction (height scale) is ignored.</param>
-		///	<param name="pmaCloneTextureFormat">If <c>premultiplyAlpha</c> is <c>true></c>, the TextureFormat of the
-		///	newly created PMA attachment Texture.</param>
-		///	<param name="pmaCloneMipmaps">If <c>premultiplyAlpha</c> is <ctrue></c>, whether the newly created
-		///	PMA attachment Texture has mipmaps enabled.</param>
-		///	<remarks>When parameter <c>premultiplyAlpha</c> is set to <c>true</c>, a premultiply alpha clone of the
-		///	original texture will be created. Additionally, this PMA Texture clone is cached for later re-use,
-		///	which might steadily increase the Texture memory footprint when used excessively.
-		///	See <see cref="AtlasUtilities.ClearCache()"/> on how to clear these cached textures.</remarks>
-		public static Attachment GetRemappedClone (this Attachment o, Sprite sprite, Material sourceMaterial,
-			bool premultiplyAlpha = true, bool cloneMeshAsLinked = true, bool useOriginalRegionSize = false,
-			bool pivotShiftsMeshUVCoords = true, bool useOriginalRegionScale = false,
-			TextureFormat pmaCloneTextureFormat = AtlasUtilities.SpineTextureFormat,
-			bool pmaCloneMipmaps = AtlasUtilities.UseMipMaps) {
+            var scale = 1f / sprite.pixelsPerUnit;
+            if (useOriginalRegionScale)
+            {
+                var regionAttachment = o as RegionAttachment;
+                if (regionAttachment != null)
+                    scale = regionAttachment.Width / regionAttachment.Region.OriginalWidth;
+            }
 
-			AtlasRegion atlasRegion = premultiplyAlpha ?
-				sprite.ToAtlasRegionPMAClone(sourceMaterial, pmaCloneTextureFormat, pmaCloneMipmaps) :
-				sprite.ToAtlasRegion(new Material(sourceMaterial) { mainTexture = sprite.texture });
-			if (!pivotShiftsMeshUVCoords && o is MeshAttachment) {
-				// prevent non-central sprite pivot setting offsetX/Y and shifting uv coords out of mesh bounds
-				atlasRegion.offsetX = 0;
-				atlasRegion.offsetY = 0;
-			}
-			float scale = 1f / sprite.pixelsPerUnit;
-			if (useOriginalRegionScale) {
-				RegionAttachment regionAttachment = o as RegionAttachment;
-				if (regionAttachment != null)
-					scale = regionAttachment.Width / regionAttachment.Region.OriginalWidth;
-			}
-			return o.GetRemappedClone(atlasRegion, cloneMeshAsLinked, useOriginalRegionSize, scale);
-		}
+            return o.GetRemappedClone(atlasRegion, cloneMeshAsLinked, useOriginalRegionSize, scale);
+        }
 
-		/// <summary>
-		/// Gets a clone of the attachment remapped with an atlasRegion image.</summary>
-		/// <returns>The remapped clone.</returns>
-		/// <param name="o">The original attachment.</param>
-		/// <param name="atlasRegion">Atlas region.</param>
-		/// <param name="cloneMeshAsLinked">If <c>true</c> MeshAttachments will be cloned as linked meshes and will inherit animation from the original attachment.</param>
-		/// <param name="useOriginalRegionSize">If <c>true</c> the size of the original attachment will be followed, instead of using the Sprite size.</param>
-		/// <param name="scale">Unity units per pixel scale used to scale the atlas region size when not using the original region size.</param>
-		public static Attachment GetRemappedClone (this Attachment o, AtlasRegion atlasRegion, bool cloneMeshAsLinked = true, bool useOriginalRegionSize = false, float scale = 0.01f) {
-			RegionAttachment regionAttachment = o as RegionAttachment;
-			if (regionAttachment != null) {
-				RegionAttachment newAttachment = (RegionAttachment)regionAttachment.Copy();
-				newAttachment.Region = atlasRegion;
-				if (!useOriginalRegionSize) {
-					newAttachment.Width = atlasRegion.width * scale;
-					newAttachment.Height = atlasRegion.height * scale;
-				}
-				newAttachment.UpdateRegion();
-				return newAttachment;
-			} else {
-				MeshAttachment meshAttachment = o as MeshAttachment;
-				if (meshAttachment != null) {
-					MeshAttachment newAttachment = cloneMeshAsLinked ? meshAttachment.NewLinkedMesh() : (MeshAttachment)meshAttachment.Copy();
-					newAttachment.Region = atlasRegion;
-					newAttachment.UpdateRegion();
-					return newAttachment;
-				}
-			}
-			return o.Copy();
-		}
-		#endregion
-	}
+        /// <summary>
+        ///     Gets a clone of the attachment remapped with an atlasRegion image.
+        /// </summary>
+        /// <returns>The remapped clone.</returns>
+        /// <param name="o">The original attachment.</param>
+        /// <param name="atlasRegion">Atlas region.</param>
+        /// <param name="cloneMeshAsLinked">
+        ///     If <c>true</c> MeshAttachments will be cloned as linked meshes and will inherit
+        ///     animation from the original attachment.
+        /// </param>
+        /// <param name="useOriginalRegionSize">
+        ///     If <c>true</c> the size of the original attachment will be followed, instead of
+        ///     using the Sprite size.
+        /// </param>
+        /// <param name="scale">
+        ///     Unity units per pixel scale used to scale the atlas region size when not using the original region
+        ///     size.
+        /// </param>
+        public static Attachment GetRemappedClone(this Attachment o, AtlasRegion atlasRegion,
+            bool cloneMeshAsLinked = true, bool useOriginalRegionSize = false, float scale = 0.01f)
+        {
+            var regionAttachment = o as RegionAttachment;
+            if (regionAttachment != null)
+            {
+                var newAttachment = (RegionAttachment)regionAttachment.Copy();
+                newAttachment.Region = atlasRegion;
+                if (!useOriginalRegionSize)
+                {
+                    newAttachment.Width = atlasRegion.width * scale;
+                    newAttachment.Height = atlasRegion.height * scale;
+                }
+
+                newAttachment.UpdateRegion();
+                return newAttachment;
+            }
+
+            var meshAttachment = o as MeshAttachment;
+            if (meshAttachment != null)
+            {
+                var newAttachment = cloneMeshAsLinked
+                    ? meshAttachment.NewLinkedMesh()
+                    : (MeshAttachment)meshAttachment.Copy();
+                newAttachment.Region = atlasRegion;
+                newAttachment.UpdateRegion();
+                return newAttachment;
+            }
+
+            return o.Copy();
+        }
+
+        #endregion
+    }
 }

@@ -1,20 +1,19 @@
-using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.SceneManagement;
-
 
 namespace Apis
 {
     public enum LoadingSceneType
     {
-        Tip, NextStage
+        Tip,
+        NextStage
     }
+
     public static class LoadingSceneManager
     {
         private static string _nextScene;
-        
+
         public static void LoadLoadingScene()
         {
             GameManager.instance.StartCoroutineWrapper(LoadScene());
@@ -26,13 +25,13 @@ namespace Apis
             SceneManager.LoadScene("LoadingScene");
         }
 
-        static IEnumerator LoadScene()
+        private static IEnumerator LoadScene()
         {
-            float fillAmount = 0f; // 나중에 로딩이 어떻게 될 지 몰라 일단 임시로 만들어둠.
+            var fillAmount = 0f; // 나중에 로딩이 어떻게 될 지 몰라 일단 임시로 만들어둠.
             yield return null;
-            AsyncOperation op = SceneManager.LoadSceneAsync(_nextScene);
+            var op = SceneManager.LoadSceneAsync(_nextScene);
             op.allowSceneActivation = false;
-            float timer = 0.0f;
+            var timer = 0.0f;
             while (!op.isDone)
             {
                 yield return null;
@@ -40,10 +39,7 @@ namespace Apis
                 if (op.progress < 0.9f)
                 {
                     fillAmount = Mathf.Lerp(fillAmount, op.progress, timer);
-                    if (fillAmount >= op.progress)
-                    {
-                        timer = 0f;
-                    }
+                    if (fillAmount >= op.progress) timer = 0f;
                 }
                 else
                 {

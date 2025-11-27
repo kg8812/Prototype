@@ -27,21 +27,25 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-namespace Spine {
-	using Physics = Skeleton.Physics;
+namespace Spine
+{
+    using Physics = Skeleton.Physics;
 
-	/// <summary>The interface for items updated by <see cref="Skeleton.UpdateWorldTransform(Physics)"/>.</summary>
-	public interface IUpdatable {
-		/// <param name="physics">Determines how physics and other non-deterministic updates are applied.</param>
-		void Update (Physics physics);
+    /// <summary>The interface for items updated by <see cref="Skeleton.UpdateWorldTransform(Physics)" />.</summary>
+    public interface IUpdatable
+    {
+	    /// <summary>
+	    ///     Returns false when this item won't be updated by
+	    ///     <see cref="Skeleton.UpdateWorldTransform(Skeleton.Physics)" /> because a skin is required and the
+	    ///     <see cref="Skeleton.Skin">active skin</see> does not contain this item.
+	    /// </summary>
+	    /// <seealso cref="Skin.Bones" />
+	    /// <seealso cref="Skin.Constraints" />
+	    /// <seealso cref="BoneData.SkinRequired" />
+	    /// <seealso cref="ConstraintData.SkinRequired" />
+	    bool Active { get; }
 
-		/// <summary>Returns false when this item won't be updated by
-		/// <see cref="Skeleton.UpdateWorldTransform(Skeleton.Physics)"/> because a skin is required and the
-		/// <see cref="Skeleton.Skin">active skin</see> does not contain this item.</summary>
-		/// <seealso cref="Skin.Bones"/>
-		/// <seealso cref="Skin.Constraints"/>
-		/// <seealso cref="BoneData.SkinRequired"/>
-		/// <seealso cref="ConstraintData.SkinRequired"/>
-		bool Active { get; }
-	}
+        /// <param name="physics">Determines how physics and other non-deterministic updates are applied.</param>
+        void Update(Physics physics);
+    }
 }

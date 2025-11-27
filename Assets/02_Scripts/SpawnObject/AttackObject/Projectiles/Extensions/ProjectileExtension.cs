@@ -1,4 +1,3 @@
-using Apis;
 using UnityEngine;
 
 namespace Apis
@@ -10,12 +9,10 @@ namespace Apis
 
         public virtual void Init(ProjectileInfo info)
         {
-            
         }
 
         public virtual void Destroy()
         {
-            
         }
     }
 }

@@ -1,4 +1,3 @@
-using Directing;
 using UnityEngine;
 
 namespace Command
@@ -9,19 +8,13 @@ namespace Command
         public override void Invoke(Actor go)
         {
             Player player = null;
-            if (go is Player go1)
-            {
-                player = go1;
-            }
+            if (go is Player go1) player = go1;
 
-            if (go is Summon { Master: Player go2 })
-            {
-                player = go2;
-            }
+            if (go is Summon { Master: Player go2 }) player = go2;
 
             if (player == null || !player.isInteractable) return;
 
-            IOnInteract interact = player.getInteract();
+            var interact = player.getInteract();
             if (interact != null && interact.IsInteractable())
             {
                 player.SetState(EPlayerState.Idle);
@@ -38,8 +31,8 @@ namespace Command
         public override bool InvokeCondition(Player player)
         {
             if (player == null) return true;
-            
-            EPlayerState currentState = player.GetState();
+
+            var currentState = player.GetState();
             return currentState is EPlayerState.Idle or EPlayerState.Move;
         }
     }

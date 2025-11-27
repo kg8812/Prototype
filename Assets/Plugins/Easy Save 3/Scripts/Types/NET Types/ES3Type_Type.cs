@@ -1,21 +1,22 @@
 using System;
+using UnityEngine.Scripting;
 
 namespace ES3Types
 {
-    [UnityEngine.Scripting.Preserve]
-    [ES3Properties()]
+    [Preserve]
+    [ES3Properties]
     public class ES3Type_Type : ES3Type
     {
-        public static ES3Type Instance = null;
+        public static ES3Type Instance;
 
-        public ES3Type_Type() : base(typeof(System.Type))
+        public ES3Type_Type() : base(typeof(Type))
         {
             Instance = this;
         }
 
         public override void Write(object obj, ES3Writer writer)
         {
-            Type type = (Type)obj;
+            var type = (Type)obj;
             writer.WriteProperty("assemblyQualifiedName", type.AssemblyQualifiedName);
         }
 

@@ -2,16 +2,14 @@
 
 namespace Scenes.Lobby
 {
-    public class PlayerSpawner: MonoBehaviour
+    public class PlayerSpawner : MonoBehaviour
     {
         [SerializeField] private Player _playerPrefab;
+
         private void Start()
         {
             GameManager.instance.playerRegistered.AddListener(_ => PlayerSpawn());
-            if (GameManager.instance.Player != null)
-            {
-                PlayerSpawn();
-            }
+            if (GameManager.instance.Player != null) PlayerSpawn();
         }
 
         private void PlayerSpawn()

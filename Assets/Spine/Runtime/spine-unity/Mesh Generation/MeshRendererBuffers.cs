@@ -29,108 +29,132 @@
 
 // Optimization option: Allows faster BuildMeshWithArrays call and avoids calling SetTriangles at the cost of
 // checking for mesh differences (vertex counts, member-wise attachment list compare) every frame.
+
 #define SPINE_TRIANGLECHECK
 //#define SPINE_DEBUG
 
 using System;
-using System.Collections.Generic;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
-namespace Spine.Unity {
-	/// <summary>A double-buffered Mesh, and a shared material array, bundled for use by Spine components that need to push a Mesh and materials to a Unity MeshRenderer and MeshFilter.</summary>
-	public class MeshRendererBuffers : IDisposable {
-		DoubleBuffered<SmartMesh> doubleBufferedMesh;
-		internal readonly ExposedList<Material> submeshMaterials = new ExposedList<Material>();
-		internal Material[] sharedMaterials = new Material[0];
+namespace Spine.Unity
+{
+	/// <summary>
+	///     A double-buffered Mesh, and a shared material array, bundled for use by Spine components that need to push a
+	///     Mesh and materials to a Unity MeshRenderer and MeshFilter.
+	/// </summary>
+	public class MeshRendererBuffers : IDisposable
+    {
+        internal readonly ExposedList<Material> submeshMaterials = new();
+        private DoubleBuffered<SmartMesh> doubleBufferedMesh;
+        internal Material[] sharedMaterials = new Material[0];
 
-		public void Initialize () {
-			if (doubleBufferedMesh != null) {
-				doubleBufferedMesh.GetNext().Clear();
-				doubleBufferedMesh.GetNext().Clear();
-				submeshMaterials.Clear();
-			} else {
-				doubleBufferedMesh = new DoubleBuffered<SmartMesh>();
-			}
-		}
+        public void Dispose()
+        {
+            if (doubleBufferedMesh == null) return;
+            doubleBufferedMesh.GetNext().Dispose();
+            doubleBufferedMesh.GetNext().Dispose();
+            doubleBufferedMesh = null;
+        }
 
-		/// <summary>Returns a sharedMaterials array for use on a MeshRenderer.</summary>
-		/// <returns></returns>
-		public Material[] GetUpdatedSharedMaterialsArray () {
-			if (submeshMaterials.Count == sharedMaterials.Length)
-				submeshMaterials.CopyTo(sharedMaterials);
-			else
-				sharedMaterials = submeshMaterials.ToArray();
+        public void Initialize()
+        {
+            if (doubleBufferedMesh != null)
+            {
+                doubleBufferedMesh.GetNext().Clear();
+                doubleBufferedMesh.GetNext().Clear();
+                submeshMaterials.Clear();
+            }
+            else
+            {
+                doubleBufferedMesh = new DoubleBuffered<SmartMesh>();
+            }
+        }
 
-			return sharedMaterials;
-		}
+        /// <summary>Returns a sharedMaterials array for use on a MeshRenderer.</summary>
+        /// <returns></returns>
+        public Material[] GetUpdatedSharedMaterialsArray()
+        {
+            if (submeshMaterials.Count == sharedMaterials.Length)
+                submeshMaterials.CopyTo(sharedMaterials);
+            else
+                sharedMaterials = submeshMaterials.ToArray();
 
-		/// <summary>Returns true if the materials were modified since the buffers were last updated.</summary>
-		public bool MaterialsChangedInLastUpdate () {
-			int newSubmeshMaterials = submeshMaterials.Count;
-			Material[] sharedMaterials = this.sharedMaterials;
-			if (newSubmeshMaterials != sharedMaterials.Length) return true;
+            return sharedMaterials;
+        }
 
-			Material[] submeshMaterialsItems = submeshMaterials.Items;
-			for (int i = 0; i < newSubmeshMaterials; i++)
-				if (!Material.ReferenceEquals(submeshMaterialsItems[i], sharedMaterials[i])) return true; //if (submeshMaterialsItems[i].GetInstanceID() != sharedMaterials[i].GetInstanceID()) return true;
+        /// <summary>Returns true if the materials were modified since the buffers were last updated.</summary>
+        public bool MaterialsChangedInLastUpdate()
+        {
+            var newSubmeshMaterials = submeshMaterials.Count;
+            var sharedMaterials = this.sharedMaterials;
+            if (newSubmeshMaterials != sharedMaterials.Length) return true;
 
-			return false;
-		}
+            var submeshMaterialsItems = submeshMaterials.Items;
+            for (var i = 0; i < newSubmeshMaterials; i++)
+                if (!ReferenceEquals(submeshMaterialsItems[i], sharedMaterials[i]))
+                    return
+                        true; //if (submeshMaterialsItems[i].GetInstanceID() != sharedMaterials[i].GetInstanceID()) return true;
 
-		/// <summary>Updates the internal shared materials array with the given instruction list.</summary>
-		public void UpdateSharedMaterials (ExposedList<SubmeshInstruction> instructions) {
-			int newSize = instructions.Count;
-			{ //submeshMaterials.Resize(instructions.Count);
-				if (newSize > submeshMaterials.Items.Length)
-					Array.Resize(ref submeshMaterials.Items, newSize);
-				submeshMaterials.Count = newSize;
-			}
+            return false;
+        }
 
-			Material[] submeshMaterialsItems = submeshMaterials.Items;
-			SubmeshInstruction[] instructionsItems = instructions.Items;
-			for (int i = 0; i < newSize; i++)
-				submeshMaterialsItems[i] = instructionsItems[i].material;
-		}
+        /// <summary>Updates the internal shared materials array with the given instruction list.</summary>
+        public void UpdateSharedMaterials(ExposedList<SubmeshInstruction> instructions)
+        {
+            var newSize = instructions.Count;
+            {
+                //submeshMaterials.Resize(instructions.Count);
+                if (newSize > submeshMaterials.Items.Length)
+                    Array.Resize(ref submeshMaterials.Items, newSize);
+                submeshMaterials.Count = newSize;
+            }
 
-		public SmartMesh GetNextMesh () {
-			return doubleBufferedMesh.GetNext();
-		}
+            var submeshMaterialsItems = submeshMaterials.Items;
+            var instructionsItems = instructions.Items;
+            for (var i = 0; i < newSize; i++)
+                submeshMaterialsItems[i] = instructionsItems[i].material;
+        }
 
-		public void Clear () {
-			sharedMaterials = new Material[0];
-			submeshMaterials.Clear();
-		}
+        public SmartMesh GetNextMesh()
+        {
+            return doubleBufferedMesh.GetNext();
+        }
 
-		public void Dispose () {
-			if (doubleBufferedMesh == null) return;
-			doubleBufferedMesh.GetNext().Dispose();
-			doubleBufferedMesh.GetNext().Dispose();
-			doubleBufferedMesh = null;
-		}
+        public void Clear()
+        {
+            sharedMaterials = new Material[0];
+            submeshMaterials.Clear();
+        }
 
-		/// <summary>This is a Mesh that also stores the instructions SkeletonRenderer generated for it.</summary>
-		public class SmartMesh : IDisposable {
-			public Mesh mesh = SpineMesh.NewSkeletonMesh();
-			public SkeletonRendererInstruction instructionUsed = new SkeletonRendererInstruction();
+        /// <summary>This is a Mesh that also stores the instructions SkeletonRenderer generated for it.</summary>
+        public class SmartMesh : IDisposable
+        {
+            public SkeletonRendererInstruction instructionUsed = new();
+            public Mesh mesh = SpineMesh.NewSkeletonMesh();
 
-			public void Clear () {
-				mesh.Clear();
-				instructionUsed.Clear();
-			}
-
-			public void Dispose () {
-				if (mesh != null) {
+            public void Dispose()
+            {
+                if (mesh != null)
+                {
 #if UNITY_EDITOR
-					if (Application.isEditor && !Application.isPlaying)
-						UnityEngine.Object.DestroyImmediate(mesh);
-					else
-						UnityEngine.Object.Destroy(mesh);
+                    if (Application.isEditor && !Application.isPlaying)
+                        Object.DestroyImmediate(mesh);
+                    else
+                        Object.Destroy(mesh);
 #else
 					UnityEngine.Object.Destroy(mesh);
 #endif
-				}
-				mesh = null;
-			}
-		}
-	}
+                }
+
+                mesh = null;
+            }
+
+            public void Clear()
+            {
+                mesh.Clear();
+                instructionUsed.Clear();
+            }
+        }
+    }
 }

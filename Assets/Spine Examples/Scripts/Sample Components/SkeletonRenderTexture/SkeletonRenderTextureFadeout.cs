@@ -37,52 +37,58 @@
 
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-
+namespace Spine.Unity.Examples
+{
 	/// <summary>
-	/// A simple fadeout component that uses a <see cref="SkeletonRenderTexture"/> for transparency fadeout.
-	/// Attach a <see cref="SkeletonRenderTexture"/> and this component to a skeleton GameObject and disable both
-	/// components initially and keep them disabled during normal gameplay. When you need to start fadeout,
-	/// enable this component.
-	/// At the end of the fadeout, the event delegate <c>OnFadeoutComplete</c> is called, to which you can bind e.g.
-	/// a method that disables or destroys the entire GameObject.
+	///     A simple fadeout component that uses a <see cref="SkeletonRenderTexture" /> for transparency fadeout.
+	///     Attach a <see cref="SkeletonRenderTexture" /> and this component to a skeleton GameObject and disable both
+	///     components initially and keep them disabled during normal gameplay. When you need to start fadeout,
+	///     enable this component.
+	///     At the end of the fadeout, the event delegate <c>OnFadeoutComplete</c> is called, to which you can bind e.g.
+	///     a method that disables or destroys the entire GameObject.
 	/// </summary>
 	[RequireComponent(typeof(SkeletonRenderTextureBase))]
-	public class SkeletonRenderTextureFadeout : MonoBehaviour {
-		SkeletonRenderTextureBase skeletonRenderTexture;
+    public class SkeletonRenderTextureFadeout : MonoBehaviour
+    {
+        public delegate void FadeoutCallback(SkeletonRenderTextureFadeout skeleton);
 
-		public float fadeoutSeconds = 2.0f;
-		protected float fadeoutSecondsRemaining;
+        public float fadeoutSeconds = 2.0f;
+        protected float fadeoutSecondsRemaining;
+        private SkeletonRenderTextureBase skeletonRenderTexture;
 
-		public delegate void FadeoutCallback (SkeletonRenderTextureFadeout skeleton);
-		public event FadeoutCallback OnFadeoutComplete;
+        protected void Awake()
+        {
+            skeletonRenderTexture = GetComponent<SkeletonRenderTextureBase>();
+        }
 
-		protected void Awake () {
-			skeletonRenderTexture = this.GetComponent<SkeletonRenderTextureBase>();
-		}
+        protected void Update()
+        {
+            if (fadeoutSecondsRemaining == 0)
+                return;
 
-		protected void OnEnable () {
-			fadeoutSecondsRemaining = fadeoutSeconds;
-			skeletonRenderTexture.enabled = true;
-		}
+            fadeoutSecondsRemaining -= Time.deltaTime;
+            if (fadeoutSecondsRemaining <= 0)
+            {
+                fadeoutSecondsRemaining = 0;
+                if (OnFadeoutComplete != null)
+                    OnFadeoutComplete(this);
+                return;
+            }
 
-		protected void Update () {
-			if (fadeoutSecondsRemaining == 0)
-				return;
-
-			fadeoutSecondsRemaining -= Time.deltaTime;
-			if (fadeoutSecondsRemaining <= 0) {
-				fadeoutSecondsRemaining = 0;
-				if (OnFadeoutComplete != null)
-					OnFadeoutComplete(this);
-				return;
-			}
-			float fadeoutAlpha = fadeoutSecondsRemaining / fadeoutSeconds;
+            var fadeoutAlpha = fadeoutSecondsRemaining / fadeoutSeconds;
 #if HAS_VECTOR_INT
-			skeletonRenderTexture.color.a = fadeoutAlpha;
+            skeletonRenderTexture.color.a = fadeoutAlpha;
 #else
 			Debug.LogError("The SkeletonRenderTexture component requires Unity 2017.2 or newer.");
 #endif
-		}
-	}
+        }
+
+        protected void OnEnable()
+        {
+            fadeoutSecondsRemaining = fadeoutSeconds;
+            skeletonRenderTexture.enabled = true;
+        }
+
+        public event FadeoutCallback OnFadeoutComplete;
+    }
 }

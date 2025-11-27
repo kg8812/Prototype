@@ -31,152 +31,198 @@ using System;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
-namespace Spine.Unity.Editor {
-	using Editor = UnityEditor.Editor;
+namespace Spine.Unity.Editor
+{
+    using Editor = UnityEditor.Editor;
 
-	[CustomEditor(typeof(AnimationReferenceAsset))]
-	public class AnimationReferenceAssetEditor : Editor {
+    [CustomEditor(typeof(AnimationReferenceAsset))]
+    public class AnimationReferenceAssetEditor : Editor
+    {
+        private const string InspectorHelpText =
+            "This is a Spine-Unity Animation Reference Asset. It serializes a reference to a SkeletonData asset and an animationName. It does not contain actual animation data. At runtime, it stores a reference to a Spine.Animation.\n\n" +
+            "You can use this in your AnimationState calls instead of a string animation name or a Spine.Animation reference. Use its implicit conversion into Spine.Animation or its .Animation property.\n\n" +
+            "Use AnimationReferenceAssets as an alternative to storing strings or finding animations and caching per component. This only does the lookup by string once, and allows you to store and manage animations via asset references.";
 
-		const string InspectorHelpText = "This is a Spine-Unity Animation Reference Asset. It serializes a reference to a SkeletonData asset and an animationName. It does not contain actual animation data. At runtime, it stores a reference to a Spine.Animation.\n\n" +
-				"You can use this in your AnimationState calls instead of a string animation name or a Spine.Animation reference. Use its implicit conversion into Spine.Animation or its .Animation property.\n\n" +
-				"Use AnimationReferenceAssets as an alternative to storing strings or finding animations and caching per component. This only does the lookup by string once, and allows you to store and manage animations via asset references.";
+        private readonly SkeletonInspectorPreview preview = new();
+        private SerializedProperty animationNameProperty;
 
-		readonly SkeletonInspectorPreview preview = new SkeletonInspectorPreview();
-		FieldInfo skeletonDataAssetField = typeof(AnimationReferenceAsset).GetField("skeletonDataAsset", BindingFlags.NonPublic | BindingFlags.Instance);
-		FieldInfo nameField = typeof(AnimationReferenceAsset).GetField("animationName", BindingFlags.NonPublic | BindingFlags.Instance);
+        private bool changeNextFrame;
+        private SkeletonData lastSkeletonData;
+        private SkeletonDataAsset lastSkeletonDataAsset;
 
-		AnimationReferenceAsset ThisAnimationReferenceAsset { get { return target as AnimationReferenceAsset; } }
-		SkeletonDataAsset ThisSkeletonDataAsset { get { return skeletonDataAssetField.GetValue(ThisAnimationReferenceAsset) as SkeletonDataAsset; } }
-		string ThisAnimationName { get { return nameField.GetValue(ThisAnimationReferenceAsset) as string; } }
+        private readonly FieldInfo nameField =
+            typeof(AnimationReferenceAsset).GetField("animationName", BindingFlags.NonPublic | BindingFlags.Instance);
 
-		bool changeNextFrame = false;
-		SerializedProperty animationNameProperty;
-		SkeletonDataAsset lastSkeletonDataAsset;
-		SkeletonData lastSkeletonData;
+        private readonly FieldInfo skeletonDataAssetField =
+            typeof(AnimationReferenceAsset).GetField("skeletonDataAsset",
+                BindingFlags.NonPublic | BindingFlags.Instance);
 
-		void OnEnable () { HandleOnEnablePreview(); }
-		void OnDestroy () {
-			HandleOnDestroyPreview();
-			AppDomain.CurrentDomain.DomainUnload -= OnDomainUnload;
-			EditorApplication.update -= preview.HandleEditorUpdate;
-		}
+        private AnimationReferenceAsset ThisAnimationReferenceAsset => target as AnimationReferenceAsset;
 
-		public override void OnInspectorGUI () {
-			animationNameProperty = animationNameProperty ?? serializedObject.FindProperty("animationName");
-			string animationName = animationNameProperty.stringValue;
+        private SkeletonDataAsset ThisSkeletonDataAsset =>
+            skeletonDataAssetField.GetValue(ThisAnimationReferenceAsset) as SkeletonDataAsset;
 
-			Animation animation = null;
-			if (ThisSkeletonDataAsset != null) {
-				SkeletonData skeletonData = ThisSkeletonDataAsset.GetSkeletonData(true);
-				if (skeletonData != null) {
-					animation = skeletonData.FindAnimation(animationName);
-				}
-			}
-			bool animationNotFound = (animation == null);
+        private string ThisAnimationName => nameField.GetValue(ThisAnimationReferenceAsset) as string;
 
-			if (changeNextFrame) {
-				changeNextFrame = false;
+        private void OnEnable()
+        {
+            HandleOnEnablePreview();
+        }
 
-				if (ThisSkeletonDataAsset != lastSkeletonDataAsset || ThisSkeletonDataAsset.GetSkeletonData(true) != lastSkeletonData) {
-					preview.Clear();
-					preview.Initialize(Repaint, ThisSkeletonDataAsset, LastSkinName);
+        private void OnDestroy()
+        {
+            HandleOnDestroyPreview();
+            AppDomain.CurrentDomain.DomainUnload -= OnDomainUnload;
+            EditorApplication.update -= preview.HandleEditorUpdate;
+        }
 
-					if (animationNotFound) {
-						animationNameProperty.stringValue = "";
-						preview.ClearAnimationSetupPose();
-					}
-				}
+        public override void OnInspectorGUI()
+        {
+            animationNameProperty = animationNameProperty ?? serializedObject.FindProperty("animationName");
+            var animationName = animationNameProperty.stringValue;
 
-				preview.ClearAnimationSetupPose();
+            Animation animation = null;
+            if (ThisSkeletonDataAsset != null)
+            {
+                var skeletonData = ThisSkeletonDataAsset.GetSkeletonData(true);
+                if (skeletonData != null) animation = skeletonData.FindAnimation(animationName);
+            }
 
-				if (!string.IsNullOrEmpty(animationNameProperty.stringValue))
-					preview.PlayPauseAnimation(animationNameProperty.stringValue, true);
-			}
+            var animationNotFound = animation == null;
 
-			//EditorGUILayout.HelpBox(AnimationReferenceAssetEditor.InspectorHelpText, MessageType.Info, true);
-			EditorGUILayout.Space();
-			EditorGUI.BeginChangeCheck();
-			DrawDefaultInspector();
-			if (EditorGUI.EndChangeCheck()) {
-				changeNextFrame = true;
-			}
+            if (changeNextFrame)
+            {
+                changeNextFrame = false;
 
-			// Draw extra info below default inspector.
-			EditorGUILayout.Space();
-			if (ThisSkeletonDataAsset == null) {
-				EditorGUILayout.HelpBox("SkeletonDataAsset is missing.", MessageType.Error);
-			} else if (string.IsNullOrEmpty(animationName)) {
-				EditorGUILayout.HelpBox("No animation selected.", MessageType.Warning);
-			} else if (animationNotFound) {
-				EditorGUILayout.HelpBox(string.Format("Animation named {0} was not found for this Skeleton.", animationNameProperty.stringValue), MessageType.Warning);
-			} else {
-				using (new SpineInspectorUtility.BoxScope()) {
-					if (!string.Equals(AssetUtility.GetPathSafeName(animationName), ThisAnimationReferenceAsset.name, System.StringComparison.OrdinalIgnoreCase))
-						EditorGUILayout.HelpBox("Animation name value does not match this asset's name. Inspectors using this asset may be misleading.", MessageType.None);
+                if (ThisSkeletonDataAsset != lastSkeletonDataAsset ||
+                    ThisSkeletonDataAsset.GetSkeletonData(true) != lastSkeletonData)
+                {
+                    preview.Clear();
+                    preview.Initialize(Repaint, ThisSkeletonDataAsset, LastSkinName);
 
-					EditorGUILayout.LabelField(SpineInspectorUtility.TempContent(animationName, SpineEditorUtilities.Icons.animation));
-					if (animation != null) {
-						EditorGUILayout.LabelField(string.Format("Timelines: {0}", animation.Timelines.Count));
-						EditorGUILayout.LabelField(string.Format("Duration: {0} sec", animation.Duration));
-					}
-				}
-			}
+                    if (animationNotFound)
+                    {
+                        animationNameProperty.stringValue = "";
+                        preview.ClearAnimationSetupPose();
+                    }
+                }
 
-			lastSkeletonDataAsset = ThisSkeletonDataAsset;
-			lastSkeletonData = ThisSkeletonDataAsset.GetSkeletonData(true);
-		}
+                preview.ClearAnimationSetupPose();
 
-		#region Preview Handlers
-		string TargetAssetGUID { get { return AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(ThisSkeletonDataAsset)); } }
-		string LastSkinKey { get { return TargetAssetGUID + "_lastSkin"; } }
-		string LastSkinName { get { return EditorPrefs.GetString(LastSkinKey, ""); } }
+                if (!string.IsNullOrEmpty(animationNameProperty.stringValue))
+                    preview.PlayPauseAnimation(animationNameProperty.stringValue, true);
+            }
 
-		void HandleOnEnablePreview () {
-			if (ThisSkeletonDataAsset != null && ThisSkeletonDataAsset.skeletonJSON == null)
-				return;
-			SpineEditorUtilities.ConfirmInitialization();
+            //EditorGUILayout.HelpBox(AnimationReferenceAssetEditor.InspectorHelpText, MessageType.Info, true);
+            EditorGUILayout.Space();
+            EditorGUI.BeginChangeCheck();
+            DrawDefaultInspector();
+            if (EditorGUI.EndChangeCheck()) changeNextFrame = true;
 
-			// This handles the case where the managed editor assembly is unloaded before recompilation when code changes.
-			AppDomain.CurrentDomain.DomainUnload -= OnDomainUnload;
-			AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
+            // Draw extra info below default inspector.
+            EditorGUILayout.Space();
+            if (ThisSkeletonDataAsset == null)
+                EditorGUILayout.HelpBox("SkeletonDataAsset is missing.", MessageType.Error);
+            else if (string.IsNullOrEmpty(animationName))
+                EditorGUILayout.HelpBox("No animation selected.", MessageType.Warning);
+            else if (animationNotFound)
+                EditorGUILayout.HelpBox(
+                    string.Format("Animation named {0} was not found for this Skeleton.",
+                        animationNameProperty.stringValue), MessageType.Warning);
+            else
+                using (new SpineInspectorUtility.BoxScope())
+                {
+                    if (!string.Equals(AssetUtility.GetPathSafeName(animationName), ThisAnimationReferenceAsset.name,
+                            StringComparison.OrdinalIgnoreCase))
+                        EditorGUILayout.HelpBox(
+                            "Animation name value does not match this asset's name. Inspectors using this asset may be misleading.",
+                            MessageType.None);
 
-			preview.Initialize(this.Repaint, ThisSkeletonDataAsset, LastSkinName);
-			preview.PlayPauseAnimation(ThisAnimationName, true);
-			preview.OnSkinChanged -= HandleOnSkinChanged;
-			preview.OnSkinChanged += HandleOnSkinChanged;
-			EditorApplication.update -= preview.HandleEditorUpdate;
-			EditorApplication.update += preview.HandleEditorUpdate;
-		}
+                    EditorGUILayout.LabelField(
+                        SpineInspectorUtility.TempContent(animationName, SpineEditorUtilities.Icons.animation));
+                    if (animation != null)
+                    {
+                        EditorGUILayout.LabelField(string.Format("Timelines: {0}", animation.Timelines.Count));
+                        EditorGUILayout.LabelField(string.Format("Duration: {0} sec", animation.Duration));
+                    }
+                }
 
-		private void OnDomainUnload (object sender, EventArgs e) {
-			OnDestroy();
-		}
+            lastSkeletonDataAsset = ThisSkeletonDataAsset;
+            lastSkeletonData = ThisSkeletonDataAsset.GetSkeletonData(true);
+        }
 
-		private void HandleOnSkinChanged (string skinName) {
-			EditorPrefs.SetString(LastSkinKey, skinName);
-			preview.PlayPauseAnimation(ThisAnimationName, true);
-		}
+        #region Preview Handlers
 
-		void HandleOnDestroyPreview () {
-			EditorApplication.update -= preview.HandleEditorUpdate;
-			preview.OnDestroy();
-		}
+        private string TargetAssetGUID =>
+            AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(ThisSkeletonDataAsset));
 
-		override public bool HasPreviewGUI () {
-			if (serializedObject.isEditingMultipleObjects) return false;
-			return ThisSkeletonDataAsset != null && ThisSkeletonDataAsset.GetSkeletonData(true) != null;
-		}
+        private string LastSkinKey => TargetAssetGUID + "_lastSkin";
+        private string LastSkinName => EditorPrefs.GetString(LastSkinKey, "");
 
-		override public void OnInteractivePreviewGUI (Rect r, GUIStyle background) {
-			preview.Initialize(this.Repaint, ThisSkeletonDataAsset);
-			preview.HandleInteractivePreviewGUI(r, background);
-		}
+        private void HandleOnEnablePreview()
+        {
+            if (ThisSkeletonDataAsset != null && ThisSkeletonDataAsset.skeletonJSON == null)
+                return;
+            SpineEditorUtilities.ConfirmInitialization();
 
-		public override GUIContent GetPreviewTitle () { return SpineInspectorUtility.TempContent("Preview"); }
-		public override void OnPreviewSettings () { preview.HandleDrawSettings(); }
-		public override Texture2D RenderStaticPreview (string assetPath, UnityEngine.Object[] subAssets, int width, int height) { return preview.GetStaticPreview(width, height); }
-		#endregion
-	}
+            // This handles the case where the managed editor assembly is unloaded before recompilation when code changes.
+            AppDomain.CurrentDomain.DomainUnload -= OnDomainUnload;
+            AppDomain.CurrentDomain.DomainUnload += OnDomainUnload;
 
+            preview.Initialize(Repaint, ThisSkeletonDataAsset, LastSkinName);
+            preview.PlayPauseAnimation(ThisAnimationName, true);
+            preview.OnSkinChanged -= HandleOnSkinChanged;
+            preview.OnSkinChanged += HandleOnSkinChanged;
+            EditorApplication.update -= preview.HandleEditorUpdate;
+            EditorApplication.update += preview.HandleEditorUpdate;
+        }
+
+        private void OnDomainUnload(object sender, EventArgs e)
+        {
+            OnDestroy();
+        }
+
+        private void HandleOnSkinChanged(string skinName)
+        {
+            EditorPrefs.SetString(LastSkinKey, skinName);
+            preview.PlayPauseAnimation(ThisAnimationName, true);
+        }
+
+        private void HandleOnDestroyPreview()
+        {
+            EditorApplication.update -= preview.HandleEditorUpdate;
+            preview.OnDestroy();
+        }
+
+        public override bool HasPreviewGUI()
+        {
+            if (serializedObject.isEditingMultipleObjects) return false;
+            return ThisSkeletonDataAsset != null && ThisSkeletonDataAsset.GetSkeletonData(true) != null;
+        }
+
+        public override void OnInteractivePreviewGUI(Rect r, GUIStyle background)
+        {
+            preview.Initialize(Repaint, ThisSkeletonDataAsset);
+            preview.HandleInteractivePreviewGUI(r, background);
+        }
+
+        public override GUIContent GetPreviewTitle()
+        {
+            return SpineInspectorUtility.TempContent("Preview");
+        }
+
+        public override void OnPreviewSettings()
+        {
+            preview.HandleDrawSettings();
+        }
+
+        public override Texture2D RenderStaticPreview(string assetPath, Object[] subAssets, int width, int height)
+        {
+            return preview.GetStaticPreview(width, height);
+        }
+
+        #endregion
+    }
 }

@@ -5,13 +5,14 @@ namespace Apis
     public interface IStat
     {
         private static Dictionary<ActorStatType, bool> _positives;
-        public static Dictionary<ActorStatType, bool> Positives => _positives ??= new()
+
+        public static Dictionary<ActorStatType, bool> Positives => _positives ??= new Dictionary<ActorStatType, bool>
         {
             { ActorStatType.Atk, true },
             { ActorStatType.Def, false },
             { ActorStatType.AtkSpeed, true },
             { ActorStatType.MoveSpeed, true },
-            { ActorStatType.MaxHp, true },
+            { ActorStatType.MaxHp, true }
         };
 
         public ActorStatType Type { get; }

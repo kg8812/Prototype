@@ -33,132 +33,153 @@
 
 using UnityEngine;
 
-namespace Spine.Unity {
-
+namespace Spine.Unity
+{
 #if NEW_PREFAB_SYSTEM
-	[ExecuteAlways]
+    [ExecuteAlways]
 #else
 	[ExecuteInEditMode]
 #endif
-	[AddComponentMenu("Spine/Point Follower")]
-	[HelpURL("http://esotericsoftware.com/spine-unity#PointFollower")]
-	public class PointFollower : MonoBehaviour, IHasSkeletonRenderer, IHasSkeletonComponent {
+    [AddComponentMenu("Spine/Point Follower")]
+    [HelpURL("http://esotericsoftware.com/spine-unity#PointFollower")]
+    public class PointFollower : MonoBehaviour, IHasSkeletonRenderer, IHasSkeletonComponent
+    {
+        public SkeletonRenderer skeletonRenderer;
+        public SkeletonRenderer SkeletonRenderer => skeletonRenderer;
+        public ISkeletonComponent SkeletonComponent => skeletonRenderer;
 
-		public SkeletonRenderer skeletonRenderer;
-		public SkeletonRenderer SkeletonRenderer { get { return this.skeletonRenderer; } }
-		public ISkeletonComponent SkeletonComponent { get { return skeletonRenderer as ISkeletonComponent; } }
+        [SpineSlot(dataField: "skeletonRenderer", includeNone: true)]
+        public string slotName;
 
-		[SpineSlot(dataField: "skeletonRenderer", includeNone: true)]
-		public string slotName;
+        [SpineAttachment(slotField: "slotName", dataField: "skeletonRenderer", fallbackToTextField: true,
+            includeNone: true)]
+        public string pointAttachmentName;
 
-		[SpineAttachment(slotField: "slotName", dataField: "skeletonRenderer", fallbackToTextField: true, includeNone: true)]
-		public string pointAttachmentName;
+        public bool followRotation = true;
+        public bool followSkeletonFlip = true;
+        public bool followSkeletonZPosition;
 
-		public bool followRotation = true;
-		public bool followSkeletonFlip = true;
-		public bool followSkeletonZPosition = false;
+        private Transform skeletonTransform;
+        private bool skeletonTransformIsParent;
+        private PointAttachment point;
+        private Bone bone;
+        public bool IsValid { get; private set; }
 
-		Transform skeletonTransform;
-		bool skeletonTransformIsParent;
-		PointAttachment point;
-		Bone bone;
-		bool valid;
-		public bool IsValid { get { return valid; } }
+        public void Initialize()
+        {
+            IsValid = skeletonRenderer != null && skeletonRenderer.valid;
+            if (!IsValid)
+                return;
 
-		public void Initialize () {
-			valid = skeletonRenderer != null && skeletonRenderer.valid;
-			if (!valid)
-				return;
-
-			UpdateReferences();
+            UpdateReferences();
 
 #if UNITY_EDITOR
-			if (Application.isEditor) LateUpdate();
+            if (Application.isEditor) LateUpdate();
 #endif
-		}
+        }
 
-		private void HandleRebuildRenderer (SkeletonRenderer skeletonRenderer) {
-			Initialize();
-		}
+        private void HandleRebuildRenderer(SkeletonRenderer skeletonRenderer)
+        {
+            Initialize();
+        }
 
-		void UpdateReferences () {
-			skeletonTransform = skeletonRenderer.transform;
-			skeletonRenderer.OnRebuild -= HandleRebuildRenderer;
-			skeletonRenderer.OnRebuild += HandleRebuildRenderer;
-			skeletonTransformIsParent = Transform.ReferenceEquals(skeletonTransform, transform.parent);
+        private void UpdateReferences()
+        {
+            skeletonTransform = skeletonRenderer.transform;
+            skeletonRenderer.OnRebuild -= HandleRebuildRenderer;
+            skeletonRenderer.OnRebuild += HandleRebuildRenderer;
+            skeletonTransformIsParent = ReferenceEquals(skeletonTransform, transform.parent);
 
-			bone = null;
-			point = null;
-			if (!string.IsNullOrEmpty(pointAttachmentName)) {
-				Skeleton skeleton = skeletonRenderer.Skeleton;
+            bone = null;
+            point = null;
+            if (!string.IsNullOrEmpty(pointAttachmentName))
+            {
+                var skeleton = skeletonRenderer.Skeleton;
 
-				Slot slot = skeleton.FindSlot(slotName);
-				if (slot != null) {
-					int slotIndex = slot.Data.Index;
-					bone = slot.Bone;
-					point = skeleton.GetAttachment(slotIndex, pointAttachmentName) as PointAttachment;
-				}
-			}
-		}
+                var slot = skeleton.FindSlot(slotName);
+                if (slot != null)
+                {
+                    var slotIndex = slot.Data.Index;
+                    bone = slot.Bone;
+                    point = skeleton.GetAttachment(slotIndex, pointAttachmentName) as PointAttachment;
+                }
+            }
+        }
 
-		void OnDestroy () {
-			if (skeletonRenderer != null)
-				skeletonRenderer.OnRebuild -= HandleRebuildRenderer;
-		}
+        private void OnDestroy()
+        {
+            if (skeletonRenderer != null)
+                skeletonRenderer.OnRebuild -= HandleRebuildRenderer;
+        }
 
-		public void LateUpdate () {
+        public void LateUpdate()
+        {
 #if UNITY_EDITOR
-			if (!Application.isPlaying) skeletonTransformIsParent = Transform.ReferenceEquals(skeletonTransform, transform.parent);
+            if (!Application.isPlaying)
+                skeletonTransformIsParent = ReferenceEquals(skeletonTransform, transform.parent);
 #endif
 
-			if (point == null) {
-				if (string.IsNullOrEmpty(pointAttachmentName)) return;
-				UpdateReferences();
-				if (point == null) return;
-			}
+            if (point == null)
+            {
+                if (string.IsNullOrEmpty(pointAttachmentName)) return;
+                UpdateReferences();
+                if (point == null) return;
+            }
 
-			Vector2 worldPos;
-			point.ComputeWorldPosition(bone, out worldPos.x, out worldPos.y);
-			float rotation = point.ComputeWorldRotation(bone);
+            Vector2 worldPos;
+            point.ComputeWorldPosition(bone, out worldPos.x, out worldPos.y);
+            var rotation = point.ComputeWorldRotation(bone);
 
-			Transform thisTransform = this.transform;
-			if (skeletonTransformIsParent) {
-				// Recommended setup: Use local transform properties if Spine GameObject is the immediate parent
-				thisTransform.localPosition = new Vector3(worldPos.x, worldPos.y, followSkeletonZPosition ? 0f : thisTransform.localPosition.z);
-				if (followRotation) {
-					float halfRotation = rotation * 0.5f * Mathf.Deg2Rad;
+            var thisTransform = transform;
+            if (skeletonTransformIsParent)
+            {
+                // Recommended setup: Use local transform properties if Spine GameObject is the immediate parent
+                thisTransform.localPosition = new Vector3(worldPos.x, worldPos.y,
+                    followSkeletonZPosition ? 0f : thisTransform.localPosition.z);
+                if (followRotation)
+                {
+                    var halfRotation = rotation * 0.5f * Mathf.Deg2Rad;
 
-					Quaternion q = default(Quaternion);
-					q.z = Mathf.Sin(halfRotation);
-					q.w = Mathf.Cos(halfRotation);
-					thisTransform.localRotation = q;
-				}
-			} else {
-				// For special cases: Use transform world properties if transform relationship is complicated
-				Vector3 targetWorldPosition = skeletonTransform.TransformPoint(new Vector3(worldPos.x, worldPos.y, 0f));
-				if (!followSkeletonZPosition)
-					targetWorldPosition.z = thisTransform.position.z;
+                    var q = default(Quaternion);
+                    q.z = Mathf.Sin(halfRotation);
+                    q.w = Mathf.Cos(halfRotation);
+                    thisTransform.localRotation = q;
+                }
+            }
+            else
+            {
+                // For special cases: Use transform world properties if transform relationship is complicated
+                var targetWorldPosition = skeletonTransform.TransformPoint(new Vector3(worldPos.x, worldPos.y, 0f));
+                if (!followSkeletonZPosition)
+                    targetWorldPosition.z = thisTransform.position.z;
 
-				Transform transformParent = thisTransform.parent;
-				if (transformParent != null) {
-					Matrix4x4 m = transformParent.localToWorldMatrix;
-					if (m.m00 * m.m11 - m.m01 * m.m10 < 0) // Determinant2D is negative
-						rotation = -rotation;
-				}
+                var transformParent = thisTransform.parent;
+                if (transformParent != null)
+                {
+                    var m = transformParent.localToWorldMatrix;
+                    if (m.m00 * m.m11 - m.m01 * m.m10 < 0) // Determinant2D is negative
+                        rotation = -rotation;
+                }
 
-				if (followRotation) {
-					Vector3 transformWorldRotation = skeletonTransform.rotation.eulerAngles;
-					thisTransform.SetPositionAndRotation(targetWorldPosition, Quaternion.Euler(transformWorldRotation.x, transformWorldRotation.y, transformWorldRotation.z + rotation));
-				} else {
-					thisTransform.position = targetWorldPosition;
-				}
-			}
+                if (followRotation)
+                {
+                    var transformWorldRotation = skeletonTransform.rotation.eulerAngles;
+                    thisTransform.SetPositionAndRotation(targetWorldPosition,
+                        Quaternion.Euler(transformWorldRotation.x, transformWorldRotation.y,
+                            transformWorldRotation.z + rotation));
+                }
+                else
+                {
+                    thisTransform.position = targetWorldPosition;
+                }
+            }
 
-			if (followSkeletonFlip) {
-				Vector3 localScale = thisTransform.localScale;
-				localScale.y = Mathf.Abs(localScale.y) * Mathf.Sign(bone.Skeleton.ScaleX * bone.Skeleton.ScaleY);
-				thisTransform.localScale = localScale;
-			}
-		}
-	}
+            if (followSkeletonFlip)
+            {
+                var localScale = thisTransform.localScale;
+                localScale.y = Mathf.Abs(localScale.y) * Mathf.Sign(bone.Skeleton.ScaleX * bone.Skeleton.ScaleY);
+                thisTransform.localScale = localScale;
+            }
+        }
+    }
 }

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Apis
 {
-    public class RepeatMovingObj: MonoBehaviour
+    public class RepeatMovingObj : MonoBehaviour
     {
         [SerializeField] private bool isUpDown;
 
@@ -15,7 +15,7 @@ namespace Apis
         private void Start()
         {
             // 시작 위치를 기준으로 좌우로 이동
-            Vector3 toPos = transform.position + (isUpDown ? Vector3.up : Vector3.right) * dist;
+            var toPos = transform.position + (isUpDown ? Vector3.up : Vector3.right) * dist;
             // Vector3 originPos = transform.position;
 
             // DoTween을 사용하여 좌우로 반복 이동

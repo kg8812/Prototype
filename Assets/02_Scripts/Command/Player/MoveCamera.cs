@@ -1,19 +1,22 @@
-using System.Collections;
-using System.Collections.Generic;
 using Managers;
 using UnityEngine;
 
 namespace Command
 {
-    [CreateAssetMenu(fileName = "MoveCam",menuName = "ActorCommand/Player/MoveCam")]
+    [CreateAssetMenu(fileName = "MoveCam", menuName = "ActorCommand/Player/MoveCam")]
     public class MoveCamera : PlayerCommand
     {
-        public bool Move;
-        public Direction direction;
         public enum Direction
         {
-            Up,Down,Left,Right,
+            Up,
+            Down,
+            Left,
+            Right
         }
+
+        public bool Move;
+        public Direction direction;
+
         protected override void Invoke(Player go)
         {
             switch (direction)

@@ -1,5 +1,5 @@
-using System;
 using UnityEngine;
+
 namespace Command
 {
     [CreateAssetMenu(fileName = "PressLR", menuName = "ActorCommand/Player/PressLR", order = 1)]

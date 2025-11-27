@@ -1,7 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using Apis;
 using Apis;
 using DG.Tweening;
 using EventData;
@@ -10,26 +6,31 @@ using UnityEngine.Events;
 
 public class UnitMoveComponent : MonoBehaviour
 {
+    private IImmunity _immunity;
     public ActorMovement ActorMovement { get; private set; }
-    private ForceActorMovement _forceActorMovement;
-    public ForceActorMovement ForceActorMovement => _forceActorMovement;
+    public ForceActorMovement ForceActorMovement { get; private set; }
+
     public bool isJump { get; set; }
     public bool ableJump { get; set; }
     public bool ableMove { get; set; }
-
-    private IImmunity _immunity;
     protected ImmunityController immunityController => _immunity?.ImmunityController;
-    public virtual void Init(IMovable mover, Collider2D col)
-    {
-        ActorMovement = new(mover, col);
-        _immunity = mover.gameObject.GetComponent<IImmunity>();
-        _forceActorMovement = new(mover, col);
-    }
 
     public MovingObj OnMovingObj { get; set; } // movingObj 위에 있는지 여부
 
+    private void FixedUpdate()
+    {
+        ActorMovement?.Update();
+    }
+
+    public virtual void Init(IMovable mover, Collider2D col)
+    {
+        ActorMovement = new ActorMovement(mover, col);
+        _immunity = mover.gameObject.GetComponent<IImmunity>();
+        ForceActorMovement = new ForceActorMovement(mover, col);
+    }
+
     /// <summary>
-    /// 넉백 함수, src에서 멀어지는 방향으로 넉백 작용
+    ///     넉백 함수, src에서 멀어지는 방향으로 넉백 작용
     /// </summary>
     /// <param name="src">멀어질 기준의 위치 벡터 </param>
     /// <param name="knockBackForce">넉백 파워 </param>
@@ -44,14 +45,9 @@ public class UnitMoveComponent : MonoBehaviour
         OnBegin?.Invoke();
         // ActorMovement.KnockBack(src, knockBackForce, knockBackAngle);
         ActorMovement.KnockBack2(src, knockBackData);
-        Sequence seq = DOTween.Sequence();
+        var seq = DOTween.Sequence();
         seq.SetDelay(knockBackData.knockBackTime);
         seq.AppendCallback(OnEnd.Invoke);
-    }
-
-    private void FixedUpdate()
-    {
-        ActorMovement?.Update();
     }
 
     public virtual void MoveOn()

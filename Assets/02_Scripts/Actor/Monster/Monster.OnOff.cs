@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
 namespace Apis
 {
     public partial class Monster
@@ -35,7 +31,7 @@ namespace Apis
         {
             MoveComponent.JumpOff();
         }
-        
+
         public override void AttackOn()
         {
             ableAttack = true;

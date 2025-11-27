@@ -1,5 +1,4 @@
-﻿
-public class ES3XMLReader
+﻿public class ES3XMLReader
 {
     // Not Implemented
 }

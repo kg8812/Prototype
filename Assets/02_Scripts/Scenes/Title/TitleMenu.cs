@@ -7,9 +7,7 @@ namespace Apis
         private void Start()
         {
             GameManager.instance.WhenReturnedToTitle.Invoke();
-            GameManager.Sound.Play(Define.BGMList.MainThemeTitle,Define.Sound.BGM);
+            GameManager.Sound.Play(Define.BGMList.MainThemeTitle, Define.Sound.BGM);
         }
-
     }
 }
-

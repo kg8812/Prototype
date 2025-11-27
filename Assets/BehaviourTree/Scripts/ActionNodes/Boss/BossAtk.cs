@@ -5,8 +5,6 @@ namespace Apis.BehaviourTreeTool
 {
     public class BossAtk : BossActionNode
     {
-        bool isFinished;
-
         public int atkNum;
 
         [Tooltip("마지막 모션 캔슬 여부")] public bool isSkip;
@@ -14,19 +12,21 @@ namespace Apis.BehaviourTreeTool
 
         [LabelText("공격 파생타입")] [InfoBox("0 = 기본, 1 = _1 등등")]
         public int atkType;
-        
+
+        private bool isFinished;
+
         public override void OnStart()
         {
             base.OnStart();
-           
+
             boss.animator.SetBool("IsAttackEnd", !isSkip);
             isFinished = false;
             boss.animator.SetInteger("Attack", atkNum);
-            boss.animator.SetInteger("AttackType",atkType);
-           
+            boss.animator.SetInteger("AttackType", atkType);
+
             OnAlert.AddListener(Invoke);
-            
-            int index = atkType > 0 ? atkNum * 100 + atkType : atkNum;
+
+            var index = atkType > 0 ? atkNum * 100 + atkType : atkNum;
             boss.StartAtkPattern(index);
         }
 
@@ -39,11 +39,8 @@ namespace Apis.BehaviourTreeTool
 
         public override State OnUpdate()
         {
-            if (isFinished || !WaitForEnd)
-            {
-                return State.Success;
-            }
-            
+            if (isFinished || !WaitForEnd) return State.Success;
+
             return State.Running;
         }
 
@@ -53,12 +50,10 @@ namespace Apis.BehaviourTreeTool
             OnAlert.RemoveAllListeners();
             boss.CancelAttack();
         }
-        void Invoke(string message)
+
+        private void Invoke(string message)
         {
-            if (message == "AttackEnd")
-            {
-                isFinished = true;
-            }
+            if (message == "AttackEnd") isFinished = true;
         }
     }
 }

@@ -1,9 +1,8 @@
-﻿using Save.Schema;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Scenes.Tutorial
 {
-    public class TutorialManager: MonoBehaviour
+    public class TutorialManager : MonoBehaviour
     {
         public void ToStage()
         {

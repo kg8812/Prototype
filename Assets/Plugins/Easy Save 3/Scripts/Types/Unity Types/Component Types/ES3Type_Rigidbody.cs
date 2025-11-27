@@ -1,23 +1,29 @@
-using System;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace ES3Types
 {
-    [UnityEngine.Scripting.Preserve]
-    [ES3PropertiesAttribute("velocity", "angularVelocity", "drag", "angularDrag", "mass", "useGravity", "maxDepenetrationVelocity", "isKinematic", "freezeRotation", "constraints", "collisionDetectionMode", "centerOfMass", "inertiaTensorRotation", "inertiaTensor", "detectCollisions", "position", "rotation", "interpolation", "solverIterations", "sleepThreshold", "maxAngularVelocity", "solverVelocityIterations")]
+    [Preserve]
+    [ES3PropertiesAttribute("velocity", "angularVelocity", "drag", "angularDrag", "mass", "useGravity",
+        "maxDepenetrationVelocity", "isKinematic", "freezeRotation", "constraints", "collisionDetectionMode",
+        "centerOfMass", "inertiaTensorRotation", "inertiaTensor", "detectCollisions", "position", "rotation",
+        "interpolation", "solverIterations", "sleepThreshold", "maxAngularVelocity", "solverVelocityIterations")]
     public class ES3Type_Rigidbody : ES3ComponentType
     {
-        public static ES3Type Instance = null;
+        public static ES3Type Instance;
 
-        public ES3Type_Rigidbody() : base(typeof(UnityEngine.Rigidbody)) { Instance = this; }
+        public ES3Type_Rigidbody() : base(typeof(Rigidbody))
+        {
+            Instance = this;
+        }
 
 
         protected override void WriteComponent(object obj, ES3Writer writer)
         {
-            var instance = (UnityEngine.Rigidbody)obj;
+            var instance = (Rigidbody)obj;
 
 #if UNITY_6000_0_OR_NEWER
-			writer.WriteProperty("velocity", instance.linearVelocity, ES3Type_Vector3.Instance);
+            writer.WriteProperty("velocity", instance.linearVelocity, ES3Type_Vector3.Instance);
             writer.WriteProperty("drag", instance.linearDamping, ES3Type_float.Instance);
             writer.WriteProperty("angularDrag", instance.angularDamping, ES3Type_float.Instance);
 #else
@@ -46,20 +52,19 @@ namespace ES3Types
 
         protected override void ReadComponent<T>(ES3Reader reader, object obj)
         {
-            var instance = (UnityEngine.Rigidbody)obj;
+            var instance = (Rigidbody)obj;
             foreach (string propertyName in reader.Properties)
-            {
                 switch (propertyName)
                 {
 #if UNITY_6000_0_OR_NEWER
-					case "velocity":
-						instance.linearVelocity = reader.Read<UnityEngine.Vector3>(ES3Type_Vector3.Instance);
-						break;
+                    case "velocity":
+                        instance.linearVelocity = reader.Read<Vector3>(ES3Type_Vector3.Instance);
+                        break;
                     case "drag":
-                        instance.linearDamping = reader.Read<System.Single>(ES3Type_float.Instance);
+                        instance.linearDamping = reader.Read<float>(ES3Type_float.Instance);
                         break;
                     case "angularDrag":
-                        instance.angularDamping = reader.Read<System.Single>(ES3Type_float.Instance);
+                        instance.angularDamping = reader.Read<float>(ES3Type_float.Instance);
                         break;
 #else
                     case "velocity":
@@ -73,70 +78,69 @@ namespace ES3Types
                         break;
 #endif
                     case "angularVelocity":
-                        instance.angularVelocity = reader.Read<UnityEngine.Vector3>(ES3Type_Vector3.Instance);
+                        instance.angularVelocity = reader.Read<Vector3>(ES3Type_Vector3.Instance);
                         break;
                     case "mass":
-                        instance.mass = reader.Read<System.Single>(ES3Type_float.Instance);
+                        instance.mass = reader.Read<float>(ES3Type_float.Instance);
                         break;
                     case "useGravity":
-                        instance.useGravity = reader.Read<System.Boolean>(ES3Type_bool.Instance);
+                        instance.useGravity = reader.Read<bool>(ES3Type_bool.Instance);
                         break;
                     case "maxDepenetrationVelocity":
-                        instance.maxDepenetrationVelocity = reader.Read<System.Single>(ES3Type_float.Instance);
+                        instance.maxDepenetrationVelocity = reader.Read<float>(ES3Type_float.Instance);
                         break;
                     case "isKinematic":
-                        instance.isKinematic = reader.Read<System.Boolean>(ES3Type_bool.Instance);
+                        instance.isKinematic = reader.Read<bool>(ES3Type_bool.Instance);
                         break;
                     case "freezeRotation":
-                        instance.freezeRotation = reader.Read<System.Boolean>(ES3Type_bool.Instance);
+                        instance.freezeRotation = reader.Read<bool>(ES3Type_bool.Instance);
                         break;
                     case "constraints":
-                        instance.constraints = reader.Read<UnityEngine.RigidbodyConstraints>();
+                        instance.constraints = reader.Read<RigidbodyConstraints>();
                         break;
                     case "collisionDetectionMode":
-                        instance.collisionDetectionMode = reader.Read<UnityEngine.CollisionDetectionMode>();
+                        instance.collisionDetectionMode = reader.Read<CollisionDetectionMode>();
                         break;
                     case "centerOfMass":
-                        instance.centerOfMass = reader.Read<UnityEngine.Vector3>(ES3Type_Vector3.Instance);
+                        instance.centerOfMass = reader.Read<Vector3>(ES3Type_Vector3.Instance);
                         break;
                     case "inertiaTensorRotation":
-                        instance.inertiaTensorRotation = reader.Read<UnityEngine.Quaternion>(ES3Type_Quaternion.Instance);
+                        instance.inertiaTensorRotation = reader.Read<Quaternion>(ES3Type_Quaternion.Instance);
                         break;
                     case "inertiaTensor":
-                        var inertiaTensor = reader.Read<UnityEngine.Vector3>(ES3Type_Vector3.Instance);
+                        var inertiaTensor = reader.Read<Vector3>(ES3Type_Vector3.Instance);
                         // Check that the inertia tensor isn't zero, as it will throw an error if we try to set it.
                         if (inertiaTensor != Vector3.zero)
                             instance.inertiaTensor = inertiaTensor;
                         break;
                     case "detectCollisions":
-                        instance.detectCollisions = reader.Read<System.Boolean>(ES3Type_bool.Instance);
+                        instance.detectCollisions = reader.Read<bool>(ES3Type_bool.Instance);
                         break;
                     case "position":
-                        instance.position = reader.Read<UnityEngine.Vector3>(ES3Type_Vector3.Instance);
+                        instance.position = reader.Read<Vector3>(ES3Type_Vector3.Instance);
                         break;
                     case "rotation":
-                        instance.rotation = reader.Read<UnityEngine.Quaternion>(ES3Type_Quaternion.Instance);
+                        instance.rotation = reader.Read<Quaternion>(ES3Type_Quaternion.Instance);
                         break;
                     case "interpolation":
-                        instance.interpolation = reader.Read<UnityEngine.RigidbodyInterpolation>();
+                        instance.interpolation = reader.Read<RigidbodyInterpolation>();
                         break;
                     case "solverIterations":
-                        instance.solverIterations = reader.Read<System.Int32>(ES3Type_int.Instance);
+                        instance.solverIterations = reader.Read<int>(ES3Type_int.Instance);
                         break;
                     case "sleepThreshold":
-                        instance.sleepThreshold = reader.Read<System.Single>(ES3Type_float.Instance);
+                        instance.sleepThreshold = reader.Read<float>(ES3Type_float.Instance);
                         break;
                     case "maxAngularVelocity":
-                        instance.maxAngularVelocity = reader.Read<System.Single>(ES3Type_float.Instance);
+                        instance.maxAngularVelocity = reader.Read<float>(ES3Type_float.Instance);
                         break;
                     case "solverVelocityIterations":
-                        instance.solverVelocityIterations = reader.Read<System.Int32>(ES3Type_int.Instance);
+                        instance.solverVelocityIterations = reader.Read<int>(ES3Type_int.Instance);
                         break;
                     default:
                         reader.Skip();
                         break;
                 }
-            }
         }
     }
 
@@ -145,7 +149,7 @@ namespace ES3Types
     {
         public static ES3Type Instance;
 
-        public ES3UserType_RigidbodyArray() : base(typeof(UnityEngine.Rigidbody[]), ES3Type_Rigidbody.Instance)
+        public ES3UserType_RigidbodyArray() : base(typeof(Rigidbody[]), ES3Type_Rigidbody.Instance)
         {
             Instance = this;
         }

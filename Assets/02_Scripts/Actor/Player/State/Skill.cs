@@ -1,14 +1,28 @@
-using System.Collections;
-using System.Collections.Generic;
 using Apis;
-using UnityEngine;
 
-namespace PlayerState {
-    public class Skill : EventState , IInterruptable
+namespace PlayerState
+{
+    public class Skill : EventState, IInterruptable
     {
-        //TODO: OnFinalAttack 임시 작업
-        public override EPlayerState NextState { get => EPlayerState.Idle; set {} }
+        private EPlayerState[] _interuptableStates;
+
         private bool escape;
+
+        //TODO: OnFinalAttack 임시 작업
+        public override EPlayerState NextState
+        {
+            get => EPlayerState.Idle;
+            set { }
+        }
+
+        public float InterruptTime { get; set; } = 0;
+
+        public EPlayerState[] InteruptableStates =>
+            _interuptableStates ??= new[]
+            {
+                EPlayerState.Dash
+            };
+
         public override void OnEnter(Player t)
         {
             base.OnEnter(t);
@@ -16,7 +30,7 @@ namespace PlayerState {
             _player.IsSkill = true;
             _player.Stop();
 
-            if(_player.onAir) 
+            if (_player.onAir)
                 _player.OnFinalSkill = true;
 
             escape = false;
@@ -44,26 +58,38 @@ namespace PlayerState {
             return escape;
         }
 
-        private void Escape() => escape = true;
-        private void Escape(EventParameters e) => Escape();
+        private void Escape()
+        {
+            escape = true;
+        }
+
+        private void Escape(EventParameters e)
+        {
+            Escape();
+        }
+    }
+
+    public class Charging : EventState, IInterruptable
+    {
+        private EPlayerState[] _interuptableStates;
+        private bool escape;
+
+        private ActiveSkill skill;
+
+        public override EPlayerState NextState
+        {
+            get => EPlayerState.Idle;
+            set { }
+        }
 
         public float InterruptTime { get; set; } = 0;
-
-        private EPlayerState[] _interuptableStates;
 
         public EPlayerState[] InteruptableStates =>
             _interuptableStates ??= new[]
             {
-                EPlayerState.Dash,
+                EPlayerState.Dash
             };
-    }
 
-    public class Charging : EventState , IInterruptable
-    {
-        public override EPlayerState NextState { get => EPlayerState.Idle; set {} }
-        private bool escape;
-
-        private ActiveSkill skill;
         public override void OnEnter(Player t)
         {
             base.OnEnter(t);
@@ -74,17 +100,20 @@ namespace PlayerState {
             _player.Stop();
             skill = _player.curSkill;
             _player.OnChargeStart.Invoke();
-            _player.StateEvent.AddEvent(EventType.OnIdleMotion, (e) => escape = true);
+            _player.StateEvent.AddEvent(EventType.OnIdleMotion, e => escape = true);
         }
 
         public override void FixedUpdate()
         {
             base.FixedUpdate();
-            if(_player.PressingDir != 0) {
-                if(!_player.PhysicTest)
+            if (_player.PressingDir != 0)
+            {
+                if (!_player.PhysicTest)
                     _player.ActorMovement.Move(_player.Direction, (100 - skill.chargeMoveDebuff) / 100f);
                 else
-                    _player.MoveComponent.ForceActorMovement.Move(_player.Direction, (100 - skill.chargeMoveDebuff) / 100f, false, _player.MoveResistFactor, _player.PreattackMoveSpeed);
+                    _player.MoveComponent.ForceActorMovement.Move(_player.Direction,
+                        (100 - skill.chargeMoveDebuff) / 100f, false, _player.MoveResistFactor,
+                        _player.PreattackMoveSpeed);
             }
         }
 
@@ -101,21 +130,26 @@ namespace PlayerState {
         {
             return escape;
         }
+    }
+
+    public class Casting : EventState, IInterruptable
+    {
+        private EPlayerState[] _interuptableStates;
+
+        public override EPlayerState NextState
+        {
+            get => EPlayerState.Idle;
+            set { }
+        }
 
         public float InterruptTime { get; set; } = 0;
-
-        private EPlayerState[] _interuptableStates;
 
         public EPlayerState[] InteruptableStates =>
             _interuptableStates ??= new[]
             {
                 EPlayerState.Dash,
+                EPlayerState.Jump
             };
-    }
-
-    public class Casting : EventState,IInterruptable
-    {
-        public override EPlayerState NextState { get => EPlayerState.Idle; set {} }
 
         public override void OnEnter(Player t)
         {
@@ -136,16 +170,5 @@ namespace PlayerState {
         {
             return false;
         }
-        
-        public float InterruptTime { get; set; } = 0;
-
-        private EPlayerState[] _interuptableStates;
-
-        public EPlayerState[] InteruptableStates =>
-            _interuptableStates ??= new[]
-            {
-                EPlayerState.Dash,
-                EPlayerState.Jump
-            };
     }
 }

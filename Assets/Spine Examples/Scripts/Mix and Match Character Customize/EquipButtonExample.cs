@@ -27,34 +27,36 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-
 using UnityEngine.UI;
 
-namespace Spine.Unity.Examples {
-	public class EquipButtonExample : MonoBehaviour {
-		public EquipAssetExample asset;
-		public EquipSystemExample equipSystem;
-		public Image inventoryImage;
+namespace Spine.Unity.Examples
+{
+    public class EquipButtonExample : MonoBehaviour
+    {
+        public EquipAssetExample asset;
+        public EquipSystemExample equipSystem;
+        public Image inventoryImage;
 
-		void OnValidate () {
-			MatchImage();
-		}
+        private void Start()
+        {
+            MatchImage();
 
-		void MatchImage () {
-			if (inventoryImage != null)
-				inventoryImage.sprite = asset.sprite;
-		}
+            var button = GetComponent<Button>();
+            button.onClick.AddListener(
+                delegate { equipSystem.Equip(asset); }
+            );
+        }
 
-		void Start () {
-			MatchImage();
+        private void OnValidate()
+        {
+            MatchImage();
+        }
 
-			Button button = GetComponent<Button>();
-			button.onClick.AddListener(
-				delegate { equipSystem.Equip(asset); }
-			);
-		}
-	}
+        private void MatchImage()
+        {
+            if (inventoryImage != null)
+                inventoryImage.sprite = asset.sprite;
+        }
+    }
 }

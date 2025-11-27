@@ -1,6 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+
 
 // 오브젝트 풀링에 넣을 오브젝트용 인터페이스
 

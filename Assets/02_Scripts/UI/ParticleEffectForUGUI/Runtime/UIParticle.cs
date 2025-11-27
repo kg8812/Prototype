@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Coffee.UIParticleExtensions;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
@@ -14,7 +13,7 @@ using Random = UnityEngine.Random;
 namespace Coffee.UIExtensions
 {
     /// <summary>
-    /// Render maskable and sortable particle effect ,without Camera, RenderTexture or Canvas.
+    ///     Render maskable and sortable particle effect ,without Camera, RenderTexture or Canvas.
     /// </summary>
     [ExecuteAlways]
     [RequireComponent(typeof(RectTransform))]
@@ -43,31 +42,23 @@ namespace Coffee.UIExtensions
             Absolute
         }
 
-        [HideInInspector]
-        [SerializeField]
-        internal bool m_IsTrail;
+        [HideInInspector] [SerializeField] internal bool m_IsTrail;
 
-        [HideInInspector]
-        [FormerlySerializedAs("m_IgnoreParent")]
-        [SerializeField]
+        [HideInInspector] [FormerlySerializedAs("m_IgnoreParent")] [SerializeField]
         private bool m_IgnoreCanvasScaler;
 
-        [HideInInspector]
-        [SerializeField]
-        private bool m_AbsoluteMode;
+        [HideInInspector] [SerializeField] private bool m_AbsoluteMode;
 
-        [Tooltip("Particle effect scale")]
-        [SerializeField]
-        private Vector3 m_Scale3D = new Vector3(10, 10, 10);
+        [Tooltip("Particle effect scale")] [SerializeField]
+        private Vector3 m_Scale3D = new(10, 10, 10);
 
         [Tooltip("Animatable material properties.\n" +
                  "If you want to change the material properties of the ParticleSystem in Animation, enable it.")]
         [SerializeField]
         internal AnimatableProperty[] m_AnimatableProperties = new AnimatableProperty[0];
 
-        [Tooltip("Particles")]
-        [SerializeField]
-        private List<ParticleSystem> m_Particles = new List<ParticleSystem>();
+        [Tooltip("Particles")] [SerializeField]
+        private List<ParticleSystem> m_Particles = new();
 
         [Tooltip("Mesh sharing.\n" +
                  "None: disable mesh sharing.\n" +
@@ -83,16 +74,14 @@ namespace Coffee.UIExtensions
         [SerializeField]
         private int m_GroupId;
 
-        [SerializeField]
-        private int m_GroupMaxId;
+        [SerializeField] private int m_GroupMaxId;
 
         [Tooltip("Relative: The particles will be emitted from the scaled position of ParticleSystem.\n" +
                  "Absolute: The particles will be emitted from the world position of ParticleSystem.")]
         [SerializeField]
         private PositionMode m_PositionMode = PositionMode.Relative;
 
-        [SerializeField]
-        [Tooltip("Prevent the root-Canvas scale from affecting the hierarchy-scaled ParticleSystem.")]
+        [SerializeField] [Tooltip("Prevent the root-Canvas scale from affecting the hierarchy-scaled ParticleSystem.")]
         private bool m_AutoScaling = true;
 
         [SerializeField]
@@ -100,13 +89,13 @@ namespace Coffee.UIExtensions
                  "UIParticle: UIParticle.scale will be adjusted.")]
         private AutoScalingMode m_AutoScalingMode = AutoScalingMode.Transform;
 
-        private readonly List<UIParticleRenderer> _renderers = new List<UIParticleRenderer>();
+        private readonly List<UIParticleRenderer> _renderers = new();
         private int _groupId;
         private Camera _orthoCamera;
         private DrivenRectTransformTracker _tracker;
 
         /// <summary>
-        /// Should this graphic be considered a target for ray-casting?
+        ///     Should this graphic be considered a target for ray-casting?
         /// </summary>
         public override bool raycastTarget
         {
@@ -115,12 +104,12 @@ namespace Coffee.UIExtensions
         }
 
         /// <summary>
-        /// Mesh sharing.
-        /// None: disable mesh sharing.
-        /// Auto: automatically select Primary/Replica.
-        /// Primary: provides particle simulation results to the same group.
-        /// Primary Simulator: Primary, but do not render the particle (simulation only).
-        /// Replica: render simulation results provided by the primary.
+        ///     Mesh sharing.
+        ///     None: disable mesh sharing.
+        ///     Auto: automatically select Primary/Replica.
+        ///     Primary: provides particle simulation results to the same group.
+        ///     Primary Simulator: Primary, but do not render the particle (simulation only).
+        ///     Replica: render simulation results provided by the primary.
         /// </summary>
         public MeshSharing meshSharing
         {
@@ -129,8 +118,8 @@ namespace Coffee.UIExtensions
         }
 
         /// <summary>
-        /// Mesh sharing group ID.
-        /// If non-zero is specified, particle simulation results are shared within the group.
+        ///     Mesh sharing group ID.
+        ///     If non-zero is specified, particle simulation results are shared within the group.
         /// </summary>
         public int groupId
         {
@@ -139,10 +128,7 @@ namespace Coffee.UIExtensions
             {
                 if (m_GroupId == value) return;
                 m_GroupId = value;
-                if (m_GroupId != m_GroupMaxId)
-                {
-                    ResetGroupId();
-                }
+                if (m_GroupId != m_GroupMaxId) ResetGroupId();
             }
         }
 
@@ -158,9 +144,9 @@ namespace Coffee.UIExtensions
         }
 
         /// <summary>
-        /// Particle position mode.
-        /// Relative: The particles will be emitted from the scaled position of the ParticleSystem.
-        /// Absolute: The particles will be emitted from the world position of the ParticleSystem.
+        ///     Particle position mode.
+        ///     Relative: The particles will be emitted from the scaled position of the ParticleSystem.
+        ///     Absolute: The particles will be emitted from the world position of the ParticleSystem.
         /// </summary>
         public PositionMode positionMode
         {
@@ -169,9 +155,9 @@ namespace Coffee.UIExtensions
         }
 
         /// <summary>
-        /// Particle position mode.
-        /// Relative: The particles will be emitted from the scaled position of the ParticleSystem.
-        /// Absolute: The particles will be emitted from the world position of the ParticleSystem.
+        ///     Particle position mode.
+        ///     Relative: The particles will be emitted from the scaled position of the ParticleSystem.
+        ///     Absolute: The particles will be emitted from the world position of the ParticleSystem.
         /// </summary>
         public bool absoluteMode
         {
@@ -180,7 +166,7 @@ namespace Coffee.UIExtensions
         }
 
         /// <summary>
-        /// Prevents the root-Canvas scale from affecting the hierarchy-scaled ParticleSystem.
+        ///     Prevents the root-Canvas scale from affecting the hierarchy-scaled ParticleSystem.
         /// </summary>
         [Obsolete("The autoScaling is now obsolete. Please use the autoScalingMode instead.", false)]
         public bool autoScaling
@@ -190,9 +176,9 @@ namespace Coffee.UIExtensions
         }
 
         /// <summary>
-        /// Auto scaling mode.
-        /// Transform: Transform.lossyScale (=world scale) will be set to (1, 1, 1).
-        /// UIParticle: UIParticle.scale will be adjusted.
+        ///     Auto scaling mode.
+        ///     Transform: Transform.lossyScale (=world scale) will be set to (1, 1, 1).
+        ///     UIParticle: UIParticle.scale will be adjusted.
         /// </summary>
         public AutoScalingMode autoScalingMode
         {
@@ -224,7 +210,7 @@ namespace Coffee.UIExtensions
             || m_MeshSharing == MeshSharing.Replica;
 
         /// <summary>
-        /// Particle effect scale.
+        ///     Particle effect scale.
         /// </summary>
         public float scale
         {
@@ -233,7 +219,7 @@ namespace Coffee.UIExtensions
         }
 
         /// <summary>
-        /// Particle effect scale.
+        ///     Particle effect scale.
         /// </summary>
         public Vector3 scale3D
         {
@@ -242,7 +228,7 @@ namespace Coffee.UIExtensions
         }
 
         /// <summary>
-        /// Particle effect scale.
+        ///     Particle effect scale.
         /// </summary>
         public Vector3 scale3DForCalc => autoScalingMode == AutoScalingMode.UIParticle
             ? m_Scale3D.GetScaled(canvasScale)
@@ -251,7 +237,7 @@ namespace Coffee.UIExtensions
         public List<ParticleSystem> particles => m_Particles;
 
         /// <summary>
-        /// Get all base materials to render.
+        ///     Get all base materials to render.
         /// </summary>
         public IEnumerable<Material> materials
         {
@@ -269,7 +255,7 @@ namespace Coffee.UIExtensions
         public override Material materialForRendering => null;
 
         /// <summary>
-        /// Paused.
+        ///     Paused.
         /// </summary>
         public bool isPaused { get; private set; }
 
@@ -285,19 +271,15 @@ namespace Coffee.UIExtensions
             RegisterDirtyMaterialCallback(UpdateRendererMaterial);
 
             if (0 < particles.Count)
-            {
                 RefreshParticles(particles);
-            }
             else
-            {
                 RefreshParticles();
-            }
 
             base.OnEnable();
         }
 
         /// <summary>
-        /// This function is called when the behaviour becomes disabled.
+        ///     This function is called when the behaviour becomes disabled.
         /// </summary>
         protected override void OnDisable()
         {
@@ -310,7 +292,7 @@ namespace Coffee.UIExtensions
         }
 
         /// <summary>
-        /// Callback for when properties have been changed by animation.
+        ///     Callback for when properties have been changed by animation.
         /// </summary>
         protected override void OnDidApplyAnimationProperties()
         {
@@ -404,10 +386,7 @@ namespace Coffee.UIExtensions
             {
                 var go = child.gameObject;
                 go.SetActive(false);
-                if (destroyOldParticles)
-                {
-                    Misc.Destroy(go);
-                }
+                if (destroyOldParticles) Misc.Destroy(go);
             }
 
             var tr = instance.transform;
@@ -440,9 +419,7 @@ namespace Coffee.UIExtensions
                 var ps = particles[i];
                 var tsa = ps.textureSheetAnimation;
                 if (tsa.mode == ParticleSystemAnimationMode.Sprites && tsa.uvChannelMask == 0)
-                {
                     tsa.uvChannelMask = UVChannelFlags.UV0;
-                }
             }
 
             RefreshParticles(particles);
@@ -456,16 +433,10 @@ namespace Coffee.UIExtensions
             {
                 var uiParticleRenderer = child.GetComponent<UIParticleRenderer>();
 
-                if (uiParticleRenderer != null)
-                {
-                    _renderers.Add(uiParticleRenderer);
-                }
+                if (uiParticleRenderer != null) _renderers.Add(uiParticleRenderer);
             }
 
-            for (var i = 0; i < _renderers.Count; i++)
-            {
-                _renderers[i].Reset(i);
-            }
+            for (var i = 0; i < _renderers.Count; i++) _renderers[i].Reset(i);
 
             var j = 0;
             for (var i = 0; i < particles.Count; i++)
@@ -473,10 +444,7 @@ namespace Coffee.UIExtensions
                 var ps = particles[i];
                 if (!ps) continue;
                 GetRenderer(j++).Set(this, ps, false);
-                if (ps.trails.enabled)
-                {
-                    GetRenderer(j++).Set(this, ps, true);
-                }
+                if (ps.trails.enabled) GetRenderer(j++).Set(this, ps, true);
             }
         }
 
@@ -487,10 +455,7 @@ namespace Coffee.UIExtensions
             if (autoScalingMode != AutoScalingMode.Transform) return;
 
             var newScale = parentScale.Inverse();
-            if (transform.localScale != newScale)
-            {
-                transform.localScale = newScale;
-            }
+            if (transform.localScale != newScale) transform.localScale = newScale;
         }
 
         internal void UpdateRenderers()
@@ -528,7 +493,7 @@ namespace Coffee.UIExtensions
         }
 
         /// <summary>
-        /// Call to update the geometry of the Graphic onto the CanvasRenderer.
+        ///     Call to update the geometry of the Graphic onto the CanvasRenderer.
         /// </summary>
         protected override void UpdateGeometry()
         {
@@ -547,15 +512,9 @@ namespace Coffee.UIExtensions
 
         internal UIParticleRenderer GetRenderer(int index)
         {
-            if (_renderers.Count <= index)
-            {
-                _renderers.Add(UIParticleRenderer.AddRenderer(this, index));
-            }
+            if (_renderers.Count <= index) _renderers.Add(UIParticleRenderer.AddRenderer(this, index));
 
-            if (!_renderers[index])
-            {
-                _renderers[index] = UIParticleRenderer.AddRenderer(this, index);
-            }
+            if (!_renderers[index]) _renderers[index] = UIParticleRenderer.AddRenderer(this, index);
 
             return _renderers[index];
         }
@@ -567,9 +526,7 @@ namespace Coffee.UIExtensions
             // When render mode is ScreenSpaceCamera or WorldSpace, use world camera.
             var root = canvas.rootCanvas;
             if (root.renderMode != RenderMode.ScreenSpaceOverlay)
-            {
                 return root.worldCamera ? root.worldCamera : Camera.main;
-            }
 
             // When render mode is ScreenSpaceOverlay, use ortho-camera.
             if (!_orthoCamera)
@@ -614,13 +571,9 @@ namespace Coffee.UIExtensions
 #pragma warning disable CS0618 // Type or member is obsolete
             if (!enabled || !autoScaling || autoScalingMode != AutoScalingMode.Transform)
 #pragma warning restore CS0618 // Type or member is obsolete
-            {
                 _tracker.Clear();
-            }
             else
-            {
                 _tracker.Add(this, rectTransform, DrivenTransformProperties.Scale);
-            }
         }
     }
 }

@@ -27,56 +27,55 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	public class MaterialReplacementExample : MonoBehaviour {
+namespace Spine.Unity.Examples
+{
+    public class MaterialReplacementExample : MonoBehaviour
+    {
+        public Material originalMaterial;
+        public Material replacementMaterial;
+        public bool replacementEnabled = true;
+        public SkeletonAnimation skeletonAnimation;
 
-		public Material originalMaterial;
-		public Material replacementMaterial;
-		public bool replacementEnabled = true;
-		public SkeletonAnimation skeletonAnimation;
+        [Space] public string phasePropertyName = "_FillPhase";
 
-		[Space]
-		public string phasePropertyName = "_FillPhase";
-		[Range(0f, 1f)] public float phase = 1f;
+        [Range(0f, 1f)] public float phase = 1f;
+        private MaterialPropertyBlock mpb;
 
-		bool previousEnabled;
-		MaterialPropertyBlock mpb;
+        private bool previousEnabled;
 
-		void Start () {
-			// Use the code below to programmatically query the original material.
-			// Note: using MeshRenderer.material will fail since it creates an instance copy of the Material,
-			// MeshRenderer.sharedMaterial might also fail when called too early or when no Attachments
-			// are visible in the initial first frame.
-			if (originalMaterial == null)
-				originalMaterial = skeletonAnimation.SkeletonDataAsset.atlasAssets[0].PrimaryMaterial;
+        private void Start()
+        {
+            // Use the code below to programmatically query the original material.
+            // Note: using MeshRenderer.material will fail since it creates an instance copy of the Material,
+            // MeshRenderer.sharedMaterial might also fail when called too early or when no Attachments
+            // are visible in the initial first frame.
+            if (originalMaterial == null)
+                originalMaterial = skeletonAnimation.SkeletonDataAsset.atlasAssets[0].PrimaryMaterial;
 
-			previousEnabled = replacementEnabled;
-			SetReplacementEnabled(replacementEnabled);
-			mpb = new MaterialPropertyBlock();
-		}
+            previousEnabled = replacementEnabled;
+            SetReplacementEnabled(replacementEnabled);
+            mpb = new MaterialPropertyBlock();
+        }
 
-		void Update () {
-			mpb.SetFloat(phasePropertyName, phase);
-			GetComponent<MeshRenderer>().SetPropertyBlock(mpb);
+        private void Update()
+        {
+            mpb.SetFloat(phasePropertyName, phase);
+            GetComponent<MeshRenderer>().SetPropertyBlock(mpb);
 
-			if (previousEnabled != replacementEnabled)
-				SetReplacementEnabled(replacementEnabled);
+            if (previousEnabled != replacementEnabled)
+                SetReplacementEnabled(replacementEnabled);
 
-			previousEnabled = replacementEnabled;
+            previousEnabled = replacementEnabled;
+        }
 
-		}
-
-		void SetReplacementEnabled (bool active) {
-			if (replacementEnabled) {
-				skeletonAnimation.CustomMaterialOverride[originalMaterial] = replacementMaterial;
-			} else {
-				skeletonAnimation.CustomMaterialOverride.Remove(originalMaterial);
-			}
-		}
-
-	}
+        private void SetReplacementEnabled(bool active)
+        {
+            if (replacementEnabled)
+                skeletonAnimation.CustomMaterialOverride[originalMaterial] = replacementMaterial;
+            else
+                skeletonAnimation.CustomMaterialOverride.Remove(originalMaterial);
+        }
+    }
 }

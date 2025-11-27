@@ -27,41 +27,47 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using Spine;
-using Spine.Unity;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	public class Goblins : MonoBehaviour {
-		SkeletonAnimation skeletonAnimation;
-		Bone headBone;
-		bool girlSkin;
+namespace Spine.Unity.Examples
+{
+    public class Goblins : MonoBehaviour
+    {
+        [Range(-360, 360)] public float extraRotation;
 
-		[Range(-360, 360)]
-		public float extraRotation;
+        private bool girlSkin;
+        private Bone headBone;
+        private SkeletonAnimation skeletonAnimation;
 
-		public void Start () {
-			skeletonAnimation = GetComponent<SkeletonAnimation>();
-			headBone = skeletonAnimation.Skeleton.FindBone("head");
-			skeletonAnimation.UpdateLocal += UpdateLocal;
-		}
+        public void Start()
+        {
+            skeletonAnimation = GetComponent<SkeletonAnimation>();
+            headBone = skeletonAnimation.Skeleton.FindBone("head");
+            skeletonAnimation.UpdateLocal += UpdateLocal;
+        }
 
-		// This is called after the animation is applied to the skeleton and can be used to adjust the bones dynamically.
-		public void UpdateLocal (ISkeletonAnimation skeletonRenderer) {
-			headBone.Rotation += extraRotation;
-		}
+        public void OnMouseDown()
+        {
+            skeletonAnimation.Skeleton.SetSkin(girlSkin ? "goblin" : "goblingirl");
+            skeletonAnimation.Skeleton.SetSlotsToSetupPose();
 
-		public void OnMouseDown () {
-			skeletonAnimation.Skeleton.SetSkin(girlSkin ? "goblin" : "goblingirl");
-			skeletonAnimation.Skeleton.SetSlotsToSetupPose();
+            girlSkin = !girlSkin;
 
-			girlSkin = !girlSkin;
+            if (girlSkin)
+            {
+                skeletonAnimation.Skeleton.SetAttachment("right-hand-item", null);
+                skeletonAnimation.Skeleton.SetAttachment("left-hand-item", "spear");
+            }
+            else
+            {
+                skeletonAnimation.Skeleton.SetAttachment("left-hand-item", "dagger");
+            }
+        }
 
-			if (girlSkin) {
-				skeletonAnimation.Skeleton.SetAttachment("right-hand-item", null);
-				skeletonAnimation.Skeleton.SetAttachment("left-hand-item", "spear");
-			} else
-				skeletonAnimation.Skeleton.SetAttachment("left-hand-item", "dagger");
-		}
-	}
+        // This is called after the animation is applied to the skeleton and can be used to adjust the bones dynamically.
+        public void UpdateLocal(ISkeletonAnimation skeletonRenderer)
+        {
+            headBone.Rotation += extraRotation;
+        }
+    }
 }

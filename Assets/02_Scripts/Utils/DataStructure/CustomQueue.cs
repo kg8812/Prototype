@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class CustomQueue<T> : IEnumerable<T>
 {
-    private List<T> list = new();
+    private readonly List<T> list = new();
 
     public int Count => list.Count;
 
@@ -13,6 +13,17 @@ public class CustomQueue<T> : IEnumerable<T>
         get => list[index];
         set => list[index] = value;
     }
+
+    public IEnumerator<T> GetEnumerator()
+    {
+        return list.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
+
     public void Enqueue(T element)
     {
         list.Add(element);
@@ -20,12 +31,9 @@ public class CustomQueue<T> : IEnumerable<T>
 
     public T Dequeue()
     {
-        if (list.Count == 0)
-        {
-            throw new Exception("Queue Out Of Index");
-        }
+        if (list.Count == 0) throw new Exception("Queue Out Of Index");
 
-        T element = list[0];
+        var element = list[0];
         list.RemoveAt(0);
 
         return element;
@@ -35,19 +43,10 @@ public class CustomQueue<T> : IEnumerable<T>
     {
         list.Remove(element);
     }
-    
+
     public void Clear()
     {
         list.Clear();
-    }
-    public IEnumerator<T> GetEnumerator()
-    {
-        return list.GetEnumerator();
-    }
-
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
     }
 
     public int IndexOf(T t)

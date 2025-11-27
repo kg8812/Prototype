@@ -29,45 +29,70 @@
 
 using System;
 
-namespace Spine {
+namespace Spine
+{
 	/// <summary>
-	/// An attachment which is a single point and a rotation. This can be used to spawn projectiles, particles, etc. A bone can be
-	/// used in similar ways, but a PointAttachment is slightly less expensive to compute and can be hidden, shown, and placed in a
-	/// skin.
-	/// <p>
-	/// See <a href="http://esotericsoftware.com/spine-point-attachments">Point Attachments</a> in the Spine User Guide.
+	///     An attachment which is a single point and a rotation. This can be used to spawn projectiles, particles, etc. A bone
+	///     can be
+	///     used in similar ways, but a PointAttachment is slightly less expensive to compute and can be hidden, shown, and
+	///     placed in a
+	///     skin.
+	///     <p>
+	///         See <a href="http://esotericsoftware.com/spine-point-attachments">Point Attachments</a> in the Spine User
+	///         Guide.
 	/// </summary>
-	public class PointAttachment : Attachment {
-		internal float x, y, rotation;
-		public float X { get { return x; } set { x = value; } }
-		public float Y { get { return y; } set { y = value; } }
-		public float Rotation { get { return rotation; } set { rotation = value; } }
+	public class PointAttachment : Attachment
+    {
+        internal float x, y, rotation;
 
-		public PointAttachment (string name)
-			: base(name) {
-		}
+        public PointAttachment(string name)
+            : base(name)
+        {
+        }
 
-		/// <summary>Copy constructor.</summary>
-		protected PointAttachment (PointAttachment other)
-			: base(other) {
-			x = other.x;
-			y = other.y;
-			rotation = other.rotation;
-		}
+        /// <summary>Copy constructor.</summary>
+        protected PointAttachment(PointAttachment other)
+            : base(other)
+        {
+            x = other.x;
+            y = other.y;
+            rotation = other.rotation;
+        }
 
-		public void ComputeWorldPosition (Bone bone, out float ox, out float oy) {
-			bone.LocalToWorld(this.x, this.y, out ox, out oy);
-		}
+        public float X
+        {
+            get => x;
+            set => x = value;
+        }
 
-		public float ComputeWorldRotation (Bone bone) {
-			float r = rotation * MathUtils.DegRad, cos = (float)Math.Cos(r), sin = (float)Math.Sin(r);
-			float x = cos * bone.a + sin * bone.b;
-			float y = cos * bone.c + sin * bone.d;
-			return MathUtils.Atan2Deg(y, x);
-		}
+        public float Y
+        {
+            get => y;
+            set => y = value;
+        }
 
-		public override Attachment Copy () {
-			return new PointAttachment(this);
-		}
-	}
+        public float Rotation
+        {
+            get => rotation;
+            set => rotation = value;
+        }
+
+        public void ComputeWorldPosition(Bone bone, out float ox, out float oy)
+        {
+            bone.LocalToWorld(x, y, out ox, out oy);
+        }
+
+        public float ComputeWorldRotation(Bone bone)
+        {
+            float r = rotation * MathUtils.DegRad, cos = (float)Math.Cos(r), sin = (float)Math.Sin(r);
+            var x = cos * bone.a + sin * bone.b;
+            var y = cos * bone.c + sin * bone.d;
+            return MathUtils.Atan2Deg(y, x);
+        }
+
+        public override Attachment Copy()
+        {
+            return new PointAttachment(this);
+        }
+    }
 }

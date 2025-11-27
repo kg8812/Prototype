@@ -29,33 +29,37 @@
 
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	public class SpineboyTargetController : MonoBehaviour {
+namespace Spine.Unity.Examples
+{
+    public class SpineboyTargetController : MonoBehaviour
+    {
+        public SkeletonAnimation skeletonAnimation;
 
-		public SkeletonAnimation skeletonAnimation;
+        [SpineBone(dataField: "skeletonAnimation")]
+        public string boneName;
 
-		[SpineBone(dataField: "skeletonAnimation")]
-		public string boneName;
-		public Camera cam;
+        public Camera cam;
 
-		Bone bone;
+        private Bone bone;
 
-		void OnValidate () {
-			if (skeletonAnimation == null) skeletonAnimation = GetComponent<SkeletonAnimation>();
-		}
+        private void Start()
+        {
+            bone = skeletonAnimation.Skeleton.FindBone(boneName);
+        }
 
-		void Start () {
-			bone = skeletonAnimation.Skeleton.FindBone(boneName);
-		}
+        private void Update()
+        {
+            var mousePosition = Input.mousePosition;
+            var worldMousePosition = cam.ScreenToWorldPoint(mousePosition);
+            var skeletonSpacePoint = skeletonAnimation.transform.InverseTransformPoint(worldMousePosition);
+            skeletonSpacePoint.x *= skeletonAnimation.Skeleton.ScaleX;
+            skeletonSpacePoint.y *= skeletonAnimation.Skeleton.ScaleY;
+            bone.SetLocalPosition(skeletonSpacePoint);
+        }
 
-		void Update () {
-			Vector3 mousePosition = Input.mousePosition;
-			Vector3 worldMousePosition = cam.ScreenToWorldPoint(mousePosition);
-			Vector3 skeletonSpacePoint = skeletonAnimation.transform.InverseTransformPoint(worldMousePosition);
-			skeletonSpacePoint.x *= skeletonAnimation.Skeleton.ScaleX;
-			skeletonSpacePoint.y *= skeletonAnimation.Skeleton.ScaleY;
-			bone.SetLocalPosition(skeletonSpacePoint);
-		}
-	}
-
+        private void OnValidate()
+        {
+            if (skeletonAnimation == null) skeletonAnimation = GetComponent<SkeletonAnimation>();
+        }
+    }
 }

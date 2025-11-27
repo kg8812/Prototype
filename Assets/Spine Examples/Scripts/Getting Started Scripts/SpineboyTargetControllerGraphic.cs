@@ -29,36 +29,40 @@
 
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	public class SpineboyTargetControllerGraphic : MonoBehaviour {
+namespace Spine.Unity.Examples
+{
+    public class SpineboyTargetControllerGraphic : MonoBehaviour
+    {
+        public SkeletonGraphic skeletonGraphic;
 
-		public SkeletonGraphic skeletonGraphic;
+        [SpineBone(dataField: "skeletonGraphic")]
+        public string boneName;
 
-		[SpineBone(dataField: "skeletonGraphic")]
-		public string boneName;
-		public Camera cam;
-		public Canvas canvas;
+        public Camera cam;
+        public Canvas canvas;
 
-		Bone bone;
+        private Bone bone;
 
-		void OnValidate () {
-			if (skeletonGraphic == null) skeletonGraphic = GetComponent<SkeletonGraphic>();
-		}
+        private void Start()
+        {
+            bone = skeletonGraphic.Skeleton.FindBone(boneName);
+        }
 
-		void Start () {
-			bone = skeletonGraphic.Skeleton.FindBone(boneName);
-		}
+        private void Update()
+        {
+            var mousePosition = Input.mousePosition;
+            Vector2 localRectPosition;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                skeletonGraphic.rectTransform, mousePosition, null, out localRectPosition);
+            Vector3 skeletonSpacePoint = localRectPosition / skeletonGraphic.MeshScale;
+            skeletonSpacePoint.x *= skeletonGraphic.Skeleton.ScaleX;
+            skeletonSpacePoint.y *= skeletonGraphic.Skeleton.ScaleY;
+            bone.SetLocalPosition(skeletonSpacePoint);
+        }
 
-		void Update () {
-			Vector3 mousePosition = Input.mousePosition;
-			Vector2 localRectPosition;
-			RectTransformUtility.ScreenPointToLocalPointInRectangle(
-				skeletonGraphic.rectTransform, mousePosition, null, out localRectPosition);
-			Vector3 skeletonSpacePoint = localRectPosition / skeletonGraphic.MeshScale;
-			skeletonSpacePoint.x *= skeletonGraphic.Skeleton.ScaleX;
-			skeletonSpacePoint.y *= skeletonGraphic.Skeleton.ScaleY;
-			bone.SetLocalPosition(skeletonSpacePoint);
-		}
-	}
-
+        private void OnValidate()
+        {
+            if (skeletonGraphic == null) skeletonGraphic = GetComponent<SkeletonGraphic>();
+        }
+    }
 }

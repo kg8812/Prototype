@@ -8,13 +8,12 @@ namespace UI
 {
     public class UI_BuffDesc : UI_Base
     {
-        enum Texts
-        {
-            DescText,
-        }
         [HideInInspector] public TextMeshProUGUI descTmp;
         [HideInInspector] public Image image;
         [HideInInspector] public RectTransform rect;
+
+        [ReadOnly] public UI_BuffIcon currentIcon;
+
         public override void Init()
         {
             base.Init();
@@ -24,17 +23,22 @@ namespace UI
             rect = GetComponent<RectTransform>();
         }
 
-        [ReadOnly] public UI_BuffIcon currentIcon;
         public void TurnOff()
         {
             image.enabled = false;
             descTmp.enabled = false;
             currentIcon = null;
         }
+
         public void TurnOn()
         {
             image.enabled = true;
             descTmp.enabled = true;
+        }
+
+        private enum Texts
+        {
+            DescText
         }
     }
 }

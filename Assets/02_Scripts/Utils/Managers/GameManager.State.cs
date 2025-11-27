@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using Apis;
-using UnityEngine;
-using UnityEngine.Events;
 using GameStateSpace;
 using Save.Schema;
+using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
 namespace GameStateSpace
@@ -21,12 +19,14 @@ namespace GameStateSpace
 
     public enum InputType
     {
-        KeyBoard,GamePad
+        KeyBoard,
+        GamePad
     }
+
     public abstract class GameState
     {
         protected readonly GameStateType myType;
-        
+
         // public virtual void CheckState()
         // {
         //     // state 진입 조건 체크 전, 우선순위 판별
@@ -37,6 +37,7 @@ namespace GameStateSpace
         // }
 
         public abstract void OnEnterState();
+
         public abstract void OnExitState();
         // public abstract void StateOn();
         // public abstract void StateOff();
@@ -60,11 +61,22 @@ namespace GameStateSpace
 
 public partial class GameManager : Singleton<GameManager>
 {
-    public static bool PreventControl { get; set; }
-    private HashSet<Guid> preventHashset;
-    // [HideInInspector] public GameStateType PreGameStateType { get; private set; }
-    [HideInInspector] public GameStateType CurGameStateType { get; private set; }
     public UnityEvent<GameStateType> GameStateChangedTo;
+    public BattleState BattleStateClass;
+
+
+    public DefaultState DefaultStateClass;
+    public InteractionState InteractionStateClass;
+    public NonBattleState NonBattleStateClass;
+    private HashSet<Guid> preventHashset;
+
+    private Dictionary<GameStateType, bool> StateDict;
+    private Dictionary<GameStateType, HashSet<Guid>> stateGuids;
+
+    public static bool PreventControl { get; set; }
+
+    // [HideInInspector] public GameStateType PreGameStateType { get; private set; }
+    public GameStateType CurGameStateType { get; private set; }
 
     public GameState CurState
     {
@@ -84,43 +96,37 @@ public partial class GameManager : Singleton<GameManager>
             }
         }
     }
-    InputType inputType;
-    public InputType currentInputType => inputType;
 
-    private Dictionary<GameStateType, bool> StateDict;
-    private Dictionary<GameStateType, HashSet<Guid>> stateGuids;
+    public InputType currentInputType { get; private set; }
 
-
-    public DefaultState DefaultStateClass;
-    public InteractionState InteractionStateClass;
-    public BattleState BattleStateClass;
-    public NonBattleState NonBattleStateClass;
-    
-    void DetectInputType()
+    private void DetectInputType()
     {
         if (Gamepad.current != null && Gamepad.current.allControls.Any(x => x.IsPressed()))
         {
             DataAccess.Settings.Data.LoadGamePadImages();
 
-            if (inputType == InputType.KeyBoard)
+            if (currentInputType == InputType.KeyBoard)
             {
-                inputType = InputType.GamePad;
+                currentInputType = InputType.GamePad;
                 DataAccess.Settings.Data.OnKeyChange?.Invoke();
             }
+
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
         }
-        else if(Input.anyKeyDown)
+        else if (Input.anyKeyDown)
         {
-            if (inputType == InputType.GamePad)
+            if (currentInputType == InputType.GamePad)
             {
-                inputType = InputType.KeyBoard;
+                currentInputType = InputType.KeyBoard;
                 DataAccess.Settings.Data.OnKeyChange?.Invoke();
             }
+
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
     }
+
     private void ToggleCountPlayTime(GameStateType sType)
     {
         switch (sType)
@@ -135,6 +141,7 @@ public partial class GameManager : Singleton<GameManager>
                 break;
         }
     }
+
     private void SAwake()
     {
         #region 변수 초기화
@@ -146,9 +153,9 @@ public partial class GameManager : Singleton<GameManager>
         NonBattleStateClass = new NonBattleState();
 
         GameStateChangedTo = new UnityEvent<GameStateType>();
-        
-        
-        StateDict = new();
+
+
+        StateDict = new Dictionary<GameStateType, bool>();
         StateDict.Add(GameStateType.DefaultState, false);
         StateDict.Add(GameStateType.InteractionState, false);
         StateDict.Add(GameStateType.BattleState, false);
@@ -161,22 +168,20 @@ public partial class GameManager : Singleton<GameManager>
         stateGuids.Add(GameStateType.NonBattleState, new HashSet<Guid>());
 
         #endregion
-        
-        
-        
-        
+
+
         // PreGameStateType = GameStateType.NonBattleState;
         CurGameStateType = GameStateType.NonBattleState;
         PlayerExistSceneStageGuid = TryOnGameState(GameStateType.DefaultState);
-        
+
         ToggleCountPlayTime(CurGameStateType);
         GameStateChangedTo.AddListener(ToggleCountPlayTime);
-        
+
         Scene.WhenSceneLoaded.AddListener(sceneData =>
         {
             if (!sceneData.isPlayerMustExist)
             {
-                if(PlayerExistSceneStageGuid == Guid.Empty)
+                if (PlayerExistSceneStageGuid == Guid.Empty)
                     PlayerExistSceneStageGuid = TryOnGameState(GameStateType.DefaultState);
             }
             else if (PlayerExistSceneStageGuid != Guid.Empty)
@@ -184,15 +189,13 @@ public partial class GameManager : Singleton<GameManager>
                 TryOffGameState(GameStateType.DefaultState, PlayerExistSceneStageGuid);
                 PlayerExistSceneStageGuid = Guid.Empty;
             }
-                    
         });
-        inputType = InputType.KeyBoard;
-
+        currentInputType = InputType.KeyBoard;
     }
 
     public Guid PreventControlOn()
     {
-        Guid guid = Guid.NewGuid();
+        var guid = Guid.NewGuid();
         PreventControl = true;
         preventHashset.Add(guid);
         return guid;
@@ -211,7 +214,7 @@ public partial class GameManager : Singleton<GameManager>
         if (!PreventControl)
         {
             DetectInputType();
-            switch (inputType)
+            switch (currentInputType)
             {
                 case InputType.GamePad:
                     CurState.GamePadControlling();
@@ -224,24 +227,24 @@ public partial class GameManager : Singleton<GameManager>
     }
 
     /// <summary>
-    /// 인수에 해당 하는 game state를 on.
-    /// 해당 게임 스테이트가 현재 켜져있는 state보다 낮은 state라면(dict 기준 default, interaction, battle, nonbattle 순)
-    /// 해당 gameState로 이전.
+    ///     인수에 해당 하는 game state를 on.
+    ///     해당 게임 스테이트가 현재 켜져있는 state보다 낮은 state라면(dict 기준 default, interaction, battle, nonbattle 순)
+    ///     해당 gameState로 이전.
     /// </summary>
     public Guid TryOnGameState(GameStateType state)
     {
         // Debug.Log($"State tryon - {state}");
-        Guid newGuid = Guid.NewGuid();
+        var newGuid = Guid.NewGuid();
         stateGuids[state].Add(newGuid);
         StateDict[state] = true;
         CheckGameState();
         return newGuid;
     }
 
-    
+
     /// <summary>
-    /// 인수에 해당 하는 game state를 off.
-    /// 해당 게임 스테이트가 현재 켜져있는 가장 낮은 state라면 다음으로 낮은 state로 이전.
+    ///     인수에 해당 하는 game state를 off.
+    ///     해당 게임 스테이트가 현재 켜져있는 가장 낮은 state라면 다음으로 낮은 state로 이전.
     /// </summary>
     public void TryOffGameState(GameStateType state, Guid guid)
     {
@@ -257,20 +260,17 @@ public partial class GameManager : Singleton<GameManager>
     {
         // StringBuilder sb = new("Check - ");
         foreach (var (key, value) in StateDict)
-        {
             // sb.Append($"{key}: {value} / ");
             if (value)
             {
                 if (CurGameStateType != key)
-                {
                     // sb.Append($"changeTo: {key}");
                     ChangeGameState(key);
-                }
+
                 // Debug.Log(sb);
                 return;
             }
-        }
-        
+
         // Debug.Log(sb);
     }
 
@@ -280,11 +280,8 @@ public partial class GameManager : Singleton<GameManager>
         if (toState == CurGameStateType) return;
 
         // 이전의 game state toggle은 강제로 off
-        for (int i = 0; i < (int)toState; i++)
-        {
-            StateDict[(GameStateType)i] = false;
-        }
-        
+        for (var i = 0; i < (int)toState; i++) StateDict[(GameStateType)i] = false;
+
         CurState.OnExitState();
         CurGameStateType = toState;
         CurState.OnEnterState();

@@ -1,5 +1,3 @@
-using Apis;
-using Apis;
 using EventData;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -12,19 +10,18 @@ namespace Apis
     {
         [TabGroup("공격 오브젝트 설정")] [LabelText("피격 반응 여부")]
         public bool isHitReaction;
-        
+
         [TabGroup("공격 오브젝트 설정")] [LabelText("피격 반응 유형")]
         public AttackEventData.HitReactionType hitReactionType;
 
         [TabGroup("공격 오브젝트 설정")] [LabelText("일반 넉백 = 그로기 넉백")]
-        public bool isSameDefaultGroggyKnockBack;
+        public bool isSameDefaultKnockBack;
 
         [TabGroup("공격 오브젝트 설정")] [LabelText("일반 넉백 데이터")]
         public KnockBackData knockBackData;
-        
-        [HideIf("isSameDefaultGroggyKnockBack", false)]
-        [TabGroup("공격 오브젝트 설정")] [LabelText("그로기 넉백 데이터")]
-        public KnockBackData groggyKnockBackData;
+
+        [HideIf("isSameDefaultKnockBack", false)] [TabGroup("공격 오브젝트 설정")] [LabelText("그로기 넉백 데이터")]
+        public KnockBackData KnockBackData;
 
         [TabGroup("공격 오브젝트 설정")] [LabelText("타겟 레이어")]
         public LayerMask targetLayer;
@@ -58,7 +55,7 @@ namespace Apis
         public float firstDmg = 100;
 
         [ShowIf("atkTypeEnum", AttackObject.AttackTypeEnum.Tick)] [TabGroup("공격 오브젝트 설정")] [LabelText("첫 공격 그로기(%)")]
-        public float firstGroggy = 100;
+        public float first = 100;
 
         [ShowIf("atkTypeEnum", AttackObject.AttackTypeEnum.Delay)] [TabGroup("공격 오브젝트 설정")] [LabelText("딜레이 시간")]
         public float delayTime;
@@ -84,9 +81,12 @@ namespace Apis
         [TabGroup("투사체 설정")] [LabelText("타겟 충돌타입")]
         public ProjectileConflictType targetConflictType;
 
-        [TabGroup("투사체 설정")][LabelText("보스 충돌타입 사용여부")] public bool useBossConflict;
-        [TabGroup("투사체 설정")] [LabelText("보스 충돌타입")][ShowIf("useBossConflict")]
+        [TabGroup("투사체 설정")] [LabelText("보스 충돌타입 사용여부")]
+        public bool useBossConflict;
+
+        [TabGroup("투사체 설정")] [LabelText("보스 충돌타입")] [ShowIf("useBossConflict")]
         public ProjectileConflictType bossConflictType;
+
         [ShowIf("targetConflictType", ProjectileConflictType.Penetrate)] [TabGroup("투사체 설정")] [LabelText("관통 최대 횟수")]
         public int penetrationMax;
 
@@ -98,10 +98,6 @@ namespace Apis
 
         [ShowIf("targetConflictType", ProjectileConflictType.Penetrate)]
         [TabGroup("투사체 설정")]
-        [LabelText("관통당 그로기 증가량")]
-        [Tooltip("감소 시 마이너스로 기입")]
-        public int penetrationGroggy;
-
         [ShowIf("targetConflictType", ProjectileConflictType.Penetrate)]
         [TabGroup("투사체 설정")]
         [LabelText("관통당 크기 증가량(%)")]
@@ -134,7 +130,6 @@ namespace Apis
         public GuideTargetType guideTargetType = GuideTargetType.FoundUntilFirst;
 
         [TabGroup("유도투사체 설정")] [LabelText("타겟 찾기 원뿔각도")] [Tooltip("0으로 설정하면 그냥 원으로 계산")]
-        public float targetFoundAngle = 0;
-
+        public float targetFoundAngle;
     }
 }

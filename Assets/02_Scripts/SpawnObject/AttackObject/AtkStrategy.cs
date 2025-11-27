@@ -1,8 +1,7 @@
-using UnityEngine;
-
 namespace Apis
 {
     #region 공격방식 인터페이스
+
     public interface IAttackStrategy
     {
         public float DmgRatio { get; set; }
@@ -11,31 +10,34 @@ namespace Apis
 
     public class FixedAmount : IAttackStrategy
     {
-        public float DmgRatio { get; set; }
-
         public FixedAmount(float dmg)
         {
             DmgRatio = dmg;
         }
+
+        public float DmgRatio { get; set; }
+
         public float Calculate(IOnHit target)
         {
             return DmgRatio;
         }
     }
-    
+
     public class AtkItemCalculation : IAttackStrategy
     {
-        public float DmgRatio { get; set; }
+        private readonly IAttackItemStat _atkItem;
 
-        private Actor _user;
-        private IAttackItemStat _atkItem;
+        private readonly Actor _user;
 
-        public AtkItemCalculation(Actor user, IAttackItemStat atkItem,float dmgRatio = 100)
+        public AtkItemCalculation(Actor user, IAttackItemStat atkItem, float dmgRatio = 100)
         {
             _atkItem = atkItem;
             _user = user;
             DmgRatio = dmgRatio;
         }
+
+        public float DmgRatio { get; set; }
+
         public float Calculate(IOnHit target)
         {
             return (_atkItem.Atk + _user.Atk) * DmgRatio / 100f;
@@ -44,73 +46,64 @@ namespace Apis
 
     public class AtkBase : IAttackStrategy
     {
-        private IAttackable user;
-        private float dmgRatio;
-        private float baseDmg;
-        public AtkBase(IAttackable user, float dmgRatio = 100,float baseDmg = 0)
+        private readonly float baseDmg;
+        private readonly IAttackable user;
+
+        public AtkBase(IAttackable user, float dmgRatio = 100, float baseDmg = 0)
         {
             this.user = user;
-            this.dmgRatio = dmgRatio;
+            this.DmgRatio = dmgRatio;
             this.baseDmg = baseDmg;
         }
 
-        public float DmgRatio
-        {
-            get => dmgRatio;
-            set => dmgRatio = value;
-        }
+        public float DmgRatio { get; set; }
 
         public float Calculate(IOnHit target)
         {
-            return baseDmg + user.Atk * dmgRatio * 0.01f;
+            return baseDmg + user.Atk * DmgRatio * 0.01f;
         }
     }
 
     public class HpBase : IAttackStrategy
     {
-        private IOnHit actor;
-        private float dmgRatio;
-        public float DmgRatio
-        {
-            get => dmgRatio;
-            set => dmgRatio = value;
-        }
+        private readonly IOnHit actor;
+
         public HpBase(IOnHit actor, float dmgRatio = 100)
         {
             this.actor = actor;
-            this.dmgRatio = dmgRatio;
-        }
-        public float Calculate(IOnHit target)
-        {
-            return actor.MaxHp * dmgRatio * 0.01f;
-        }
-    }
-    
-    public class TargetCurHpRatio : IAttackStrategy
-    {
-        private float dmgRatio;
-        
-        public float DmgRatio
-        {
-            get => dmgRatio;
-            set => dmgRatio = value;
+            this.DmgRatio = dmgRatio;
         }
 
-        public TargetCurHpRatio(float hpRatio)
-        {
-            dmgRatio = hpRatio;
-        }
+        public float DmgRatio { get; set; }
+
         public float Calculate(IOnHit target)
         {
-            return target.CurHp * dmgRatio / 100;
+            return actor.MaxHp * DmgRatio * 0.01f;
         }
     }
+
+    public class TargetCurHpRatio : IAttackStrategy
+    {
+        public TargetCurHpRatio(float hpRatio)
+        {
+            DmgRatio = hpRatio;
+        }
+
+        public float DmgRatio { get; set; }
+
+        public float Calculate(IOnHit target)
+        {
+            return target.CurHp * DmgRatio / 100;
+        }
+    }
+
     public class StatBase : IAttackStrategy
     {
-        private Actor _user;
-        private ActorStatType _statType;
-        private float _baseDmg;
-        public StatBase(Actor user,ActorStatType statType, float baseDmg = 0, float dmgRatio = 100)
+        private readonly float _baseDmg;
+        private readonly ActorStatType _statType;
+        private readonly Actor _user;
+
+        public StatBase(Actor user, ActorStatType statType, float baseDmg = 0, float dmgRatio = 100)
         {
             DmgRatio = dmgRatio;
             _baseDmg = baseDmg;
@@ -119,7 +112,7 @@ namespace Apis
         }
 
         public float DmgRatio { get; set; }
-    
+
 
         public float Calculate(IOnHit target)
         {
@@ -128,4 +121,4 @@ namespace Apis
     }
 
     #endregion
-} 
+}

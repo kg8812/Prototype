@@ -1,17 +1,12 @@
 using System;
-using System.Collections.Generic;
 using Apis;
-using Apis.SkillTrees;
-using Apis;
-using Default;
 using DG.Tweening;
-using Sirenix.OdinInspector;
-using Sirenix.Utilities;
 using UnityEngine;
 
 public partial class Player
 {
     #region 공격 전략
+
     public interface IPlayerAttack
     {
         public float GroundAttackEscapeTime(int index);
@@ -24,7 +19,7 @@ public partial class Player
 
     public class PlayerWeaponAttack : IPlayerAttack
     {
-        readonly Player player;
+        private readonly Player player;
 
         public PlayerWeaponAttack(Player player)
         {
@@ -54,25 +49,21 @@ public partial class Player
 
         public bool CheckAttackable(int index)
         {
-            IAttackItem item = AttackItemManager.GetItem(index);
+            var item = AttackItemManager.GetItem(index);
             return item != null && item.TryAttack();
         }
 
         public void Attack(int combo)
         {
             if (AttackItemManager.CurrentItem is Weapon weapon)
-            {
                 weapon.Attack(combo);
-            }
             else
-            {
                 Debug.LogError("무기가 할당되지 않음");
-            }
-           
         }
     }
 
     #endregion
+
     #region 대쉬 방식 인터페이스
 
     public interface IPlayerDash
@@ -86,9 +77,11 @@ public partial class Player
 
     public class BasicDash : IPlayerDash
     {
-        Player _player;
-        private float _DashTime;
-        private int _MotionType = 0;
+        private readonly float _DashTime;
+
+        private Guid _guid;
+        private readonly int _MotionType = 0;
+        private readonly Player _player;
 
         public BasicDash(Player player)
         {
@@ -96,14 +89,14 @@ public partial class Player
             _DashTime = _player.DashTime;
         }
 
-        private Guid _guid;
         public Tween Dash()
         {
             _player.DashLandingOff();
             // _player.Hide();
             _player.HitCollider.enabled = false;
 
-            return _player.ActorMovement.DashTemp(_player.DashTime, _player.DashSpeed * _player.DashTime, false, _player.DodgeSpeedGraph);
+            return _player.ActorMovement.DashTemp(_player.DashTime, _player.DashSpeed * _player.DashTime, false,
+                _player.DodgeSpeedGraph);
         }
 
         public void DashEnd()
@@ -118,8 +111,15 @@ public partial class Player
             _player.HitCollider.enabled = true;
         }
 
-        public float DashTime() => _DashTime;
-        public int MotionType() => _MotionType;
+        public float DashTime()
+        {
+            return _DashTime;
+        }
+
+        public int MotionType()
+        {
+            return _MotionType;
+        }
     }
 
     #endregion

@@ -1,67 +1,74 @@
 using System;
+using ES3Internal;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Scripting;
 
 namespace ES3Types
 {
-	[UnityEngine.Scripting.Preserve]
-	[ES3PropertiesAttribute("shader", "renderQueue", "shaderKeywords", "globalIlluminationFlags", "properties")]
-	public class ES3Type_Material : ES3UnityObjectType
-	{
-		public static ES3Type Instance = null;
+    [Preserve]
+    [ES3PropertiesAttribute("shader", "renderQueue", "shaderKeywords", "globalIlluminationFlags", "properties")]
+    public class ES3Type_Material : ES3UnityObjectType
+    {
+        public static ES3Type Instance;
 
-		public ES3Type_Material() : base(typeof(UnityEngine.Material)){ Instance = this; }
+        public ES3Type_Material() : base(typeof(Material))
+        {
+            Instance = this;
+        }
 
-		protected override void WriteUnityObject(object obj, ES3Writer writer)
-		{
-			var instance = (UnityEngine.Material)obj;
+        protected override void WriteUnityObject(object obj, ES3Writer writer)
+        {
+            var instance = (Material)obj;
 
             // Uncomment if you want "instance" to be removed from the name.
             //instance.name = instance.name.Replace(" (Instance)", "");
 
-			writer.WriteProperty("name", instance.name);
-			writer.WriteProperty("shader", instance.shader);
-			writer.WriteProperty("renderQueue", instance.renderQueue, ES3Type_int.Instance);
-			writer.WriteProperty("shaderKeywords", instance.shaderKeywords);
-			writer.WriteProperty("globalIlluminationFlags", instance.globalIlluminationFlags);
+            writer.WriteProperty("name", instance.name);
+            writer.WriteProperty("shader", instance.shader);
+            writer.WriteProperty("renderQueue", instance.renderQueue, ES3Type_int.Instance);
+            writer.WriteProperty("shaderKeywords", instance.shaderKeywords);
+            writer.WriteProperty("globalIlluminationFlags", instance.globalIlluminationFlags);
 
             var shader = instance.shader;
 
             if (shader != null)
             {
 #if UNITY_2019_3_OR_NEWER
-                for (int i = 0; i < shader.GetPropertyCount(); i++)
+                for (var i = 0; i < shader.GetPropertyCount(); i++)
                 {
                     var name = shader.GetPropertyName(i);
 
                     switch (shader.GetPropertyType(i))
                     {
-                        case UnityEngine.Rendering.ShaderPropertyType.Color:
+                        case ShaderPropertyType.Color:
                             writer.WriteProperty(name, instance.GetColor(name));
                             break;
-                        case UnityEngine.Rendering.ShaderPropertyType.Float:
-                        case UnityEngine.Rendering.ShaderPropertyType.Range:
+                        case ShaderPropertyType.Float:
+                        case ShaderPropertyType.Range:
                             writer.WriteProperty(name, instance.GetFloat(name));
                             break;
-                        case UnityEngine.Rendering.ShaderPropertyType.Texture:
+                        case ShaderPropertyType.Texture:
                             var texture = instance.GetTexture(name);
 
                             if (texture != null && texture.GetType() != typeof(Texture2D))
                             {
-                                ES3Internal.ES3Debug.LogWarning($"The texture '{name}' of Material '{instance.name}' will not be saved as only Textures of type Texture2D can be saved at runtime, whereas '{name}' is of type '{texture.GetType()}'.");
+                                ES3Debug.LogWarning(
+                                    $"The texture '{name}' of Material '{instance.name}' will not be saved as only Textures of type Texture2D can be saved at runtime, whereas '{name}' is of type '{texture.GetType()}'.");
                                 break;
                             }
+
                             writer.WriteProperty(name, texture);
                             writer.WriteProperty(name + "_TextureOffset", instance.GetTextureOffset(name));
                             writer.WriteProperty(name + "_TextureScale", instance.GetTextureScale(name));
                             break;
-                        case UnityEngine.Rendering.ShaderPropertyType.Vector:
+                        case ShaderPropertyType.Vector:
                             writer.WriteProperty(name, instance.GetVector(name));
                             break;
                     }
                 }
 
 #else
-
                 if(instance.HasProperty("_Color"))
                     writer.WriteProperty("_Color", instance.GetColor("_Color"));
                 if(instance.HasProperty("_SpecColor"))
@@ -513,81 +520,87 @@ namespace ES3Types
                     writer.WriteProperty("_Detail_TextureScale", instance.GetTextureScale("_Detail_TextureScale"));
                 if(instance.HasProperty("_HalfOverCutoff"))
                     writer.WriteProperty("_HalfOverCutoff", instance.GetFloat("_HalfOverCutoff"));
-                    #endif
+#endif
             }
-		}
+        }
 
-		protected override object ReadUnityObject<T>(ES3Reader reader)
-		{
-			var obj = new Material(Shader.Find("Diffuse"));
-			ReadUnityObject<T>(reader, obj);
-			return obj;
-		}
+        protected override object ReadUnityObject<T>(ES3Reader reader)
+        {
+            var obj = new Material(Shader.Find("Diffuse"));
+            ReadUnityObject<T>(reader, obj);
+            return obj;
+        }
 
-		protected override void ReadUnityObject<T>(ES3Reader reader, object obj)
-		{
-			var instance = (UnityEngine.Material)obj;
+        protected override void ReadUnityObject<T>(ES3Reader reader, object obj)
+        {
+            var instance = (Material)obj;
 
 #if UNITY_2019_3_OR_NEWER
 
             foreach (string propertyName in reader.Properties)
-            {
                 switch (propertyName)
                 {
                     case "name":
                         instance.name = reader.Read<string>(ES3Type_string.Instance);
                         break;
                     case "shader":
-                        instance.shader = reader.Read<UnityEngine.Shader>(ES3Type_Shader.Instance);
+                        instance.shader = reader.Read<Shader>(ES3Type_Shader.Instance);
                         break;
                     case "renderQueue":
-                        instance.renderQueue = reader.Read<System.Int32>(ES3Type_int.Instance);
+                        instance.renderQueue = reader.Read<int>(ES3Type_int.Instance);
                         break;
                     case "shaderKeywords":
-                        var keywords = reader.Read<System.String[]>();
+                        var keywords = reader.Read<string[]>();
                         foreach (var keyword in keywords)
                             instance.EnableKeyword(keyword);
                         break;
                     case "globalIlluminationFlags":
-                        instance.globalIlluminationFlags = reader.Read<UnityEngine.MaterialGlobalIlluminationFlags>();
+                        instance.globalIlluminationFlags = reader.Read<MaterialGlobalIlluminationFlags>();
                         break;
                     case "_MainTex_Scale":
                         instance.SetTextureScale("_MainTex", reader.Read<Vector2>());
                         break;
                     default:
                         var propertyIndex = -1;
-                        if (instance.shader != null && instance.HasProperty(propertyName) && (propertyIndex = instance.shader.FindPropertyIndex(propertyName)) != -1)
+                        if (instance.shader != null && instance.HasProperty(propertyName) &&
+                            (propertyIndex = instance.shader.FindPropertyIndex(propertyName)) != -1)
                         {
                             var propertyType = instance.shader.GetPropertyType(propertyIndex);
 
                             switch (propertyType)
                             {
-                                case UnityEngine.Rendering.ShaderPropertyType.Color:
+                                case ShaderPropertyType.Color:
                                     instance.SetColor(propertyName, reader.Read<Color>());
                                     break;
-                                case UnityEngine.Rendering.ShaderPropertyType.Float:
-                                case UnityEngine.Rendering.ShaderPropertyType.Range:
+                                case ShaderPropertyType.Float:
+                                case ShaderPropertyType.Range:
                                     instance.SetFloat(propertyName, reader.Read<float>());
                                     break;
-                                case UnityEngine.Rendering.ShaderPropertyType.Texture:
+                                case ShaderPropertyType.Texture:
                                     instance.SetTexture(propertyName, reader.Read<Texture>());
                                     break;
-                                case UnityEngine.Rendering.ShaderPropertyType.Vector:
+                                case ShaderPropertyType.Vector:
                                     instance.SetColor(propertyName, reader.Read<Vector4>());
                                     break;
                             }
                         }
                         else if (propertyName.EndsWith("_TextureScale"))
-                            instance.SetTextureScale(propertyName.Split(new string[] { "_TextureScale" }, StringSplitOptions.None)[0], reader.Read<Vector2>());
+                        {
+                            instance.SetTextureScale(
+                                propertyName.Split(new[] { "_TextureScale" }, StringSplitOptions.None)[0],
+                                reader.Read<Vector2>());
+                        }
                         else if (propertyName.EndsWith("_TextureOffset"))
-                            instance.SetTextureOffset(propertyName.Split(new string[] { "_TextureOffset" }, StringSplitOptions.None)[0], reader.Read<Vector2>());
+                        {
+                            instance.SetTextureOffset(
+                                propertyName.Split(new[] { "_TextureOffset" }, StringSplitOptions.None)[0],
+                                reader.Read<Vector2>());
+                        }
 
                         reader.Skip();
                         break;
                 }
-            }
 #else
-
             foreach (string propertyName in reader.Properties)
 			{
 				switch(propertyName)
@@ -1292,13 +1305,13 @@ namespace ES3Types
         }
     }
 
-		public class ES3Type_MaterialArray : ES3ArrayType
-	{
-		public static ES3Type Instance;
+    public class ES3Type_MaterialArray : ES3ArrayType
+    {
+        public static ES3Type Instance;
 
-		public ES3Type_MaterialArray() : base(typeof(Material[]), ES3Type_Material.Instance)
-		{
-			Instance = this;
-		}
-	}
+        public ES3Type_MaterialArray() : base(typeof(Material[]), ES3Type_Material.Instance)
+        {
+            Instance = this;
+        }
+    }
 }

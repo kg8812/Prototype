@@ -1,12 +1,11 @@
 ﻿using Managers;
-using Sirenix.Utilities;
 using Unity.Cinemachine;
 using UnityEngine;
 
 namespace Directing
 {
     [RequireComponent(typeof(CinemachineTargetGroup))]
-    public class TargetGroupCamera: Singleton<TargetGroupCamera>
+    public class TargetGroupCamera : Singleton<TargetGroupCamera>
     {
         private CinemachineTargetGroup _citg;
 
@@ -31,10 +30,7 @@ namespace Directing
 
         public void ResetTargets()
         {
-            foreach (var t in _citg.Targets)
-            {
-                RemoveTarget(t.Object);
-            }
+            foreach (var t in _citg.Targets) RemoveTarget(t.Object);
         }
 
         public void DoUpdate()
@@ -44,13 +40,10 @@ namespace Directing
 
         public void AdjustTargetRadius(Transform trans, float radius)
         {
-            for (int i = 0; i < _citg.Targets.Count; i++)
-            {
+            for (var i = 0; i < _citg.Targets.Count; i++)
                 if (_citg.Targets[i].Object == trans)
-                {
                     _citg.Targets[i].Radius = radius;
-                }
-            }
+
             CameraManager.instance.UpdateConfinerMaxDistance();
         }
     }

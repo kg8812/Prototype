@@ -5,11 +5,16 @@ namespace Apis
 {
     public class Recognizable : MonoBehaviour
     {
+        private Coroutine _exitRecog;
         [SerializeField] private IMonoBehaviour _iPosition;
+        private bool _isActivated;
+
+        private bool _isBlockByMap; // map = ground + wall
+
+        private bool _isRecognized;
 
         public bool IsInRecognitionCircle { get; set; }
         public bool IsInVisible { get; set; }
-        private bool _isActivated;
 
         public bool IsActivated
         {
@@ -31,8 +36,6 @@ namespace Apis
             }
         }
 
-        private bool _isRecognized;
-
         public bool IsRecognized
         {
             get => _isRecognized;
@@ -52,12 +55,8 @@ namespace Apis
             }
         }
 
-        private bool _isBlockByMap; // map = ground + wall
-        private Coroutine _exitRecog;
-
         protected virtual void OnActivated()
         {
-            
         }
 
         private void OnDisActivated()
@@ -79,10 +78,7 @@ namespace Apis
 
         public bool CheckRecognition(out float? dist)
         {
-            if (IsRecognized || IsInRecognitionCircle || IsInVisible)
-            {
-                IsActivated = true;
-            }
+            if (IsRecognized || IsInRecognitionCircle || IsInVisible) IsActivated = true;
 
             dist = -1;
             if (IsRecognized || IsInRecognitionCircle)
@@ -98,17 +94,10 @@ namespace Apis
             }
 
             if (IsRecognized && !IsInRecognitionCircle)
-            {
                 if (_exitRecog == null)
-                {
                     StartCoroutine(MinRecognitionTimer());
-                }
-            }
 
-            if (!IsRecognized && !IsInVisible && !IsInRecognitionCircle)
-            {
-                IsActivated = false;
-            }
+            if (!IsRecognized && !IsInVisible && !IsInRecognitionCircle) IsActivated = false;
 
             return IsRecognized;
         }
@@ -121,17 +110,14 @@ namespace Apis
 
         public float ShotRayToPlayer()
         {
-            Vector3 myRayPoint = _iPosition.Position;
+            var myRayPoint = _iPosition.Position;
             Vector2 dir = GameManager.instance.ControllingEntity.Position - myRayPoint;
-            RaycastHit2D hit = Physics2D.Raycast(myRayPoint, dir, Mathf.Infinity,
+            var hit = Physics2D.Raycast(myRayPoint, dir, Mathf.Infinity,
                 LayerMasks.Player | LayerMasks.GroundWall);
 #if UNITY_EDITOR
             Debug.DrawRay(myRayPoint, dir, Color.yellow);
 #endif
-            if (hit && hit.collider.gameObject.CompareTag("Player"))
-            {
-                return hit.distance;
-            }
+            if (hit && hit.collider.gameObject.CompareTag("Player")) return hit.distance;
 
             return -1;
         }

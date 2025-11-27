@@ -27,81 +27,89 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using Spine.Unity.AttachmentTools;
-using System.Collections;
+using System;
 using System.Collections.Generic;
+using Spine.Unity.AttachmentTools;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	public class EquipSystemExample : MonoBehaviour, IHasSkeletonDataAsset {
+namespace Spine.Unity.Examples
+{
+    public class EquipSystemExample : MonoBehaviour, IHasSkeletonDataAsset
+    {
+        public enum EquipType
+        {
+            Gun,
+            Goggles
+        }
 
-		// Implementing IHasSkeletonDataAsset allows Spine attribute drawers to automatically detect this component as a skeleton data source.
-		public SkeletonDataAsset skeletonDataAsset;
-		SkeletonDataAsset IHasSkeletonDataAsset.SkeletonDataAsset { get { return this.skeletonDataAsset; } }
+        // Implementing IHasSkeletonDataAsset allows Spine attribute drawers to automatically detect this component as a skeleton data source.
+        public SkeletonDataAsset skeletonDataAsset;
 
-		public Material sourceMaterial;
-		public bool applyPMA = true;
-		public List<EquipHook> equippables = new List<EquipHook>();
+        public Material sourceMaterial;
+        public bool applyPMA = true;
+        public List<EquipHook> equippables = new();
 
-		public EquipsVisualsComponentExample target;
-		public Dictionary<EquipAssetExample, Attachment> cachedAttachments = new Dictionary<EquipAssetExample, Attachment>();
+        public EquipsVisualsComponentExample target;
+        public Dictionary<EquipAssetExample, Attachment> cachedAttachments = new();
+        SkeletonDataAsset IHasSkeletonDataAsset.SkeletonDataAsset => skeletonDataAsset;
 
-		[System.Serializable]
-		public class EquipHook {
-			public EquipType type;
-			[SpineSlot]
-			public string slot;
-			[SpineSkin]
-			public string templateSkin;
-			[SpineAttachment(skinField: "templateSkin")]
-			public string templateAttachment;
-		}
+        public void Equip(EquipAssetExample asset)
+        {
+            var equipType = asset.equipType;
+            var howToEquip = equippables.Find(x => x.type == equipType);
 
-		public enum EquipType {
-			Gun,
-			Goggles
-		}
+            var skeletonData = skeletonDataAsset.GetSkeletonData(true);
+            var slotIndex = skeletonData.FindSlot(howToEquip.slot).Index;
+            var attachment = GenerateAttachmentFromEquipAsset(asset, slotIndex, howToEquip.templateSkin,
+                howToEquip.templateAttachment);
+            target.Equip(slotIndex, howToEquip.templateAttachment, attachment);
+        }
 
-		public void Equip (EquipAssetExample asset) {
-			EquipType equipType = asset.equipType;
-			EquipHook howToEquip = equippables.Find(x => x.type == equipType);
+        private Attachment GenerateAttachmentFromEquipAsset(EquipAssetExample asset, int slotIndex,
+            string templateSkinName, string templateAttachmentName)
+        {
+            Attachment attachment;
+            cachedAttachments.TryGetValue(asset, out attachment);
 
-			SkeletonData skeletonData = skeletonDataAsset.GetSkeletonData(true);
-			int slotIndex = skeletonData.FindSlot(howToEquip.slot).Index;
-			Attachment attachment = GenerateAttachmentFromEquipAsset(asset, slotIndex, howToEquip.templateSkin, howToEquip.templateAttachment);
-			target.Equip(slotIndex, howToEquip.templateAttachment, attachment);
-		}
+            if (attachment == null)
+            {
+                var skeletonData = skeletonDataAsset.GetSkeletonData(true);
+                var templateSkin = skeletonData.FindSkin(templateSkinName);
+                var templateAttachment = templateSkin.GetAttachment(slotIndex, templateAttachmentName);
+                attachment = templateAttachment.GetRemappedClone(asset.sprite, sourceMaterial, applyPMA);
+                // Note: Each call to `GetRemappedClone()` with parameter `premultiplyAlpha` set to `true` creates
+                // a cached Texture copy which can be cleared by calling AtlasUtilities.ClearCache() as shown in the method below.
 
-		Attachment GenerateAttachmentFromEquipAsset (EquipAssetExample asset, int slotIndex, string templateSkinName, string templateAttachmentName) {
-			Attachment attachment;
-			cachedAttachments.TryGetValue(asset, out attachment);
+                cachedAttachments.Add(asset, attachment); // Cache this value for next time this asset is used.
+            }
 
-			if (attachment == null) {
-				SkeletonData skeletonData = skeletonDataAsset.GetSkeletonData(true);
-				Skin templateSkin = skeletonData.FindSkin(templateSkinName);
-				Attachment templateAttachment = templateSkin.GetAttachment(slotIndex, templateAttachmentName);
-				attachment = templateAttachment.GetRemappedClone(asset.sprite, sourceMaterial, premultiplyAlpha: this.applyPMA);
-				// Note: Each call to `GetRemappedClone()` with parameter `premultiplyAlpha` set to `true` creates
-				// a cached Texture copy which can be cleared by calling AtlasUtilities.ClearCache() as shown in the method below.
+            return attachment;
+        }
 
-				cachedAttachments.Add(asset, attachment); // Cache this value for next time this asset is used.
-			}
+        public void Done()
+        {
+            target.OptimizeSkin();
+            // `GetRepackedSkin()` and each call to `GetRemappedClone()` with parameter `premultiplyAlpha` set to `true`
+            // creates cached Texture copies which can be cleared by calling AtlasUtilities.ClearCache().
+            // You can optionally clear the textures cache after multiple repack operations.
+            // Just be aware that while this cleanup frees up memory, it is also a costly operation
+            // and will likely cause a spike in the framerate.
 
-			return attachment;
-		}
+            //AtlasUtilities.ClearCache();
+            //Resources.UnloadUnusedAssets();
+        }
 
-		public void Done () {
-			target.OptimizeSkin();
-			// `GetRepackedSkin()` and each call to `GetRemappedClone()` with parameter `premultiplyAlpha` set to `true`
-			// creates cached Texture copies which can be cleared by calling AtlasUtilities.ClearCache().
-			// You can optionally clear the textures cache after multiple repack operations.
-			// Just be aware that while this cleanup frees up memory, it is also a costly operation
-			// and will likely cause a spike in the framerate.
+        [Serializable]
+        public class EquipHook
+        {
+            public EquipType type;
 
-			//AtlasUtilities.ClearCache();
-			//Resources.UnloadUnusedAssets();
-		}
+            [SpineSlot] public string slot;
 
-	}
+            [SpineSkin] public string templateSkin;
 
+            [SpineAttachment(skinField: "templateSkin")]
+            public string templateAttachment;
+        }
+    }
 }

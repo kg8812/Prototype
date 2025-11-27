@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 namespace Apis.BehaviourTreeTool
@@ -7,10 +6,10 @@ namespace Apis.BehaviourTreeTool
     {
         public BossMonster.BossPhase phase;
 
-        bool _isFinished;
+        public float duration;
 
-        public float duration = 0;
-        
+        private bool _isFinished;
+
         public override void OnStart()
         {
             base.OnStart();
@@ -20,9 +19,7 @@ namespace Apis.BehaviourTreeTool
             boss.OnTransformStart.Invoke();
 
             if (!Mathf.Approximately(duration, 0))
-            {
                 GameManager.instance.StartCoroutineWrapper(InvokeInTime(duration, () => _isFinished = true));
-            }
         }
 
         public override void OnStop()
@@ -31,12 +28,13 @@ namespace Apis.BehaviourTreeTool
             boss.animator.SetTrigger("ChangeState");
             OnAlert.RemoveAllListeners();
         }
-       
+
         public override void OnSkip()
         {
             base.OnSkip();
             boss.phase = phase;
         }
+
         public override State OnUpdate()
         {
             if (_isFinished)
@@ -45,16 +43,13 @@ namespace Apis.BehaviourTreeTool
                 boss.OnTransformEnd.Invoke();
                 return State.Success;
             }
-          
+
             return State.Running;
         }
 
-        void Invoke(string message)
+        private void Invoke(string message)
         {
-            if(message == "TransformEnd")
-            {
-                _isFinished = true;
-            }
+            if (message == "TransformEnd") _isFinished = true;
         }
     }
 }

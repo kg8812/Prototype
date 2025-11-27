@@ -9,22 +9,20 @@ namespace Apis.BehaviourTreeTool
 
         public override void OnStart()
         {
-            float rand = Random.Range(minTime, maxTime);
+            var rand = Random.Range(minTime, maxTime);
 
-            if (child is DelayNode delayNode)
-            {
-                delayNode.duration = rand;
-            }
+            if (child is DelayNode delayNode) delayNode.duration = rand;
         }
-    
+
         public override void OnStop()
         {
         }
-    
+
         public override State OnUpdate()
-        {          
+        {
             return child.Update();
         }
+
         public override bool Check()
         {
             return CheckChild;

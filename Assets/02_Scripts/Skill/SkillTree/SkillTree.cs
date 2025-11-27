@@ -1,41 +1,41 @@
-using Apis.Managers;
-using Save.Schema;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Apis.SkillTrees
 {
-    public abstract class SkillTree : SerializedScriptableObject,ISkillVisitor
+    public abstract class SkillTree : SerializedScriptableObject, ISkillVisitor
     {
-        [SerializeField] [LabelText("인덱스")] int index;
-        private string _name;
-        private string description;
-        private PlayerType _playerType;
-        private TreeTypeEnum treeType;
-        private int[] tagNames;
-        private SlotTypeEnum _slotType;
-        
-        protected int level;
-        public int Level => level;
-        public enum TreeTypeEnum
-        {
-            Active,Passive,Support
-        }
-
         public enum SlotTypeEnum
         {
-            Low,Medium,High
+            Low,
+            Medium,
+            High
         }
-        public SlotTypeEnum SlotType => _slotType;
-        
-        public string Name => _name;
-        public string Description => description;
+
+        public enum TreeTypeEnum
+        {
+            Active,
+            Passive,
+            Support
+        }
+
+        [SerializeField] [LabelText("인덱스")] private int index;
+
+        protected int level;
+        public int Level => level;
+        public SlotTypeEnum SlotType { get; private set; }
+
+        public string Name { get; }
+
+        public string Description { get; }
+
         public int Index => index;
-        public PlayerType PlayerType => _playerType;
-        public TreeTypeEnum TreeType => treeType;
-        public int[] TagNames => tagNames;
-        
+        public PlayerType PlayerType { get; private set; }
+
+        public TreeTypeEnum TreeType { get; private set; }
+
+        public int[] TagNames { get; private set; }
+
         // 호출은 액티브 -> 패시브 순으로 호출됨.
 
         public virtual void Activate(PlayerActiveSkill active, int level)
@@ -52,16 +52,17 @@ namespace Apis.SkillTrees
         {
             level = 0;
         }
+
         public virtual void Init()
         {
             if (SkillTreeDatas.TryGetSkillTreeData(index, out var data))
             {
                 // _name = LanguageManager.Str(data.name);
                 // description = LanguageManager.Str(data.description);
-                _playerType = data.playerType;
-                treeType = data.treeType;
-                tagNames = data.tagNames;
-                _slotType = data.slotType;
+                PlayerType = data.playerType;
+                TreeType = data.treeType;
+                TagNames = data.tagNames;
+                SlotType = data.slotType;
 
                 level = 0;
             }

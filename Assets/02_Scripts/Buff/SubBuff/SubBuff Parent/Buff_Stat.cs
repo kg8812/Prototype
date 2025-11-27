@@ -1,4 +1,3 @@
-
 namespace Apis
 {
     public abstract class Buff_Stat : Buff_Base
@@ -16,11 +15,15 @@ namespace Apis
             }
         }
 
+
+        protected abstract ActorStatType StatType { get; }
+
         public override void PermanentApply()
         {
             base.PermanentApply();
             actor.AddStat(StatType, amount[0], buff.ValueType);
         }
+
         public override void TempApply(EventParameters parameters)
         {
             base.TempApply(parameters);
@@ -34,8 +37,5 @@ namespace Apis
                     break;
             }
         }
-
-       
-        protected abstract ActorStatType StatType { get; }
     }
 }

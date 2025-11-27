@@ -1,9 +1,9 @@
-using Apis;
+using System;
 using Apis.Util;
 
 namespace Apis.DataType
 {
-    [System.Serializable]
+    [Serializable]
     public class SubBuffOptionDataType
     {
         public int name;
@@ -16,7 +16,7 @@ namespace Apis.DataType
         public string iconPath;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class BuffDataType
     {
         public int index;
@@ -35,7 +35,7 @@ namespace Apis.DataType
         public ValueType valueType;
         public bool showIcon;
         public int applyStrategy;
-        
+
         public BuffDataType(SubBuffType type)
         {
             if (BuffDatabase.DataLoad.TryGetSubBuffIndex(type, out index))
@@ -46,20 +46,20 @@ namespace Apis.DataType
         }
     }
 
-    [System.Serializable]
-    public class BuffGroupDataType: HasChance
+    [Serializable]
+    public class BuffGroupDataType : HasChance
     {
         public int index;
         public int buffGroup;
         public int buffIndex;
-        public int chance { get; set; }
         public int buffName;
         public int buffDesc;
         public bool showIcon;
         public string iconPath;
+        public int chance { get; set; }
     }
 
-    [System.Serializable]
+    [Serializable]
     public class SubBuffTypeDataType
     {
         public int index;

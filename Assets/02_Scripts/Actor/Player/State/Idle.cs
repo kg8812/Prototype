@@ -1,11 +1,15 @@
-using System.Collections;
-using System.Collections.Generic;
-using PlayerState;
-using UnityEngine;
-
-namespace PlayerState {
+namespace PlayerState
+{
     public class Idle : BaseGroundState, IAnimate
     {
+        public void OnEnterAnimate()
+        {
+        }
+
+        public void OnExitAnimate()
+        {
+        }
+
         public override void OnEnter(Player t)
         {
             base.OnEnter(t);
@@ -14,28 +18,17 @@ namespace PlayerState {
 
         public override void FixedUpdate()
         {
-            if(_player.IsIdleFixed) return;
+            if (_player.IsIdleFixed) return;
 
             base.FixedUpdate();
 
-            if(_player.PhysicTest)
-            {
-                _player.MoveComponent.ForceActorMovement.Friction(5);
-            }
+            if (_player.PhysicTest) _player.MoveComponent.ForceActorMovement.Friction(5);
             _player.resister.Resist();
         }
+
         public override void OnExit()
         {
             base.OnExit();
-
-        }
-
-        public void OnEnterAnimate()
-        {
-        }
-
-        public void OnExitAnimate()
-        {
         }
     }
 }

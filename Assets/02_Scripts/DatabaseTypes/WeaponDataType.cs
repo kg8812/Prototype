@@ -1,26 +1,21 @@
-using Apis;
+using System;
 
 namespace Apis.DataType
 {
-    [System.Serializable]
+    [Serializable]
     public class WeaponDataType
     {
         // public int index;
         public int weaponId;
         public int weaponNameString;
         public int description;
-        public Weapon.WeaponGrade weaponRarity;
-        public float bodyFactor;
-        public float spiritFactor;
-        public float finesseFactor;
         public float attackPower;
-        public int baseGroggyPower;
+
         public string iconPath;
         // public int price;
-        public bool unlock;
     }
-    
-    [System.Serializable]
+
+    [Serializable]
     public class MotionGroupDataType
     {
         public int index;
@@ -31,8 +26,8 @@ namespace Apis.DataType
         public int[] groundLegMotions;
         public int[] airLegMotions;
     }
-    
-    [System.Serializable]
+
+    [Serializable]
     public class MotionDataType
     {
         public int index;

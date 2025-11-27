@@ -1,10 +1,8 @@
-using Command;
 using UnityEngine;
 
 namespace Command
 {
     [CreateAssetMenu(fileName = "UseActiveSkill", menuName = "ActorCommand/Common/ActiveSkill")]
-
     public class UseActiveSkill : ActorCommand
     {
         public override void Invoke(Actor go)
@@ -14,6 +12,7 @@ namespace Command
                 Debug.Log("액티브 스킬이 없음");
                 return;
             }
+
             GameManager.instance.Player.ActiveSkill.Use();
         }
 

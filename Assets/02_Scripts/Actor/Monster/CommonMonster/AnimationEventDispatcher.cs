@@ -1,9 +1,10 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.Events;
 
 namespace Apis
 {
-    [System.Serializable]
+    [Serializable]
     public class UnityAnimationEvent : UnityEvent<string>
     {
     }
@@ -14,21 +15,21 @@ namespace Apis
         [HideInInspector] public UnityAnimationEvent OnAnimationStart;
         [HideInInspector] public UnityAnimationEvent OnAnimationComplete;
 
-        Animator animator;
+        private Animator animator;
 
-        void Awake()
+        private void Awake()
         {
             animator = GetComponent<Animator>();
-            for (int i = 0; i < animator.runtimeAnimatorController.animationClips.Length; i++)
+            for (var i = 0; i < animator.runtimeAnimatorController.animationClips.Length; i++)
             {
-                AnimationClip clip = animator.runtimeAnimatorController.animationClips[i];
+                var clip = animator.runtimeAnimatorController.animationClips[i];
 
-                AnimationEvent animationStartEvent = new AnimationEvent();
+                var animationStartEvent = new AnimationEvent();
                 animationStartEvent.time = 0;
                 animationStartEvent.functionName = "AnimationStartHandler";
                 animationStartEvent.stringParameter = clip.name;
 
-                AnimationEvent animationEndEvent = new AnimationEvent();
+                var animationEndEvent = new AnimationEvent();
                 animationEndEvent.time = clip.length;
                 animationEndEvent.functionName = "AnimationCompleteHandler";
                 animationEndEvent.stringParameter = clip.name;

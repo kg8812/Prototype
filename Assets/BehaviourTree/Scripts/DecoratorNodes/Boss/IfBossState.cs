@@ -9,27 +9,17 @@ namespace Apis.BehaviourTreeTool
         public override bool Check()
         {
             foreach (var bossState in stateList)
-            {
                 if (bossState == boss.State)
-                {
                     return CheckChild;
-                }
-            }
+
             return false;
         }
 
         public override void OnStart()
         {
             foreach (var bossState in stateList)
-            {
                 if (bossState == boss.State)
-                {
-                    BehaviourTree.Traverse(this, node =>
-                    {
-                        node.isStarted = false;
-                    });
-                }
-            }
+                    BehaviourTree.Traverse(this, node => { node.isStarted = false; });
         }
 
         public override void OnStop()
@@ -39,20 +29,13 @@ namespace Apis.BehaviourTreeTool
         public override State OnUpdate()
         {
             foreach (var bossState in stateList)
-            {
                 if (bossState == boss.State)
                 {
-                    if (child != null)
-                    {
-                        return child.Update();
-                    }
-                    else
-                    {
-                        
-                        return State.Failure;
-                    }
+                    if (child != null) return child.Update();
+
+                    return State.Failure;
                 }
-            }
+
             if (child != null) child.state = State.Failure;
 
             return State.Failure;

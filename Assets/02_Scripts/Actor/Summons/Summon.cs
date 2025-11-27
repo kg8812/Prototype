@@ -1,7 +1,6 @@
-
 public abstract class Summon : Actor
-{   
-    Actor master;
+{
+    private Actor master;
     public virtual Actor Master => master;
 
     public virtual void SetMaster(Actor master)
@@ -11,6 +10,5 @@ public abstract class Summon : Actor
 
     public virtual void OnUnSummon()
     {
-        
     }
 }

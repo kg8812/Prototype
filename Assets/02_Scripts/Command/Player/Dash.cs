@@ -13,9 +13,9 @@ namespace Command
         public override bool InvokeCondition(Player player)
         {
             return player.GetAbleState(EPlayerState.Dash)
-            && !player.IsDash 
-            && player.CoolDown.GetCd(EPlayerCd.Dash) 
-            && player.AirDashed < player.MaxAirDash;
+                   && !player.IsDash
+                   && player.CoolDown.GetCd(EPlayerCd.Dash)
+                   && player.AirDashed < player.MaxAirDash;
         }
     }
 }

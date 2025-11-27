@@ -3,11 +3,29 @@ using System.Linq;
 
 namespace Apis
 {
-    public class SubBuffList : SubBuffCollection,ISubject<SubBuffList>
+    public class SubBuffList : SubBuffCollection, ISubject<SubBuffList>
     {
+        protected readonly List<IObserver<SubBuffList>> observers2 = new();
+
         public SubBuffList(Buff buff, Actor actor) : base(buff, actor)
         {
             list = new List<SubBuff>();
+        }
+
+        public void Attach(IObserver<SubBuffList> observer)
+        {
+            observers2.Add(observer);
+        }
+
+        public void Detach(IObserver<SubBuffList> observer)
+        {
+            observers2.Remove(observer);
+        }
+
+        public override void NotifyObservers()
+        {
+            base.NotifyObservers();
+            observers2.ForEach(x => x.Notify(this));
         }
 
         public override void Add(SubBuff subBuff)
@@ -39,7 +57,7 @@ namespace Apis
         {
             if (list != null && list.Count > 0)
             {
-                SubBuff subBuff = list[0];
+                var subBuff = list[0];
 
                 if (buff.StackDecrease == 0)
                 {
@@ -47,20 +65,20 @@ namespace Apis
                     temp.RemoveAt(0);
                     list = temp;
                     NotifyObservers();
-                    
+
                     subBuff.OnRemove();
                 }
                 else if (buff.StackDecrease == 1)
                 {
                     Clear();
                 }
-                return subBuff;
 
+                return subBuff;
             }
 
             return null;
         }
-        
+
         public override void Clear()
         {
             var a = list.ToList();
@@ -69,27 +87,7 @@ namespace Apis
             list = a;
             NotifyObservers();
 
-            foreach (var x in temp)
-            {
-                x.OnRemove();
-            }
-        }
-        
-        readonly protected List<IObserver<SubBuffList>> observers2 = new();
-
-        public void Attach(IObserver<SubBuffList> observer)
-        {
-            observers2.Add(observer);
-        }
-
-        public void Detach(IObserver<SubBuffList> observer)
-        {
-            observers2.Remove(observer);
-        }
-        public override void NotifyObservers()
-        {
-            base.NotifyObservers();
-            observers2.ForEach(x => x.Notify(this));
+            foreach (var x in temp) x.OnRemove();
         }
     }
 }

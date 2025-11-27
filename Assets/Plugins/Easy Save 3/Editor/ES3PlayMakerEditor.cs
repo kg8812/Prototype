@@ -1,5 +1,4 @@
 ﻿#if PLAYMAKER_1_8_OR_NEWER
-
 using UnityEngine;
 using UnityEditor;
 using HutongGames.PlayMaker;
@@ -59,9 +58,10 @@ namespace ES3PlayMaker
             var variableNames = new string[localVariables.Length + globalVariables.Length];
             int selected = -1;
 
-            for(int i=0; i<variableNames.Length; i++)
+            for(int i = 0; i<variableNames.Length; i++)
             {
-                var variable = i >= localVariables.Length ? globalVariables[i - localVariables.Length] : localVariables[i];
+                var variable =
+ i >= localVariables.Length ? globalVariables[i - localVariables.Length] : localVariables[i];
                 variableNames[i] = i >= localVariables.Length ? "Globals/"+variable.Name : variable.Name;
                 if (fsmVar.NamedVar == variable)
                     selected = i;
@@ -98,7 +98,8 @@ namespace ES3PlayMaker
             var action = target as ES3PlayMaker.SettingsAction;
             if (action == null)
                 return false;
-            action.overrideDefaultSettings.Value = EditorGUILayout.ToggleLeft("Override Default Settings", action.overrideDefaultSettings.Value);
+            action.overrideDefaultSettings.Value =
+ EditorGUILayout.ToggleLeft("Override Default Settings", action.overrideDefaultSettings.Value);
 
             if (action.overrideDefaultSettings.Value)
             {
@@ -156,7 +157,7 @@ namespace ES3PlayMaker
 #region Save Actions
 
     /*[CustomActionEditor(typeof(ES3PlayMaker.Save))]
-	public class SaveEditor : KeyValueSettingsEditor{}*/
+    public class SaveEditor : KeyValueSettingsEditor{}*/
 
     /*[CustomActionEditor(typeof(ES3PlayMaker.SaveMultiple))]
     public class SaveMultipleEditor : SettingsEditor
@@ -473,14 +474,14 @@ namespace ES3PlayMaker
 	}
 
 	/*[CustomActionEditor(typeof(ES3PlayMaker.ES3FileSave))]
-	public class ES3FileSaveEditor : SaveEditor
-	{
-		public override void DrawGUI()
-		{
-			EditField("fsmES3File");
-			base.DrawGUI();
-		}
-	}*/
+    public class ES3FileSaveEditor : SaveEditor
+    {
+        public override void DrawGUI()
+        {
+            EditField("fsmES3File");
+            base.DrawGUI();
+        }
+    }*/
 
 	[CustomActionEditor(typeof(ES3PlayMaker.ES3FileLoad))]
 	public class ES3FileLoadEditor : LoadEditor

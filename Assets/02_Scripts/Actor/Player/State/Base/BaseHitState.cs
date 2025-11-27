@@ -1,18 +1,20 @@
-using System.Collections;
-using System.Collections.Generic;
 using EventData;
-using PlayerState;
-using Unity.VisualScripting;
 using UnityEngine;
 
-namespace PlayerState {
+namespace PlayerState
+{
     public class BaseHitState : EventState
     {
-        public override EPlayerState NextState { get{ return EPlayerState.Idle; } set{} }
+        protected KnockBackData data;
         protected bool escapeFlag;
 
         protected EventParameters eventParameters;
-        protected KnockBackData data;
+
+        public override EPlayerState NextState
+        {
+            get => EPlayerState.Idle;
+            set { }
+        }
 
         public override void OnEnter(Player t)
         {
@@ -21,15 +23,12 @@ namespace PlayerState {
             // _player.StopHitEffect();
             // _player.PlayHitEffect();
             _player.StateEvent.ExecuteEventOnce(EventType.OnHit, null);
-            var e = _player.GetInfo(EPlayerState.KnockBack);
-            eventParameters = e.eventParameters;
             data = _player.GetKnockBackData(eventParameters);
         }
 
         public override void OnExit()
         {
             base.OnExit();
-            _player.RemoveInfo(EPlayerState.KnockBack);
         }
 
         public override bool EscapeCondition()
@@ -43,16 +42,12 @@ namespace PlayerState {
             Vector2 knockBackSrc = data.directionType == KnockBackData.DirectionType.AktObjRelative
                 ? eventParameters.user.Position
                 : eventParameters.master.Position;
-            
+
             if (data.knockBackForce == 0)
-            {
                 _player.MoveComponent.KnockBack(knockBackSrc, _player.knockBackData,
                     null, null);
-            }
             else
-            {
                 _player.MoveComponent.KnockBack(knockBackSrc, data, null, null);
-            }
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
 using ES3Internal;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.Scripting;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -11,12 +13,13 @@ namespace ES3Internal
     public class ES3Prefab : MonoBehaviour
     {
         public long prefabId = GetNewRefID();
+
         /*
          * We need to store references to all dependencies of the prefab because only supported scripts will be serialised.
-         * This means that although supported scripts have their dependencies added to the reference manager when we load the prefab, 
+         * This means that although supported scripts have their dependencies added to the reference manager when we load the prefab,
          * there will not be any dependencies in the reference manager for scripts which are not supported.  So it will not be possible to save any reference to these.
          */
-        public ES3RefIdDictionary localRefs = new ES3RefIdDictionary();
+        public ES3RefIdDictionary localRefs = new();
 
         public void Awake()
         {
@@ -31,7 +34,7 @@ namespace ES3Internal
                     mgr.Add(kvp.Key);
         }
 
-        public long Get(UnityEngine.Object obj)
+        public long Get(Object obj)
         {
             long id;
             if (localRefs.TryGetValue(obj, out id))
@@ -39,7 +42,7 @@ namespace ES3Internal
             return -1;
         }
 
-        public long Add(UnityEngine.Object obj)
+        public long Add(Object obj)
         {
             long id;
             if (localRefs.TryGetValue(obj, out id))
@@ -63,9 +66,10 @@ namespace ES3Internal
 
             foreach (var kvp in localRefs)
             {
-                long id = refMgr.Add(kvp.Key);
+                var id = refMgr.Add(kvp.Key);
                 localToGlobal[kvp.Value.ToString()] = id.ToString();
             }
+
             return localToGlobal;
         }
 
@@ -90,7 +94,7 @@ namespace ES3Internal
         public void GeneratePrefabReferences()
         {
 #if UNITY_2021_3_OR_NEWER
-            if (this.gameObject.scene.name != null || UnityEditor.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null)
+            if (gameObject.scene.name != null || PrefabStageUtility.GetCurrentPrefabStage() != null)
 #elif UNITY_2018_3_OR_NEWER
             if (this.gameObject.scene.name != null || UnityEditor.Experimental.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage() != null)
 #else
@@ -104,15 +108,15 @@ namespace ES3Internal
             // Get dependencies of children also.
             var transforms = GetComponentsInChildren<Transform>();
             var gos = new GameObject[transforms.Length];
-            for (int i = 0; i < transforms.Length; i++)
+            for (var i = 0; i < transforms.Length; i++)
                 gos[i] = transforms[i].gameObject;
 
-            bool addedNewReference = false;
+            var addedNewReference = false;
 
             // Add the GameObject's dependencies to the reference list.
             foreach (var obj in EditorUtility.CollectDependencies(gos))
             {
-                var dependency = (UnityEngine.Object)obj;
+                var dependency = obj;
                 if (obj == null || !ES3ReferenceMgr.CanBeSaved(dependency))
                     continue;
 
@@ -124,6 +128,7 @@ namespace ES3Internal
                     Undo.RecordObject(this, "Update Easy Save 3 Prefab");
                     EditorUtility.SetDirty(this);
                 }
+
                 tempLocalRefs.Add(dependency, id == -1 ? GetNewRefID() : id);
             }
 
@@ -139,12 +144,15 @@ namespace ES3Internal
  */
 namespace ES3Types
 {
-    [UnityEngine.Scripting.Preserve]
+    [Preserve]
     public class ES3Type_ES3Prefab : ES3Type
     {
-        public static ES3Type Instance = null;
+        public static ES3Type Instance;
 
-        public ES3Type_ES3Prefab() : base(typeof(ES3Prefab)) { Instance = this; }
+        public ES3Type_ES3Prefab() : base(typeof(ES3Prefab))
+        {
+            Instance = this;
+        }
 
         public override void Write(object obj, ES3Writer writer)
         {
@@ -163,11 +171,14 @@ namespace ES3Types
     {
         public static ES3Type Instance = new ES3Type_ES3PrefabInternal();
 
-        public ES3Type_ES3PrefabInternal() : base(typeof(ES3Type_ES3PrefabInternal)) { Instance = this; }
+        public ES3Type_ES3PrefabInternal() : base(typeof(ES3Type_ES3PrefabInternal))
+        {
+            Instance = this;
+        }
 
         public override void Write(object obj, ES3Writer writer)
         {
-            ES3Prefab es3Prefab = (ES3Prefab)obj;
+            var es3Prefab = (ES3Prefab)obj;
 
             writer.WriteProperty("prefabId", es3Prefab.prefabId.ToString(), ES3Type_string.Instance);
             writer.WriteProperty("refs", es3Prefab.GetReferences());
@@ -182,19 +193,23 @@ namespace ES3Types
 
             var es3Prefab = ES3ReferenceMgrBase.Current.GetPrefab(prefabId);
             if (es3Prefab == null)
-                throw new MissingReferenceException("Prefab with ID " + prefabId + " could not be found.\nPress the 'Refresh References' button on the ES3ReferenceMgr Component of the Easy Save 3 Manager in the scene to refresh prefabs.");
+                throw new MissingReferenceException("Prefab with ID " + prefabId +
+                                                    " could not be found.\nPress the 'Refresh References' button on the ES3ReferenceMgr Component of the Easy Save 3 Manager in the scene to refresh prefabs.");
 
 
 #if UNITY_EDITOR
             // Use PrefabUtility.InstantiatePrefab if we're saving in the Editor and the application isn't playing.
             // This keeps the connection to the prefab, which is useful for Editor scripts saving data outside of runtime.
-            var instance = Application.isPlaying ? GameObject.Instantiate(es3Prefab.gameObject) : PrefabUtility.InstantiatePrefab(es3Prefab.gameObject);
+            var instance = Application.isPlaying
+                ? GameObject.Instantiate(es3Prefab.gameObject)
+                : PrefabUtility.InstantiatePrefab(es3Prefab.gameObject);
 #else
             var instance = GameObject.Instantiate(es3Prefab.gameObject);
 #endif
             var instanceES3Prefab = ((GameObject)instance).GetComponent<ES3Prefab>();
             if (instanceES3Prefab == null)
-                throw new MissingReferenceException("Prefab with ID " + prefabId + " was found, but it does not have an ES3Prefab component attached.");
+                throw new MissingReferenceException("Prefab with ID " + prefabId +
+                                                    " was found, but it does not have an ES3Prefab component attached.");
 
             ReadInto<T>(reader, instance);
 

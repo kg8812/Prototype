@@ -1,3 +1,4 @@
-public interface IMonsterAtkPattern{
+public interface IMonsterAtkPattern
+{
     void Attack();
 }

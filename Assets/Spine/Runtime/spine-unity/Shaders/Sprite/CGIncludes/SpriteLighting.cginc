@@ -17,21 +17,20 @@
 
 struct VertexInput
 {
-	float4 vertex : POSITION;
-	float4 texcoord : TEXCOORD0;
-	float4 color : COLOR;
-#if defined(MESH_NORMALS)
-	float3 normal : NORMAL;
-#endif // _FIXED_NORMALS
-#if defined(_NORMALMAP)
+    float4 vertex : POSITION;
+    float4 texcoord : TEXCOORD0;
+    float4 color : COLOR;
+    #if defined(MESH_NORMALS)
+    float3 normal : NORMAL;
+    #endif // _FIXED_NORMALS
+    #if defined(_NORMALMAP)
 	float4 tangent : TANGENT;
-#endif // _NORMALMAP
-#if defined(_TINT_BLACK_ON)
+    #endif // _NORMALMAP
+    #if defined(_TINT_BLACK_ON)
 	float2 tintBlackRG : TEXCOORD1;
 	float2 tintBlackB : TEXCOORD2;
-#endif
-	UNITY_VERTEX_INPUT_INSTANCE_ID
-
+    #endif
+    UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
 ////////////////////////////////////////
@@ -44,75 +43,75 @@ uniform float4 _FixedNormal = float4(0, 0, 1, 1);
 
 inline float3 getFixedNormal()
 {
-	return _FixedNormal.xyz;
+    return _FixedNormal.xyz;
 }
 
 inline float calculateBackfacingSign(float3 worldPos)
 {
-	//If we're using fixed normals and mesh is facing away from camera, flip tangentSign
-	//Unity uses a left handed coordinate system so camera always looks down the negative z axis
-	float3 cameraForward = float3(0,0,-1);
-	float3 meshWorldForward = mul((float3x3)unity_ObjectToWorld, cameraForward);
-	float3 toCamera = _WorldSpaceCameraPos - worldPos;
-	return sign(dot(toCamera, meshWorldForward));
+    //If we're using fixed normals and mesh is facing away from camera, flip tangentSign
+    //Unity uses a left handed coordinate system so camera always looks down the negative z axis
+    float3 cameraForward = float3(0, 0, -1);
+    float3 meshWorldForward = mul((float3x3)unity_ObjectToWorld, cameraForward);
+    float3 toCamera = _WorldSpaceCameraPos - worldPos;
+    return sign(dot(toCamera, meshWorldForward));
 }
 
 inline half3 calculateSpriteWorldNormal(VertexInput vertex, float backFaceSign)
 {
-#if defined(MESH_NORMALS)
+    #if defined(MESH_NORMALS)
 
-	return calculateWorldNormal(vertex.normal);
+    return calculateWorldNormal(vertex.normal);
 
-#else // !MESH_NORMALS
+    #else // !MESH_NORMALS
 
 	float3 normal = getFixedNormal();
 
-#if defined(_FIXED_NORMALS_VIEWSPACE) || defined(_FIXED_NORMALS_VIEWSPACE_BACKFACE)
+    #if defined(_FIXED_NORMALS_VIEWSPACE) || defined(_FIXED_NORMALS_VIEWSPACE_BACKFACE)
 	//View space fixed normal
 	//Rotate fixed normal by inverse view matrix to convert the fixed normal into world space
 	float3x3 invView = transpose((float3x3)UNITY_MATRIX_V);
 	return normalize(mul(invView, normal));
-#elif defined (_FIXED_NORMALS_WORLDSPACE)
+    #elif defined (_FIXED_NORMALS_WORLDSPACE)
 	//World space fixed normal
 	return normal;
-#else
-	//Model space fixed normal.
-#if defined(FIXED_NORMALS_BACKFACE_RENDERING)
+    #else
+    //Model space fixed normal.
+    #if defined(FIXED_NORMALS_BACKFACE_RENDERING)
 	//If back face rendering is enabled and the sprite is facing away from the camera (ie we're rendering the backface) then need to flip the normal
 	normal *= backFaceSign;
-#endif
+    #endif
 	return calculateWorldNormal(normal);
-#endif
+    #endif
 
-#endif // !MESH_NORMALS
+    #endif // !MESH_NORMALS
 }
 
 inline half3 calculateSpriteViewNormal(VertexInput vertex, float backFaceSign)
 {
-#if defined(MESH_NORMALS)
+    #if defined(MESH_NORMALS)
 
-	return normalize(mul((float3x3)UNITY_MATRIX_IT_MV, vertex.normal));
+    return normalize(mul((float3x3)UNITY_MATRIX_IT_MV, vertex.normal));
 
-#else // !MESH_NORMALS
+    #else // !MESH_NORMALS
 
 	float3 normal = getFixedNormal();
 
-#if defined(_FIXED_NORMALS_VIEWSPACE) || defined(_FIXED_NORMALS_VIEWSPACE_BACKFACE)
+    #if defined(_FIXED_NORMALS_VIEWSPACE) || defined(_FIXED_NORMALS_VIEWSPACE_BACKFACE)
 	//View space fixed normal
 	return normal;
-#elif defined (_FIXED_NORMALS_WORLDSPACE)
+    #elif defined (_FIXED_NORMALS_WORLDSPACE)
 	//World space fixed normal
 	return normalize(mul((float3x3)UNITY_MATRIX_V, normal));
-#else
-	//Model space fixed normal
-#if defined(FIXED_NORMALS_BACKFACE_RENDERING)
+    #else
+    //Model space fixed normal
+    #if defined(FIXED_NORMALS_BACKFACE_RENDERING)
 	//If back face rendering is enabled and the sprite is facing away from the camera (ie we're rendering the backface) then need to flip the normal
 	normal *= backFaceSign;
-#endif
+    #endif
 	return normalize(mul((float3x3)UNITY_MATRIX_IT_MV, normal));
-#endif
+    #endif
 
-#endif // !MESH_NORMALS
+    #endif // !MESH_NORMALS
 }
 
 ////////////////////////////////////////

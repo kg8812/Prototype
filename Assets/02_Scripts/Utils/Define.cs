@@ -1,8 +1,3 @@
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEngine;
-
-
 public class Define
 {
     #region Enums
@@ -15,8 +10,7 @@ public class Define
         Up,
         Jump,
         Attack,
-        ActiveSkill,
-        
+        ActiveSkill
     }
 
     public enum UIKey
@@ -30,7 +24,7 @@ public class Define
         Select,
         Cancel,
         Equip,
-        Skip,
+        Skip
     }
 
     public enum UIEvent
@@ -60,7 +54,7 @@ public class Define
     public enum AttackType
     {
         Extra,
-        BasicAttack,
+        BasicAttack
     }
 
     #endregion
@@ -98,7 +92,6 @@ public class Define
     public static class DummyEffects
     {
         public const string Explosion = "DummyExplosion";
-        
     }
 
     #endregion
@@ -156,7 +149,9 @@ public class Define
         public const string BaseController = "PlayerBaseController";
         public const string Overrider = "PlayerOverrider";
     }
+
     #endregion
+
     #endregion
 }
 
@@ -177,7 +172,7 @@ public enum ActorStatType // 스탯 종류
     MoveSpeed,
     MaxHp,
     CritProb,
-    CritDmg,
+    CritDmg
 }
 
 public enum EventType // 효과 적용 조건
@@ -243,102 +238,13 @@ public enum EventType // 효과 적용 조건
     OnIdleMotion,
     OnKnockbackComplete,
     OnAnyState,
-    OnAirEnter,
+    OnAirEnter
 }
 
 #region 버프,디버프 관련
 
 public enum SubBuffType // 버프 종류, 클래스랑 이름 똑같이 해야함
 {
-    Buff_DoubleJump,
-    Debuff_SequenceStack,
-    Buff_Warmth,
-    MarkStack,
-    StarEye,
-    Celerity,
-    HunterStack,
-    RefinedAnger,
-    DisCharge,
-    ExpansionBullet,
-
-    Buff_Atk,
-    Buff_Def,
-    Buff_AtkSpeed,
-    Buff_MoveSpeed,
-    Buff_CritProb,
-    Buff_CritDmg,
-    Buff_CD,
-    Buff_Mentality,
-    Buff_MaxHp,
-    Buff_DmgReduce,
-    Buff_ExtraDmg,
-    Buff_GoldRate,
-    Buff_HealRate,
-    Buff_ShieldRate,
-    Buff_AllStat,
-
-    Debuff_Atk,
-    Debuff_Def,
-    Debuff_AtkSpeed,
-    Debuff_MoveSpeed,
-    Debuff_CritProb,
-    Debuff_CritDmg,
-    Debuff_CD,
-    Debuff_Mentality,
-    Debuff_MaxHp,
-    Debuff_DmgReduce,
-    Debuff_ExtraDmg,
-    Debuff_GoldRate,
-    Debuff_HealRate,
-    Debuff_ShieldRate,
-
-    Buff_BasicAtkEnhance,
-
-    Debuff_Stun,
-    Debuff_Chill,
-    Debuff_Frozen,
-    Debuff_Grab,
-    Debuff_KnockBack,
-    Debuff_BonusDmg,
-    Debuff_Execution,
-    Debuff_Tied,
-
-    Buff_Immune,
-    Buff_Remove,
-
-    Debuff_Burn,
-    Debuff_Poison,
-    Debuff_Bleed,
-    Debuff_RasenganResidue,
-
-    Buff_MaxHpRegen,
-    Buff_LostHpRegen,
-    Buff_HpRegen,
-    Buff_LifeSteal,
-    Buff_ShieldHpRegen,
-
-    Buff_Barrier,
-    Buff_DefBarrier,
-
-    Debuff_MaxHpLose,
-    Debuff_LostHpLose,
-    Debuff_HpLose,
-    Debuff_AtkHpLose,
-    Debuff_CurHpLose,
-    Debuff_GroggyLose,
-
-    Buff_Sight,
-    Buff_AirDashCount,
-    Buff_RepairValue,
-    Buff_RepairCount,
-    Buff_WeaponCD,
-    Buff_SkillDmg,
-    Buff_DashRange,
-
-    Buff_ActiveDuration,
-    Buff_ActiveCD,
-    Buff_ActiveCurCD,
-
     None
 }
 
@@ -355,14 +261,14 @@ public static class NextState
             EPlayerState.Idle => new[]
             {
                 EPlayerState.Move, EPlayerState.Jump, EPlayerState.Attack, EPlayerState.Dash,
-                EPlayerState.Skill,
+                EPlayerState.Skill
             },
             EPlayerState.Move => new[]
             {
                 EPlayerState.Jump, EPlayerState.Attack, EPlayerState.Dash,
-                EPlayerState.Skill,
+                EPlayerState.Skill
             },
-            EPlayerState.Dash => new[] { EPlayerState.Jump,},
+            EPlayerState.Dash => new[] { EPlayerState.Jump },
             EPlayerState.Run => new[]
             {
                 EPlayerState.Run, EPlayerState.Jump, EPlayerState.Attack,
@@ -381,60 +287,33 @@ public enum EAnimationBool
 {
     Idle,
     IsMove,
-    Turn,
     OnAir,
-    IsCrouch,
-    IsDash,
-    IsFrontKnockback,
-    IsRun,
-    IsIceDrill,
+    IsDash
 }
 
 public enum EAnimationTrigger
 {
-    Climb,
-    ClimbLow,
-    Turn,
     Jump,
     Attack,
-    Heal,
     Damaged,
     Dead,
     Interact,
     IdleOn,
     IdleFix,
-    Stop,
     Dash,
     AttackInit,
-    PreAttack,
-    StepAttack,
-    KnockbackEnter,
-    KnockbackEnd,
     IdleFixOff,
-    InteractEnd,
-    CutsceneOn,
-    CutsceneEnd,
-    IceDrillOn,
-    Drop,
+    InteractEnd
 }
 
 public enum EAnimationInt
 {
-    Direction,
-    MaxGroundAtk,
-    MaxAirAtk,
-    AttackType,
-    WeaponSkillType,
-    DashType,
-    ChargingType,
 }
 
 public enum EAnimationFloat
 {
     AtkSpeed,
-    MoveMultiplier,
-    PotionTime,
-    MoveSpeed,
+    MoveSpeed
 }
 
 #endregion

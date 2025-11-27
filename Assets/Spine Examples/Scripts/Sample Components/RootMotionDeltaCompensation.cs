@@ -27,51 +27,54 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using Spine.Unity;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
+namespace Spine.Unity.Examples
+{
+    public class RootMotionDeltaCompensation : MonoBehaviour
+    {
+        [SerializeField] protected SkeletonRootMotionBase rootMotion;
+        public Transform targetPosition;
+        public int trackIndex;
+        public bool adjustX = true;
+        public bool adjustY = true;
+        public float minScaleX = -999;
+        public float minScaleY = -999;
+        public float maxScaleX = 999;
+        public float maxScaleY = 999;
 
-	public class RootMotionDeltaCompensation : MonoBehaviour {
+        public bool allowXTranslation;
+        public bool allowYTranslation = true;
 
-		[SerializeField] protected SkeletonRootMotionBase rootMotion;
-		public Transform targetPosition;
-		public int trackIndex = 0;
-		public bool adjustX = true;
-		public bool adjustY = true;
-		public float minScaleX = -999;
-		public float minScaleY = -999;
-		public float maxScaleX = 999;
-		public float maxScaleY = 999;
+        private void Start()
+        {
+            if (rootMotion == null)
+                rootMotion = GetComponent<SkeletonRootMotionBase>();
+        }
 
-		public bool allowXTranslation = false;
-		public bool allowYTranslation = true;
+        private void Update()
+        {
+            AdjustDelta();
+        }
 
-		void Start () {
-			if (rootMotion == null)
-				rootMotion = this.GetComponent<SkeletonRootMotionBase>();
-		}
+        private void OnDisable()
+        {
+            if (adjustX)
+                rootMotion.rootMotionScaleX = 1;
+            if (adjustY)
+                rootMotion.rootMotionScaleY = 1;
+            if (allowXTranslation)
+                rootMotion.rootMotionTranslateXPerY = 0;
+            if (allowYTranslation)
+                rootMotion.rootMotionTranslateYPerX = 0;
+        }
 
-		void Update () {
-			AdjustDelta();
-		}
-
-		void OnDisable () {
-			if (adjustX)
-				rootMotion.rootMotionScaleX = 1;
-			if (adjustY)
-				rootMotion.rootMotionScaleY = 1;
-			if (allowXTranslation)
-				rootMotion.rootMotionTranslateXPerY = 0;
-			if (allowYTranslation)
-				rootMotion.rootMotionTranslateYPerX = 0;
-		}
-
-		void AdjustDelta () {
-			Vector3 toTarget = targetPosition.position - this.transform.position;
-			rootMotion.AdjustRootMotionToDistance(toTarget, trackIndex, adjustX, adjustY,
-				minScaleX, maxScaleX, minScaleY, maxScaleY,
-				allowXTranslation, allowYTranslation);
-		}
-	}
+        private void AdjustDelta()
+        {
+            var toTarget = targetPosition.position - transform.position;
+            rootMotion.AdjustRootMotionToDistance(toTarget, trackIndex, adjustX, adjustY,
+                minScaleX, maxScaleX, minScaleY, maxScaleY,
+                allowXTranslation, allowYTranslation);
+        }
+    }
 }

@@ -4,7 +4,11 @@ namespace Apis
 {
     public abstract class Debuff_DotDmg : Debuff_base
     {
-        SubBuffOptionDataType _option;
+        private SubBuffOptionDataType _option;
+
+        protected Debuff_DotDmg(Buff buff) : base(buff)
+        {
+        }
 
         protected SubBuffOptionDataType option
         {
@@ -12,18 +16,15 @@ namespace Apis
             {
                 if (_option == null)
                 {
-                    BuffDatabase.DataLoad.TryGetSubBuffIndex(Type, out int index);
+                    BuffDatabase.DataLoad.TryGetSubBuffIndex(Type, out var index);
                     BuffDatabase.DataLoad.TryGetSubBuffOption(index, out _option);
                 }
 
                 return _option;
             }
-        } 
-        public float Dmg { get; protected set; }
-        protected Debuff_DotDmg(Buff buff) : base(buff)
-        {
-            
         }
+
+        public float Dmg { get; protected set; }
 
         public override void OnAdd()
         {

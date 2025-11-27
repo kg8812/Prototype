@@ -1,6 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
-using Apis;
 using Apis;
 using EventData;
 using UnityEngine;
@@ -8,17 +6,16 @@ using UnityEngine.Events;
 
 public class MonsterMoveComponent : UnitMoveComponent
 {
+    private Coroutine KnockBackCoroutine;
     private Monster monster;
-    
+
     public override void Init(IMovable mover, Collider2D col)
     {
         base.Init(mover, col);
-        
+
         monster = mover as Monster;
     }
 
-    private Coroutine KnockBackCoroutine;
-    
     public override void KnockBack(Vector2 src, KnockBackData knockBackData, UnityAction OnBegin,
         UnityAction OnEnd)
     {
@@ -26,14 +23,14 @@ public class MonsterMoveComponent : UnitMoveComponent
         {
             Debug.Log("KnockBack2");
 
-            if(KnockBackCoroutine != null) StopCoroutine(KnockBackCoroutine);
+            if (KnockBackCoroutine != null) StopCoroutine(KnockBackCoroutine);
             OnBegin?.Invoke();
             ActorMovement.KnockBack2(src, knockBackData);
             // 몬스터의 경우 Time이 아닌 vel.x, y가 최소가 근접할때까지 반복
             KnockBackCoroutine = StartCoroutine(CheckKnockBackEnd(OnEnd));
         }
     }
-    
+
     private IEnumerator CheckKnockBackEnd(UnityAction onEnd, float minXY = 0.01f)
     {
         while (true)

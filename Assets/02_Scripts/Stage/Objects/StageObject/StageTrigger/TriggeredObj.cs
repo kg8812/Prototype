@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace Apis.StageObj
+﻿namespace Apis.StageObj
 {
     public interface TriggeredObj
     {

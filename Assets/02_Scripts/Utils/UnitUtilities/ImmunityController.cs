@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 // 면역 관리 클래스
 public class ImmunityController
@@ -18,8 +16,8 @@ public class ImmunityController
     public Guid AddCount(string type)
     {
         if (!lists.TryGetValue(type, out var set)) return Guid.Empty;
-        
-        Guid guid = Guid.NewGuid();
+
+        var guid = Guid.NewGuid();
 
         set.Add(guid);
 
@@ -30,27 +28,27 @@ public class ImmunityController
     public void MinusCount(string type, Guid guid)
     {
         if (!lists.TryGetValue(type, out var set)) return;
-        
+
         set.Remove(guid);
     }
-    
+
     // 특정 타입 면역 제거
     public void MakeCountToZero(string type)
     {
         if (!lists.TryGetValue(type, out var set)) return;
-        
+
         set.Clear();
     }
-   // 면역 확인
+
+    // 면역 확인
     public bool IsImmune(string type)
     {
-        bool b = lists.TryGetValue(type, out var set) && set.Count > 0;
+        var b = lists.TryGetValue(type, out var set) && set.Count > 0;
         return b;
     }
-    
+
     public bool Contains(string type)
     {
         return lists.ContainsKey(type);
     }
-    
 }

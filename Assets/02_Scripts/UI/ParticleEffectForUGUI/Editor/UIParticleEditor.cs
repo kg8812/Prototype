@@ -6,7 +6,6 @@ using UnityEditor.UI;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UI;
-using Coffee.UIParticleExtensions;
 #if UNITY_2021_2_OR_NEWER
 using UnityEditor.Overlays;
 #else
@@ -16,6 +15,7 @@ using Object = UnityEngine.Object;
 #endif
 #if UNITY_2021_2_OR_NEWER
 using UnityEditor.SceneManagement;
+
 #elif UNITY_2018_3_OR_NEWER
 using UnityEditor.Experimental.SceneManagement;
 #endif
@@ -41,10 +41,7 @@ namespace Coffee.UIExtensions
 
             public override void OnGUI()
             {
-                if (visible)
-                {
-                    WindowFunction();
-                }
+                if (visible) WindowFunction();
             }
         }
 #endif
@@ -52,14 +49,14 @@ namespace Coffee.UIExtensions
         //################################
         // Constant or Static Members.
         //################################
-        private static readonly GUIContent s_ContentRenderingOrder = new GUIContent("Rendering Order");
-        private static readonly GUIContent s_ContentRefresh = new GUIContent("Refresh");
-        private static readonly GUIContent s_ContentFix = new GUIContent("Fix");
-        private static readonly GUIContent s_ContentMaterial = new GUIContent("Material");
-        private static readonly GUIContent s_ContentTrailMaterial = new GUIContent("Trail Material");
-        private static readonly GUIContent s_Content3D = new GUIContent("3D");
-        private static readonly GUIContent s_ContentRandom = new GUIContent("Random");
-        private static readonly GUIContent s_ContentScale = new GUIContent("Scale");
+        private static readonly GUIContent s_ContentRenderingOrder = new("Rendering Order");
+        private static readonly GUIContent s_ContentRefresh = new("Refresh");
+        private static readonly GUIContent s_ContentFix = new("Fix");
+        private static readonly GUIContent s_ContentMaterial = new("Material");
+        private static readonly GUIContent s_ContentTrailMaterial = new("Trail Material");
+        private static readonly GUIContent s_Content3D = new("3D");
+        private static readonly GUIContent s_ContentRandom = new("Random");
+        private static readonly GUIContent s_ContentScale = new("Scale");
         private static SerializedObject s_SerializedObject;
         private static bool s_XYZMode;
 
@@ -74,11 +71,11 @@ namespace Coffee.UIExtensions
         private ReorderableList _ro;
         private bool _showMax;
 
-        private static readonly HashSet<Shader> s_Shaders = new HashSet<Shader>();
+        private static readonly HashSet<Shader> s_Shaders = new();
 #if UNITY_2018 || UNITY_2019
         private static readonly List<ParticleSystemVertexStream> s_Streams = new List<ParticleSystemVertexStream>();
 #endif
-        private static readonly List<string> s_MaskablePropertyNames = new List<string>
+        private static readonly List<string> s_MaskablePropertyNames = new()
         {
             "_Stencil",
             "_StencilComp",
@@ -142,7 +139,7 @@ namespace Coffee.UIExtensions
         // Public/Protected Members.
         //################################
         /// <summary>
-        /// This function is called when the object becomes enabled and active.
+        ///     This function is called when the object becomes enabled and active.
         /// </summary>
         protected override void OnEnable()
         {
@@ -181,9 +178,7 @@ namespace Coffee.UIExtensions
                     MaterialField(rect, s_ContentTrailMaterial, materials, 1);
                     EditorGUI.EndDisabledGroup();
                     if (materials != null && materials.serializedObject.hasModifiedProperties)
-                    {
                         materials.serializedObject.ApplyModifiedProperties();
-                    }
                 },
                 drawHeaderCallback = rect =>
                 {
@@ -195,25 +190,21 @@ namespace Coffee.UIExtensions
 
                     pos = new Rect(rect.width - 35, rect.y, 60, rect.height);
                     if (GUI.Button(pos, s_ContentRefresh, EditorStyles.miniButton))
-                    {
                         foreach (var uip in targets.OfType<UIParticle>())
                         {
                             uip.RefreshParticles();
                             EditorUtility.SetDirty(uip);
                         }
-                    }
                 }
             };
 
             // On select UIParticle, refresh particles.
             if (!Application.isPlaying)
-            {
                 foreach (var uip in targets.OfType<UIParticle>())
                 {
                     if (PrefabUtility.GetPrefabAssetType(uip) != PrefabAssetType.NotAPrefab) continue;
                     uip.RefreshParticles(uip.particles);
                 }
-            }
         }
 
         private static void MaterialField(Rect rect, GUIContent label, SerializedProperty sp, int index)
@@ -231,7 +222,7 @@ namespace Coffee.UIExtensions
         }
 
         /// <summary>
-        /// Implement this function to make a custom inspector.
+        ///     Implement this function to make a custom inspector.
         /// </summary>
         public override void OnInspectorGUI()
         {
@@ -263,10 +254,7 @@ namespace Coffee.UIExtensions
             if (EditorGUI.EndChangeCheck())
             {
                 serializedObject.ApplyModifiedProperties();
-                foreach (var uip in targets.OfType<UIParticle>())
-                {
-                    uip.ResetGroupId();
-                }
+                foreach (var uip in targets.OfType<UIParticle>()) uip.ResetGroupId();
             }
 
             // Position Mode
@@ -282,12 +270,8 @@ namespace Coffee.UIExtensions
             EditorGUI.EndDisabledGroup();
             serializedObject.ApplyModifiedProperties();
             if (EditorGUI.EndChangeCheck())
-            {
                 foreach (var uip in targets.OfType<UIParticle>())
-                {
                     uip.RefreshParticles(uip.particles);
-                }
-            }
 
             // Non-UI built-in shader is not supported.
             foreach (var mat in current.materials)
@@ -295,17 +279,14 @@ namespace Coffee.UIExtensions
                 if (!mat || !mat.shader) continue;
                 var shader = mat.shader;
                 if (IsBuiltInObject(shader) && !shader.name.StartsWith("UI/"))
-                {
                     EditorGUILayout.HelpBox(
                         $"Built-in shader '{shader.name}' in '{mat.name}' is not supported.\n" +
                         "Use UI shaders instead.",
                         MessageType.Error);
-                }
             }
 
             // Does the shader support UI masks?
             if (current.maskable && current.GetComponentInParent<Mask>(false))
-            {
                 foreach (var mat in current.materials)
                 {
                     if (!mat || !mat.shader) continue;
@@ -323,7 +304,6 @@ namespace Coffee.UIExtensions
                         break;
                     }
                 }
-            }
 
             s_Shaders.Clear();
 
@@ -332,9 +312,7 @@ namespace Coffee.UIExtensions
 #pragma warning disable CS0612
             if (FixButton(current.m_IsTrail, label))
 #pragma warning restore CS0612
-            {
                 DestroyUIParticle(current);
-            }
 
 #if UNITY_2018 || UNITY_2019
             // (2018, 2019) Check to use 'TEXCOORD*.zw' components as custom vertex stream.
@@ -368,7 +346,7 @@ namespace Coffee.UIExtensions
 
         private bool IsBuiltInObject(Object obj)
         {
-            return AssetDatabase.TryGetGUIDAndLocalFileIdentifier(obj, out var guid, out long _)
+            return AssetDatabase.TryGetGUIDAndLocalFileIdentifier(obj, out var guid, out var _)
                    && Regex.IsMatch(guid, "^0{16}.0{15}$", RegexOptions.Compiled);
         }
 
@@ -445,10 +423,7 @@ namespace Coffee.UIExtensions
 
             EditorGUI.BeginChangeCheck();
             showMax = GUILayout.Toggle(showMax, s_ContentRandom, EditorStyles.miniButton, GUILayout.Width(60));
-            if (EditorGUI.EndChangeCheck() && !showMax)
-            {
-                spGroupMaxId.intValue = spGroupId.intValue;
-            }
+            if (EditorGUI.EndChangeCheck() && !showMax) spGroupMaxId.intValue = spGroupId.intValue;
 
             EditorGUILayout.EndHorizontal();
 
@@ -578,18 +553,12 @@ namespace Coffee.UIExtensions
             {
                 EditorGUI.BeginChangeCheck();
                 EditorGUILayout.PropertyField(x, s_ContentScale);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    y.floatValue = z.floatValue = x.floatValue;
-                }
+                if (EditorGUI.EndChangeCheck()) y.floatValue = z.floatValue = x.floatValue;
             }
 
             EditorGUI.BeginChangeCheck();
             showXyz = GUILayout.Toggle(showXyz, s_Content3D, EditorStyles.miniButton, GUILayout.Width(30));
-            if (EditorGUI.EndChangeCheck() && !showXyz)
-            {
-                z.floatValue = y.floatValue = x.floatValue;
-            }
+            if (EditorGUI.EndChangeCheck() && !showXyz) z.floatValue = y.floatValue = x.floatValue;
 
             EditorGUILayout.EndHorizontal();
 

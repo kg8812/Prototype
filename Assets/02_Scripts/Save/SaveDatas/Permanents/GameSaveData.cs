@@ -1,9 +1,7 @@
 ﻿using System.Collections.Generic;
-using Managers;
 
 namespace Save.Schema
 {
-    
     public class GameSaveData : ISaveData
     {
         public bool IsFirstGame = true;
@@ -16,12 +14,11 @@ namespace Save.Schema
 
         public void Initialize()
         {
-            SlotDatas = new();
+            SlotDatas = new List<SlotInfoSaveData>();
         }
 
         public void BeforeSave()
         {
         }
-        
     }
 }

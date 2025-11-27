@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace NewNewInvenSpace
 {
-    
     [Serializable]
     public enum PresetType
     {
@@ -19,12 +17,13 @@ namespace NewNewInvenSpace
         AtkItem,
         Acc
     }
-    
+
     [Serializable]
     public struct Preset
     {
         public PresetType type;
         public PresetBlock[] Blocks;
+
         public Preset(PresetType type, PresetBlock[] blocks)
         {
             this.type = type;
@@ -44,7 +43,7 @@ namespace NewNewInvenSpace
             this.invenGroupType = invenGroupType;
         }
     }
-    
+
     [InfoBox(
         @"프리셋 인덱스 목록
 0 ~ 5 : 캐릭터별 프리셋 (아징릴주고비)
@@ -54,10 +53,9 @@ namespace NewNewInvenSpace
 9 : 비챤 야수
 10 : 아이네 스킬
 11 : 아이네 달의 영역")]
-    [CreateAssetMenu(menuName = "Scriptable/Datas/PresetData", fileName="New PresetData")]
-    public class PresetData: ScriptableObject
+    [CreateAssetMenu(menuName = "Scriptable/Datas/PresetData", fileName = "New PresetData")]
+    public class PresetData : ScriptableObject
     {
-
         /* 프리셋 인덱스 목록
          * 0 ~ 5 : 캐릭터별 프리셋 (아징릴주고비)
          * 6 : 릴파 스킬
@@ -70,10 +68,12 @@ namespace NewNewInvenSpace
 
         public const int AtkCnt = 4;
         public const int AccCnt = 12;
-        
-        [Serializable]
-        public class IntPresetDictionary: UnitySerializedDictionary<int, Preset> {}
 
         public IntPresetDictionary Presets;
+
+        [Serializable]
+        public class IntPresetDictionary : UnitySerializedDictionary<int, Preset>
+        {
+        }
     }
 }

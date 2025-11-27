@@ -1,5 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.ComponentModel;
+using UnityEditor;
 using UnityEngine;
 
 namespace ES3Internal
@@ -16,15 +16,16 @@ namespace ES3Internal
 #if ES3GLOBAL_DISABLED
         private static bool useGlobalReferences = false;
 #else
-        private static bool useGlobalReferences = true;
+        private static readonly bool useGlobalReferences = true;
 #endif
 
         private const string globalReferencesPath = "ES3/ES3GlobalReferences";
 
-        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
-        public ES3RefIdDictionary refId = new ES3RefIdDictionary();
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public ES3RefIdDictionary refId = new();
 
-        private static ES3GlobalReferences _globalReferences = null;
+        private static ES3GlobalReferences _globalReferences;
+
         public static ES3GlobalReferences Instance
         {
             get
@@ -41,27 +42,27 @@ namespace ES3Internal
 
                     if (_globalReferences == null)
                     {
-                        _globalReferences = ScriptableObject.CreateInstance<ES3GlobalReferences>();
+                        _globalReferences = CreateInstance<ES3GlobalReferences>();
 
                         // If this is the version being submitted to the Asset Store, don't include ES3Defaults.
                         if (Application.productName.Contains("ES3 Release"))
                         {
-                            Debug.Log("This has been identified as a release build as the title contains 'ES3 Release', so ES3GlobalReferences will not be created.");
+                            Debug.Log(
+                                "This has been identified as a release build as the title contains 'ES3 Release', so ES3GlobalReferences will not be created.");
                             return _globalReferences;
                         }
 
                         ES3Settings.CreateDefaultSettingsFolder();
-                        UnityEditor.AssetDatabase.CreateAsset(_globalReferences, PathToGlobalReferences());
-                        UnityEditor.AssetDatabase.SaveAssets();
+                        AssetDatabase.CreateAsset(_globalReferences, PathToGlobalReferences());
+                        AssetDatabase.SaveAssets();
                     }
-
                 }
 
                 return _globalReferences;
             }
         }
 
-        private long Get(UnityEngine.Object obj)
+        private long Get(Object obj)
         {
             if (obj == null)
                 return -1;
@@ -72,9 +73,9 @@ namespace ES3Internal
             return id;
         }
 
-        public UnityEngine.Object Get(long id)
+        public Object Get(long id)
         {
-            foreach(var kvp in refId)
+            foreach (var kvp in refId)
                 if (kvp.Value == id)
                     return kvp.Key;
             return null;
@@ -89,34 +90,35 @@ namespace ES3Internal
                 if (obj == null)
                     continue;
 
-                if ((
-                 ((obj.hideFlags & HideFlags.HideInInspector) == HideFlags.HideInInspector) ||
-                 ((obj.hideFlags & HideFlags.DontSave) == HideFlags.DontSave) ||
-                 ((obj.hideFlags & HideFlags.DontSaveInBuild) == HideFlags.DontSaveInBuild) ||
-                 ((obj.hideFlags & HideFlags.DontSaveInEditor) == HideFlags.DontSaveInEditor) ||
-                 ((obj.hideFlags & HideFlags.HideAndDontSave) == HideFlags.HideAndDontSave)))
+                if ((obj.hideFlags & HideFlags.HideInInspector) == HideFlags.HideInInspector ||
+                    (obj.hideFlags & HideFlags.DontSave) == HideFlags.DontSave ||
+                    (obj.hideFlags & HideFlags.DontSaveInBuild) == HideFlags.DontSaveInBuild ||
+                    (obj.hideFlags & HideFlags.DontSaveInEditor) == HideFlags.DontSaveInEditor ||
+                    (obj.hideFlags & HideFlags.HideAndDontSave) == HideFlags.HideAndDontSave)
                 {
                     var type = obj.GetType();
                     // Meshes are marked with HideAndDontSave, but shouldn't be ignored.
                     if (type != typeof(Mesh) && type != typeof(Material))
                         continue;
                 }
+
                 newRefId[obj] = kvp.Value;
             }
+
             refId = newRefId;
         }
 
-        public long GetOrAdd(UnityEngine.Object obj)
+        public long GetOrAdd(Object obj)
         {
             var id = Get(obj);
 
             // Only add items to global references when it's not playing.
-            if (!Application.isPlaying && id == -1 && UnityEditor.AssetDatabase.Contains(obj) && ES3ReferenceMgr.CanBeSaved(obj))
+            if (!Application.isPlaying && id == -1 && AssetDatabase.Contains(obj) && ES3ReferenceMgr.CanBeSaved(obj))
             {
                 id = ES3ReferenceMgrBase.GetNewRefID();
                 refId.Add(obj, id);
 
-                UnityEditor.EditorUtility.SetDirty(this);
+                EditorUtility.SetDirty(this);
             }
 
             return id;
@@ -124,7 +126,7 @@ namespace ES3Internal
 
         private static string PathToGlobalReferences()
         {
-            return ES3Settings.PathToEasySaveFolder() + "Resources/" + globalReferencesPath +".asset";
+            return ES3Settings.PathToEasySaveFolder() + "Resources/" + globalReferencesPath + ".asset";
         }
 #endif
     }

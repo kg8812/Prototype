@@ -9,13 +9,10 @@ namespace Apis
         public static AsyncOperationHandle<GameObject> InstantiateAsync(AssetReference assetRef)
         {
             var handler = Addressables.InstantiateAsync(assetRef);
-            
+
             handler.Completed += obj =>
             {
-                if (obj.Result != null)
-                {
-                    obj.Result.AddComponent<AddressCleanUp>();
-                }
+                if (obj.Result != null) obj.Result.AddComponent<AddressCleanUp>();
             };
 
             return handler;
@@ -25,11 +22,8 @@ namespace Apis
         {
             var handler = Addressables.InstantiateAsync(address);
 
-            handler.Completed += obj =>
-            {
-                obj.Result.AddComponent<AddressCleanUp>();
-            };
-            
+            handler.Completed += obj => { obj.Result.AddComponent<AddressCleanUp>(); };
+
             return handler;
         }
     }

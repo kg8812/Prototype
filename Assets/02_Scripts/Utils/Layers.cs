@@ -24,7 +24,7 @@ namespace Apis
         public static readonly LayerMask Fragment = LayerMask.GetMask("Fragment");
         public static readonly LayerMask BackGround = LayerMask.GetMask("BackGround");
         public static readonly LayerMask Trigger = LayerMask.GetMask("Trigger");
-        
+
         public static readonly LayerMask MapAndPlatform = Map | Platform;
         public static readonly LayerMask GroundAndPlatform = Ground | Platform | Map; // 일단 Map도 포함시켜둠
         public static readonly LayerMask GroundWall = Ground | Wall;
@@ -53,7 +53,6 @@ namespace Apis
         public static readonly int Fragment = LayerMask.NameToLayer("Fragment");
         public static readonly int BackGround = LayerMask.NameToLayer("BackGround");
         public static readonly int Ground = LayerMask.NameToLayer("Ground");
-
     }
 
     public static class SortingLayers

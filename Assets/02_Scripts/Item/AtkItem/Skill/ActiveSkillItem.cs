@@ -1,12 +1,13 @@
-﻿using Apis;
-using Apis.DataType;
+﻿using Apis.DataType;
+using Default;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace Apis
 {
-    public class ActiveSkillItem: Item, IAttackItem
+    public class ActiveSkillItem : Item, IAttackItem
     {
+        private ActiveSkillItemDataType _data;
         // protected new string name;
         // protected string flavourText;
         // protected string description;
@@ -19,24 +20,8 @@ namespace Apis
         // public override string FlavourText => flavourText;
         //
         // public override string Description => description;
-        
-        [ReadOnly][ShowInInspector]public ActiveSkill ActiveSkill { get; set; }
 
-        private ActiveSkillItemDataType _data;
-        
-        public override void Init()
-        {
-            base.Init();
-            if (Image == null && _data != null)
-            {
-                Image = Default.ResourceUtil.Load<Sprite>(_data.iconPath);
-            }
-            ActiveSkill.Init();
-        }
-
-        public override void Activate()
-        {
-        }
+        [ReadOnly] [ShowInInspector] public ActiveSkill ActiveSkill { get; set; }
 
         public void BeforeAttack()
         {
@@ -52,16 +37,33 @@ namespace Apis
         {
             return ActiveSkill.TryUse();
         }
+
         public void WhenIconIsSet(UI_AtkItemIcon icon)
         {
             if (icon == null) return;
-            
+
             icon.Skill = ActiveSkill;
         }
 
         public void EndAttack()
         {
             ActiveSkill?.DeActive();
+        }
+
+        public AttackCategory Category => AttackCategory.One;
+
+        public UI_AtkItemIcon Icon { get; set; }
+        public int AtkSlotIndex { get; set; }
+
+        public override void Init()
+        {
+            base.Init();
+            if (Image == null && _data != null) Image = ResourceUtil.Load<Sprite>(_data.iconPath);
+            ActiveSkill.Init();
+        }
+
+        public override void Activate()
+        {
         }
 
         protected override void OnEquip(IMonoBehaviour user)
@@ -81,10 +83,5 @@ namespace Apis
             base.Return();
             GameManager.Item.ActiveSkillItem.Return(this);
         }
-
-        public AttackCategory Category => AttackCategory.One;
-        
-        public UI_AtkItemIcon Icon { get; set; }
-        public int AtkSlotIndex { get; set; }
     }
 }

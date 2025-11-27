@@ -2,44 +2,53 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Apis;
-using Apis;
+using Command;
 using DG.Tweening;
 using PlayerState;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
+using Dash = PlayerState.Dash;
+using Idle = PlayerState.Idle;
+using Interact = PlayerState.Interact;
+using Jump = PlayerState.Jump;
+using Move = PlayerState.Move;
+using Skill = PlayerState.Skill;
 
 public partial class Player : Actor
 {
-    public bool PhysicTest =false;
+    private const float searchDepth = 0.1f;
+    public bool PhysicTest;
+    public uint MaxAirDash = 1;
+    public bool StateLog;
 
-    Dictionary<EPlayerState, IState<Player>> _playerStateDictionary = new Dictionary<EPlayerState, IState<Player>>();
-    readonly private StateEvent _StateEvent = new();
-    public StateEvent StateEvent => _StateEvent;
-    PlayerStateMachine _playerStateMachine;
+    private readonly Dictionary<EPlayerState, bool> _AbleState = new();
 
-    public Command.ECommandType CurrentCommand => controller.CurrentCommand;
+    private UnityEvent _OnChargeEnd;
 
-    private Dictionary<EPlayerState, bool> _AbleState = new();
+    private UnityEvent _onChargeStart;
 
-    public bool AbleDash => ableDash;
-    private bool ableDash;
+    private readonly Dictionary<EPlayerState, IState<Player>> _playerStateDictionary = new();
 
     public CoyoteVar<int> CoyoteCurrentJump;
 
-    public bool IsCrouch => isCrouch;
-    private bool isCrouch = false;
+    private Tweener dashLandingTweener;
 
-    public bool IsDrop => isDrop;
-    private bool isDrop = false;
+    public StateEvent StateEvent { get; } = new();
+
+    public ECommandType CurrentCommand => Controller.CurrentCommand;
+
+    public bool AbleDash { get; private set; }
+
+    public bool IsCrouch { get; } = false;
+
+    public bool IsDrop { get; private set; }
 
     public bool AbleAttack => GetAbleState(EPlayerState.Attack);
- 
+
     public bool ableMove => MoveComponent.ableMove;
     public bool ableJump => MoveComponent.ableJump;
     public bool IsClimb { get; set; }
     public bool IsMove { get; set; }
-    public bool IsDash { get; set; }
 
     public bool OnAttack { get; set; }
     public bool OnFinalAttack { get; set; }
@@ -48,26 +57,41 @@ public partial class Player : Actor
 
     public int AirDashed { get; set; }
     public bool IsReadyIdle { get; set; }
-    public uint MaxAirDash = 1;
 
     public bool isInteractable { get; set; }
-    public ActorMovement ActorMovement => MoveComponent?.ActorMovement;
     public EActorDirection PressingDir => Controller.PressingDir;
-    
-    UnityEvent _onChargeStart;
-    public UnityEvent OnChargeStart => _onChargeStart ??= new();
+    public UnityEvent OnChargeStart => _onChargeStart ??= new UnityEvent();
+    public UnityEvent OnChargeEnd => _OnChargeEnd ??= new UnityEvent();
+    public bool IsFixGravity { get; set; }
 
-    private UnityEvent _OnChargeEnd;
-    public UnityEvent OnChargeEnd => _OnChargeEnd ??= new();
+    public PlayerStateMachine StateMachine { get; private set; }
+
+    public EPlayerState CurrentState { get; private set; }
+
+    public bool IsDash { get; set; }
+
+    public virtual void DashOff()
+    {
+        AbleDash = false;
+        SetAbleState(EPlayerState.Dash, false);
+    }
+
+    public virtual void DashOn()
+    {
+        AbleDash = true;
+        SetAbleState(EPlayerState.Dash);
+        if (StateMachine?.CurrentState is BaseState s)
+            s.AbleStates.Add(EPlayerState.Dash);
+    }
+
+    public ActorMovement ActorMovement => MoveComponent?.ActorMovement;
 
     public void MoveOn()
     {
         MoveComponent.MoveOn();
-        SetAbleState(EPlayerState.Move, true);
+        SetAbleState(EPlayerState.Move);
 
-        if(_playerStateMachine?.CurrentState is BaseState s){
-            s.AbleStates.Add(EPlayerState.Move);
-        }
+        if (StateMachine?.CurrentState is BaseState s) s.AbleStates.Add(EPlayerState.Move);
     }
 
     public void MoveOff()
@@ -80,6 +104,7 @@ public partial class Player : Actor
     {
         MoveComponent.MoveCCOn();
     }
+
     public void MoveCCOff()
     {
         MoveComponent.MoveCCOff();
@@ -88,8 +113,8 @@ public partial class Player : Actor
     public void JumpOn()
     {
         MoveComponent.JumpOn();
-        SetAbleState(EPlayerState.Jump, true);
-        if(_playerStateMachine?.CurrentState is BaseState s)
+        SetAbleState(EPlayerState.Jump);
+        if (StateMachine?.CurrentState is BaseState s)
             s.AbleStates.Add(EPlayerState.Jump);
     }
 
@@ -99,28 +124,16 @@ public partial class Player : Actor
         SetAbleState(EPlayerState.Jump, false);
     }
 
-    public virtual void DashOff()
-    {
-        ableDash = false;
-        SetAbleState(EPlayerState.Dash, false);
-    }
-    public virtual void DashOn()
-    {
-        ableDash = true;
-        SetAbleState(EPlayerState.Dash, true);
-        if(_playerStateMachine?.CurrentState is BaseState s)
-            s.AbleStates.Add(EPlayerState.Dash);
-    }
-
     public void BlockIdle(bool isBlock = true)
     {
         SetAbleState(EPlayerState.Idle, isBlock);
     }
 
-    IEnumerator PlayerWaitCoroutine(UnityAction action)
+    private IEnumerator PlayerWaitCoroutine(UnityAction action)
     {
         IdleOn();
-        yield return new WaitUntil(() => {
+        yield return new WaitUntil(() =>
+        {
             return !IsMove && !onAir && !OnAttack && !IsDash && !IsCrouch && !IsClimb && IsReadyIdle;
         });
         action.Invoke();
@@ -130,27 +143,26 @@ public partial class Player : Actor
     public void ControlOff(bool isBlockAttck = false)
     {
         MoveComponent.MoveCCOn();
-        controller.DisableControl();
-        if(isBlockAttck) AttackOff();
+        Controller.DisableControl();
+        if (isBlockAttck) AttackOff();
     }
+
     public void ControlOn()
     {
         MoveComponent.MoveCCOff();
         AttackOn();
-        controller.EnableControl();
+        Controller.EnableControl();
     }
 
     public void ControllerOn()
     {
-        controller.EnableControl();
-    }
-    public void ControllerOff()
-    {
-        controller.DisableControl();
+        Controller.EnableControl();
     }
 
-    private bool isFixGravity = false;
-    public bool IsFixGravity { get => isFixGravity; set => isFixGravity = value; }
+    public void ControllerOff()
+    {
+        Controller.DisableControl();
+    }
 
     public void GravityOn()
     {
@@ -177,23 +189,22 @@ public partial class Player : Actor
 
         ActorMovement.SetGravityToZero();
     }
-    
+
     public void DropOver(Collider2D platform)
     {
-        if(!isDrop || platform == null) return;
+        if (!IsDrop || platform == null) return;
 
-        Physics2D.IgnoreCollision(playerCollisionCollider, platform, false);
-        isDrop = false;
+        Physics2D.IgnoreCollision(PlayerCollisionCollider, platform, false);
+        IsDrop = false;
     }
 
-    private const float searchDepth = 0.1f;
     public Collider2D DropStart()
     {
-        if(!IsDropable(out var platform)) return null;
+        if (!IsDropable(out var platform)) return null;
 
-        Physics2D.IgnoreCollision(playerCollisionCollider, platform, true);
+        Physics2D.IgnoreCollision(PlayerCollisionCollider, platform, true);
 
-        isDrop = true;
+        IsDrop = true;
 
         return platform;
     }
@@ -208,13 +219,12 @@ public partial class Player : Actor
         return !(hit.collider == null) && Controller.IsPressingDown;
     }
 
-    private Tweener dashLandingTweener;
-    public Tweener DashLanding(float time, float distance, DG.Tweening.Ease graph)
+    public Tweener DashLanding(float time, float distance, Ease graph)
     {
-        Vector2 tempSpeed = Rb.linearVelocity;
+        var tempSpeed = Rb.linearVelocity;
         Rb.linearVelocity = Vector2.zero;
         dashLandingTweener = ActorMovement.DashTemp(time, distance, false, graph);
-        dashLandingTweener.onComplete += () => Rb.linearVelocity = tempSpeed; 
+        dashLandingTweener.onComplete += () => Rb.linearVelocity = tempSpeed;
         return dashLandingTweener;
     }
 
@@ -231,40 +241,38 @@ public partial class Player : Actor
             animator.SetTrigger("CancelMotion");
         }
     }
-    
+
     private void StateMachineInit()
     {
         MakeDict();
-        _playerStateMachine = new PlayerStateMachine(this, _playerStateDictionary[EPlayerState.Idle]);
+        StateMachine = new PlayerStateMachine(this, _playerStateDictionary[EPlayerState.Idle]);
     }
 
-    public PlayerStateMachine StateMachine => _playerStateMachine;
-    private EPlayerState _CurrentState;
-    public EPlayerState CurrentState => _CurrentState;
-    public bool StateLog = false;
     public void SetState(EPlayerState state)
     {
         IState<Player> outState;
         if (_playerStateDictionary.TryGetValue(state, out outState))
         {
-            if(_playerStateMachine.CurrentState != outState){
-                _CurrentState = state;
-                if(StateLog) Debug.Log(state);
+            if (StateMachine.CurrentState != outState)
+            {
+                CurrentState = state;
+                if (StateLog) Debug.Log(state);
             }
-            _playerStateMachine.SetState(outState);
+
+            StateMachine.SetState(outState);
         }
     }
 
     public EPlayerState GetState()
     {
-        foreach(KeyValuePair<EPlayerState, IState<Player>> kv in _playerStateDictionary)
-        {
-            if(kv.Value == _playerStateMachine.CurrentState) return kv.Key;
-        }
+        foreach (var kv in _playerStateDictionary)
+            if (kv.Value == StateMachine.CurrentState)
+                return kv.Key;
 
         return EPlayerState.Idle;
     }
-    void MakeDict()
+
+    private void MakeDict()
     {
         _playerStateDictionary.Add(EPlayerState.Idle, new Idle());
         _playerStateDictionary.Add(EPlayerState.Move, new Move());
@@ -273,9 +281,7 @@ public partial class Player : Actor
         _playerStateDictionary.Add(EPlayerState.Attack, new Attack());
         _playerStateDictionary.Add(EPlayerState.Damaged, new Damaged());
         _playerStateDictionary.Add(EPlayerState.Dead, new Dead());
-        _playerStateDictionary.Add(EPlayerState.Skill,new PlayerState.Skill());
-        _playerStateDictionary.Add(EPlayerState.KnockBack, new KnockBack());
-        _playerStateDictionary.Add(EPlayerState.KnockBackEnd, new KnockBackEnd());
+        _playerStateDictionary.Add(EPlayerState.Skill, new Skill());
         _playerStateDictionary.Add(EPlayerState.Interact, new Interact());
     }
 
@@ -283,7 +289,7 @@ public partial class Player : Actor
     {
         ableAttack = true;
         MoveComponent.ableMove = true;
-        ableDash = true;
+        AbleDash = true;
         onAir = false;
         AirDashed = 0;
         IsReadyIdle = true;
@@ -297,18 +303,13 @@ public partial class Player : Actor
         isInteractable = true;
 
         foreach (var state in Enum.GetValues(typeof(EPlayerState)))
-        {
-            if(!_AbleState.TryAdd((EPlayerState)state, false))
-            {
+            if (!_AbleState.TryAdd((EPlayerState)state, false))
                 _AbleState[(EPlayerState)state] = false;
-            }
-        }
+
         _AbleState[EPlayerState.Idle] = true;
 
-        StateEvent.AddEvent(EventType.OnIdle, (e) =>{
-            _AbleState[EPlayerState.Idle] = false;
-        });
-        _CurrentState = EPlayerState.Idle;
+        StateEvent.AddEvent(EventType.OnIdle, e => { _AbleState[EPlayerState.Idle] = false; });
+        CurrentState = EPlayerState.Idle;
     }
 
     public void SetAbleState(EPlayerState state, bool value = true)
@@ -318,7 +319,7 @@ public partial class Player : Actor
 
     public bool GetAbleState(EPlayerState state)
     {
-        if(!_AbleState.TryGetValue(state, out bool value)) 
+        if (!_AbleState.TryGetValue(state, out var value))
             return false;
 
         return value;
@@ -326,12 +327,12 @@ public partial class Player : Actor
 
     public void SetDropMaxVel(float value)
     {
-        maxDropVel = value;
+        MaxDropVel = value;
     }
 
     public void ResetDropResistFactor()
     {
-        maxDropVel = initMaxDropVel;
+        MaxDropVel = initMaxDropVel;
     }
 
     public void ForcedResetState()

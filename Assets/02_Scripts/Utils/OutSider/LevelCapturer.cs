@@ -1,18 +1,18 @@
 using System.IO;
+using Default;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class LevelCapturer : MonoBehaviour
 {
-    private Camera cam;
     public int size = 1;
-    
-    
+    private Camera cam;
+
+
     [Button(ButtonSizes.Large)]
     public void SetCamSize()
     {
-        
         Screen.SetResolution(2000, 1024, true);
         cam = GetComponent<Camera>();
         cam.orthographic = true;
@@ -24,7 +24,8 @@ public class LevelCapturer : MonoBehaviour
     [Button(ButtonSizes.Large)]
     public void Capture()
     {
-        string filePath = Path.Combine(Application.dataPath, $"Capture/{SceneManager.GetActiveScene().name}-{Default.FormatUtils.CurrentTimeToId()}.png");
+        var filePath = Path.Combine(Application.dataPath,
+            $"Capture/{SceneManager.GetActiveScene().name}-{FormatUtils.CurrentTimeToId()}.png");
         ScreenCapture.CaptureScreenshot(filePath, size);
     }
 }

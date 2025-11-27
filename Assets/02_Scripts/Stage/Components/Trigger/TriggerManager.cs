@@ -1,23 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Sirenix.Utilities;
-using UnityEngine;
+﻿using System.Collections.Generic;
 using UnityEngine.Events;
 
 namespace Apis.Components
 {
     public class TriggerManager
     {
+        private UnityEvent<Trigger> _onTriggerEnter;
+        private UnityEvent<Trigger> _onTriggerExit;
         private HashSet<int> _postTriggers;
+        public UnityEvent<Trigger> OnTriggerEnter => _onTriggerEnter ??= new UnityEvent<Trigger>();
+        public UnityEvent<Trigger> OnTriggerExit => _onTriggerExit ??= new UnityEvent<Trigger>();
 
-        UnityEvent<Trigger> _onTriggerEnter;
-        public UnityEvent<Trigger> OnTriggerEnter => _onTriggerEnter ??= new();
-         UnityEvent<Trigger> _onTriggerExit;
-        public UnityEvent<Trigger> OnTriggerExit => _onTriggerExit ??= new();
         public void Init()
         {
-            _postTriggers = new ();
+            _postTriggers = new HashSet<int>();
             GameManager.instance.WhenReturnedToTitle.RemoveListener(ClearTriggers);
             GameManager.instance.WhenReturnedToTitle.AddListener(ClearTriggers);
         }
@@ -26,6 +22,7 @@ namespace Apis.Components
         {
             return _postTriggers.Contains(triggerId);
         }
+
         public void ClearTriggers()
         {
             _postTriggers.Clear();

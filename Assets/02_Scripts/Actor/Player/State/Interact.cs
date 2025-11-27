@@ -1,22 +1,11 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using EventData;
-using UnityEngine;
-using UnityEngine.Tilemaps;
-
-namespace PlayerState {
+namespace PlayerState
+{
     public class Interact : EventState, IAnimate
     {
-        public override EPlayerState NextState { get => EPlayerState.Idle; set {} }
-        public override void OnEnter(Player t)
+        public override EPlayerState NextState
         {
-            base.OnEnter(t);
-        }
-
-        public override void OnExit()
-        {
-            base.OnExit();
+            get => EPlayerState.Idle;
+            set { }
         }
 
         public void OnEnterAnimate()
@@ -28,6 +17,16 @@ namespace PlayerState {
         public void OnExitAnimate()
         {
             _player.AnimController.Trigger(EAnimationTrigger.InteractEnd);
+        }
+
+        public override void OnEnter(Player t)
+        {
+            base.OnEnter(t);
+        }
+
+        public override void OnExit()
+        {
+            base.OnExit();
         }
 
         public override bool EscapeCondition()

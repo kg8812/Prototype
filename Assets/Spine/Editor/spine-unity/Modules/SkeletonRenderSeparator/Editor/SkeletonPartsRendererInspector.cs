@@ -31,28 +31,37 @@ using Spine.Unity.Editor;
 using UnityEditor;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	[CustomEditor(typeof(SkeletonPartsRenderer))]
-	public class SkeletonRenderPartInspector : UnityEditor.Editor {
-		SpineInspectorUtility.SerializedSortingProperties sortingProperties;
+namespace Spine.Unity.Examples
+{
+    [CustomEditor(typeof(SkeletonPartsRenderer))]
+    public class SkeletonRenderPartInspector : UnityEditor.Editor
+    {
+        private SpineInspectorUtility.SerializedSortingProperties sortingProperties;
 
-		void OnEnable () {
-			sortingProperties = new SpineInspectorUtility.SerializedSortingProperties(SpineInspectorUtility.GetRenderersSerializedObject(serializedObject));
-		}
+        private void OnEnable()
+        {
+            sortingProperties =
+                new SpineInspectorUtility.SerializedSortingProperties(
+                    SpineInspectorUtility.GetRenderersSerializedObject(serializedObject));
+        }
 
-		public override void OnInspectorGUI () {
-			SpineInspectorUtility.SortingPropertyFields(sortingProperties, true);
+        public override void OnInspectorGUI()
+        {
+            SpineInspectorUtility.SortingPropertyFields(sortingProperties, true);
 
-			if (!serializedObject.isEditingMultipleObjects) {
-				EditorGUILayout.Space();
-				if (SpineInspectorUtility.LargeCenteredButton(new GUIContent("Select SkeletonRenderer", SpineEditorUtilities.Icons.spine))) {
-					SkeletonPartsRenderer thisSkeletonPartsRenderer = target as SkeletonPartsRenderer;
-					SkeletonRenderSeparator separator = thisSkeletonPartsRenderer.GetComponentInParent<SkeletonRenderSeparator>();
-					if (separator != null && separator.partsRenderers.Contains(thisSkeletonPartsRenderer) && separator.SkeletonRenderer != null)
-						Selection.activeGameObject = separator.SkeletonRenderer.gameObject;
-				}
-			}
-		}
-	}
-
+            if (!serializedObject.isEditingMultipleObjects)
+            {
+                EditorGUILayout.Space();
+                if (SpineInspectorUtility.LargeCenteredButton(new GUIContent("Select SkeletonRenderer",
+                        SpineEditorUtilities.Icons.spine)))
+                {
+                    var thisSkeletonPartsRenderer = target as SkeletonPartsRenderer;
+                    var separator = thisSkeletonPartsRenderer.GetComponentInParent<SkeletonRenderSeparator>();
+                    if (separator != null && separator.partsRenderers.Contains(thisSkeletonPartsRenderer) &&
+                        separator.SkeletonRenderer != null)
+                        Selection.activeGameObject = separator.SkeletonRenderer.gameObject;
+                }
+            }
+        }
+    }
 }

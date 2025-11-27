@@ -1,9 +1,9 @@
-
 namespace Apis.BehaviourTreeTool
 {
     public class ExcuteAll : CommonCompositeNode
     {
-        int current;
+        private int current;
+
         public override void OnStart()
         {
             base.OnStart();
@@ -30,14 +30,10 @@ namespace Apis.BehaviourTreeTool
                         return State.Running;
                 }
             }
-            if (current >= children.Count)
-            {
-                return State.Success;
-            }
-            else
-            {
-                return State.Running;
-            }
+
+            if (current >= children.Count) return State.Success;
+
+            return State.Running;
         }
     }
 }

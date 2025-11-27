@@ -2,11 +2,10 @@ using UnityEngine;
 
 public class TileSpriteEdgePosition : MonoBehaviour
 {
-    [HideInInspector] public IMonoBehaviour target;
+    public float maxDistance;
     private SpriteRenderer render;
+    [HideInInspector] public IMonoBehaviour target;
 
-    public float maxDistance = 0;
-    
     private void Awake()
     {
         render = GetComponent<SpriteRenderer>();
@@ -14,15 +13,12 @@ public class TileSpriteEdgePosition : MonoBehaviour
 
     private void FixedUpdate()
     {
-        float distance = Vector2.Distance(transform.position, target.Position);
+        var distance = Vector2.Distance(transform.position, target.Position);
 
-        if (maxDistance > 0)
-        {
-            distance = Mathf.Clamp(distance, 0, maxDistance);
-        }
+        if (maxDistance > 0) distance = Mathf.Clamp(distance, 0, maxDistance);
         Vector2 dir = target.Position - transform.position;
         dir.Normalize();
-        
+
         render.size = new Vector2(distance / transform.localScale.x, render.size.y);
         render.transform.right = -dir;
     }

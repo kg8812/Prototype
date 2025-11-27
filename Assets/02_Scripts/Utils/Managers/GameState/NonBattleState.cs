@@ -1,16 +1,15 @@
 namespace GameStateSpace
 {
-    public class NonBattleState: GameState
+    public class NonBattleState : GameState
     {
         public override void OnEnterState()
         {
-            
         }
 
         public override void OnExitState()
         {
-            
         }
+
         public override void KeyBoardControlling()
         {
             base.KeyBoardControlling();

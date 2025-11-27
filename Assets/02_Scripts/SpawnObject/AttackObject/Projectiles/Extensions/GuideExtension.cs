@@ -9,13 +9,24 @@ namespace Apis
         FoundNearestAlways,
         FoundUntilFirstInRange
     }
+
     public class GuideExtension : ProjectileExtension
     {
+        private const int MaxTargetSearch = 15;
         [HideInInspector] public float followPower;
-        float followRange;
-        GuideTargetType guideTargetType = GuideTargetType.FoundUntilFirst;
-        float targetFoundAngle = 0;
-        
+        private Vector2 _followVec, _curVec, _toVec;
+        private int _foundedCols, _i, _exceptedCols, _targetInd;
+        private Vector2 _position, _dir;
+        private readonly Collider2D[] _tempCols = new Collider2D[MaxTargetSearch];
+        private float _tempMaxDist, _tempDist, _angle;
+        private float followRange;
+
+        private float followRangeSqr;
+        private GuideTargetType guideTargetType = GuideTargetType.FoundUntilFirst;
+
+        protected IOnHit target;
+        private float targetFoundAngle;
+
         public float FollowRange
         {
             get => followRange;
@@ -26,28 +37,54 @@ namespace Apis
             }
         }
 
-        protected IOnHit target;
-
         protected Vector2 TargetPos => target.Position;
-
-        private const int MaxTargetSearch = 15;
-        private float _tempMaxDist, _tempDist, _angle;
-        private Collider2D[] _tempCols = new Collider2D[MaxTargetSearch];
-        private int _foundedCols, _i, _exceptedCols, _targetInd;
-        private Vector2 _position, _dir;
-        private Vector2 _followVec, _curVec, _toVec;
-
-        private float followRangeSqr;
 
         private void Awake()
         {
             projectile.OnSetTarget += LookAtTarget;
         }
 
+        private void FixedUpdate()
+        {
+            if (!projectile.Fired) return;
+            if (target is { IsDead : true }) target = null;
+
+            switch (guideTargetType)
+            {
+                case GuideTargetType.FoundUntilFirst:
+                    if (!ReferenceEquals(target, null))
+                        FollowTarget();
+                    else
+                        FindTarget();
+
+                    break;
+
+                case GuideTargetType.FoundNearestAlways:
+                    FindTarget();
+                    FollowTarget();
+                    break;
+
+                case GuideTargetType.FoundUntilFirstInRange:
+                    if (!ReferenceEquals(target, null))
+                    {
+                        if (CheckTargetInRange())
+                            FollowTarget();
+                        else
+                            target = null;
+                    }
+                    else
+                    {
+                        FindTarget();
+                    }
+
+                    break;
+            }
+        }
+
         public override void Init(ProjectileInfo info)
         {
             base.Init(info);
-            
+
             if (info == null) return;
 
             target = null;
@@ -60,10 +97,7 @@ namespace Apis
 
         public void LookAtTarget(IOnHit _target)
         {
-            if (_target is { IsDead: false })
-            {
-                target = _target;
-            }
+            if (_target is { IsDead: false }) target = _target;
         }
 
         private void FollowTarget()
@@ -80,7 +114,8 @@ namespace Apis
 
         private void FindTarget()
         {
-            _foundedCols = Physics2D.OverlapCircleNonAlloc(projectile.transform.position, followRange, _tempCols, projectile.targetLayer);
+            _foundedCols = Physics2D.OverlapCircleNonAlloc(projectile.transform.position, followRange, _tempCols,
+                projectile.targetLayer);
             if (_foundedCols > 0)
             {
                 // velocity가 0이라면 각도 판별 못함
@@ -124,10 +159,7 @@ namespace Apis
                 }
 
                 target = _tempCols[_targetInd].gameObject.GetComponent<IOnHit>();
-                if (target is { IsDead: true })
-                {
-                    target = null;
-                }
+                if (target is { IsDead: true }) target = null;
             }
             else
             {
@@ -138,52 +170,8 @@ namespace Apis
         protected bool CheckTargetInRange()
         {
             _dir = TargetPos - (Vector2)projectile.transform.position;
-            return followRangeSqr >= _dir.sqrMagnitude && Utils.CheckAngle(projectile.rigid.linearVelocity, _dir, targetFoundAngle);
-        }
-
-        void FixedUpdate()
-        {
-            if (!projectile.Fired) return;
-            if (target is { IsDead : true}) target = null;
-            
-            switch (guideTargetType)
-            {
-                case GuideTargetType.FoundUntilFirst:
-                    if (!ReferenceEquals(target, null))
-                    {
-                        FollowTarget();
-                    }
-                    else
-                    {
-                        FindTarget();
-                    }
-
-                    break;
-
-                case GuideTargetType.FoundNearestAlways:
-                    FindTarget();
-                    FollowTarget();
-                    break;
-
-                case GuideTargetType.FoundUntilFirstInRange:
-                    if (!ReferenceEquals(target, null))
-                    {
-                        if (CheckTargetInRange())
-                        {
-                            FollowTarget();
-                        }
-                        else
-                        {
-                            target = null;
-                        }
-                    }
-                    else
-                    {
-                        FindTarget();
-                    }
-
-                    break;
-            }
+            return followRangeSqr >= _dir.sqrMagnitude &&
+                   Utils.CheckAngle(projectile.rigid.linearVelocity, _dir, targetFoundAngle);
         }
     }
 }

@@ -1,32 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using Apis;
 using Managers;
 using Sirenix.Utilities;
 using UnityEditor;
-using UnityEditor.Rendering;
-using UnityEngine;
 
 namespace Save.Schema
 {
     public class DataSchema
     {
         private Dictionary<string, ISaveData> _datas;
-        public Dictionary<string, ISaveData> Datas => _datas ??= new();
+        public Dictionary<string, ISaveData> Datas => _datas ??= new Dictionary<string, ISaveData>();
 
         public void Save(string key)
         {
             if (Datas.TryGetValue(key, out var value))
-            {
                 if (value != null)
                 {
                     value.BeforeSave();
                     ES3.Save(key, value);
                 }
-            }
         }
+
         public void SaveAll()
         {
             Datas?.ForEach(x =>
@@ -41,9 +36,7 @@ namespace Save.Schema
         {
             var keys = Datas.Keys.ToList();
             foreach (var x in keys)
-            {
                 if (ES3.KeyExists(x))
-                {
                     try
                     {
                         Datas[x] = ES3.Load<ISaveData>(x);
@@ -65,9 +58,6 @@ namespace Save.Schema
                         });
                         throw;
                     }
-                    
-                }
-            }
         }
 
         public void ResetAll()
@@ -78,29 +68,23 @@ namespace Save.Schema
                 Datas[x.Key].Initialize();
             });
         }
+
         public void DeleteAllData()
         {
             var keys = Datas.Keys.ToList();
             foreach (var x in keys)
-            {
                 if (ES3.KeyExists(x))
-                {
                     ES3.DeleteKey(x);
-                }
-            }
         }
 
-        public void AddData(string key,ISaveData data)
+        public void AddData(string key, ISaveData data)
         {
             Datas?.TryAdd(key, data);
         }
 
         public void DeleteData(string key)
         {
-            if (ES3.KeyExists(key))
-            {
-                ES3.DeleteKey(key);
-            }
+            if (ES3.KeyExists(key)) ES3.DeleteKey(key);
         }
     }
 
@@ -108,7 +92,8 @@ namespace Save.Schema
     {
         public void BeforeSave(); // 세이브 전 호출코드, 세이브하기전에 이 클래스에 현재 게임 내 데이터 값을 가져와야함. ex) 현재 재화값을 데이터로 가져옴
         public void OnLoaded(); // 로드시 호출코드, 이 클래스에 저장된 데이터들을 게임에 적용시킴.
+
         public void Initialize(); // 이 함수는 이 클래스의 데이터를 초기화하는용이 아니라, 현재 이 세이브 데이터에 맞는 게임 내 데이터를 초기화하는용임.
-                                 //  예시) 재화관련 세이브를 관리하는 클래스일 시, 현재 게임내의 재화를 0으로 초기화. 새로운 슬롯을 만들 때 초기화하기 위해 필요한 함수
+        //  예시) 재화관련 세이브를 관리하는 클래스일 시, 현재 게임내의 재화를 0으로 초기화. 새로운 슬롯을 만들 때 초기화하기 위해 필요한 함수
     }
 }

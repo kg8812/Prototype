@@ -5,36 +5,35 @@ using UnityEngine.UI;
 
 public class UI_HoveringShader : MonoBehaviour
 {
-
-    Image image;
-    bool isSelected;
-
     [HideInInspector] public int isHovering;
 
     [FormerlySerializedAs("OnHoverOn")] public UnityEvent OnHoverEnter = new();
     public UnityEvent OnHoverExit = new();
 
-    private void Start() {
-        image = GetComponent<Image>();
-        Material mat = Instantiate(image.material);
-        image.material = mat;
+    private Image image;
+    private bool isSelected;
 
+    private void Start()
+    {
+        image = GetComponent<Image>();
+        var mat = Instantiate(image.material);
+        image.material = mat;
     }
-    void Update()
+
+    private void Update()
     {
         if (isHovering == 1 || isSelected)
         {
-            image.material.SetInt("_IsHovering",isHovering);
-            image.material.SetFloat("_UnScaledTime",Time.unscaledTime);
-            
+            image.material.SetInt("_IsHovering", isHovering);
+            image.material.SetFloat("_UnScaledTime", Time.unscaledTime);
         }
     }
 
     public void HoverEnter()
     {
-        if (isSelected) 
+        if (isSelected)
             isHovering = 0;
-        else 
+        else
             isHovering = 1;
 
         OnHoverEnter.Invoke();
@@ -43,20 +42,18 @@ public class UI_HoveringShader : MonoBehaviour
     public void HoverExit()
     {
         isHovering = 0;
-        if (!isSelected) {
-            gameObject.SetActive(false);
-        }
+        if (!isSelected) gameObject.SetActive(false);
         OnHoverExit.Invoke();
     }
 
-    public void Select() {
+    public void Select()
+    {
         isHovering = 0;
         isSelected = true;
-
     }
-    public void UnSelect() {
+
+    public void UnSelect()
+    {
         isSelected = false;
-
     }
-
 }

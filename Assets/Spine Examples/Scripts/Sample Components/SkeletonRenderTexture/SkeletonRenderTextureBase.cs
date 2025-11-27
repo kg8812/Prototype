@@ -35,174 +35,185 @@ using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Spine.Unity.Examples {
-
-	public abstract class SkeletonRenderTextureBase : MonoBehaviour {
+namespace Spine.Unity.Examples
+{
+    public abstract class SkeletonRenderTextureBase : MonoBehaviour
+    {
 #if HAS_VECTOR2INT
-		public Color color = Color.white;
-		public int maxRenderTextureSize = 1024;
-		public GameObject quad;
-		public Material quadMaterial;
-		protected Mesh quadMesh;
-		public RenderTexture renderTexture;
-		public Camera targetCamera;
-		[Tooltip("Shader passes to render to the RenderTexture. E.g. set the first element " +
-			"to -1 to render all shader passes, or set it to 0 to only render the first " +
-			"shader pass, which may be required when using URP or shadow-casting shaders.")]
-		public int[] shaderPasses = new int[1] { 0 };
+        public Color color = Color.white;
+        public int maxRenderTextureSize = 1024;
+        public GameObject quad;
+        public Material quadMaterial;
+        protected Mesh quadMesh;
+        public RenderTexture renderTexture;
+        public Camera targetCamera;
 
-		protected CommandBuffer commandBuffer;
-		protected Vector2Int screenSize;
-		protected Vector2Int usedRenderTextureSize;
-		protected Vector2Int allocatedRenderTextureSize;
-		protected Vector2 downScaleFactor = Vector2.one;
+        [Tooltip("Shader passes to render to the RenderTexture. E.g. set the first element " +
+                 "to -1 to render all shader passes, or set it to 0 to only render the first " +
+                 "shader pass, which may be required when using URP or shadow-casting shaders.")]
+        public int[] shaderPasses = new int[1] { 0 };
 
-		protected Vector3 worldCornerNoDistortion0;
-		protected Vector3 worldCornerNoDistortion1;
-		protected Vector3 worldCornerNoDistortion2;
-		protected Vector3 worldCornerNoDistortion3;
-		protected Vector2 uvCorner0;
-		protected Vector2 uvCorner1;
-		protected Vector2 uvCorner2;
-		protected Vector2 uvCorner3;
+        protected CommandBuffer commandBuffer;
+        protected Vector2Int screenSize;
+        protected Vector2Int usedRenderTextureSize;
+        protected Vector2Int allocatedRenderTextureSize;
+        protected Vector2 downScaleFactor = Vector2.one;
 
-		protected virtual void Awake () {
-			commandBuffer = new CommandBuffer();
-		}
+        protected Vector3 worldCornerNoDistortion0;
+        protected Vector3 worldCornerNoDistortion1;
+        protected Vector3 worldCornerNoDistortion2;
+        protected Vector3 worldCornerNoDistortion3;
+        protected Vector2 uvCorner0;
+        protected Vector2 uvCorner1;
+        protected Vector2 uvCorner2;
+        protected Vector2 uvCorner3;
 
-		void OnDestroy () {
-			if (renderTexture)
-				RenderTexture.ReleaseTemporary(renderTexture);
-		}
+        protected virtual void Awake()
+        {
+            commandBuffer = new CommandBuffer();
+        }
 
-		protected void PrepareTextureMapping (out Vector3 screenSpaceMin, out Vector3 screenSpaceMax,
-			Vector3 screenCorner0, Vector3 screenCorner1, Vector3 screenCorner2, Vector3 screenCorner3) {
+        private void OnDestroy()
+        {
+            if (renderTexture)
+                RenderTexture.ReleaseTemporary(renderTexture);
+        }
 
-			screenSpaceMin =
-				Vector3.Min(screenCorner0, Vector3.Min(screenCorner1,
-				Vector3.Min(screenCorner2, screenCorner3)));
-			screenSpaceMax =
-				Vector3.Max(screenCorner0, Vector3.Max(screenCorner1,
-				Vector3.Max(screenCorner2, screenCorner3)));
-			// ensure we are on whole pixel borders
-			screenSpaceMin.x = Mathf.Floor(screenSpaceMin.x);
-			screenSpaceMin.y = Mathf.Floor(screenSpaceMin.y);
-			screenSpaceMax.x = Mathf.Ceil(screenSpaceMax.x);
-			screenSpaceMax.y = Mathf.Ceil(screenSpaceMax.y);
+        protected void PrepareTextureMapping(out Vector3 screenSpaceMin, out Vector3 screenSpaceMax,
+            Vector3 screenCorner0, Vector3 screenCorner1, Vector3 screenCorner2, Vector3 screenCorner3)
+        {
+            screenSpaceMin =
+                Vector3.Min(screenCorner0, Vector3.Min(screenCorner1,
+                    Vector3.Min(screenCorner2, screenCorner3)));
+            screenSpaceMax =
+                Vector3.Max(screenCorner0, Vector3.Max(screenCorner1,
+                    Vector3.Max(screenCorner2, screenCorner3)));
+            // ensure we are on whole pixel borders
+            screenSpaceMin.x = Mathf.Floor(screenSpaceMin.x);
+            screenSpaceMin.y = Mathf.Floor(screenSpaceMin.y);
+            screenSpaceMax.x = Mathf.Ceil(screenSpaceMax.x);
+            screenSpaceMax.y = Mathf.Ceil(screenSpaceMax.y);
 
-			// inverse-map screenCornerN to screenSpaceMin/screenSpaceMax area to get UV coordinates
-			uvCorner0 = MathUtilities.InverseLerp(screenSpaceMin, screenSpaceMax, screenCorner0);
-			uvCorner1 = MathUtilities.InverseLerp(screenSpaceMin, screenSpaceMax, screenCorner1);
-			uvCorner2 = MathUtilities.InverseLerp(screenSpaceMin, screenSpaceMax, screenCorner2);
-			uvCorner3 = MathUtilities.InverseLerp(screenSpaceMin, screenSpaceMax, screenCorner3);
+            // inverse-map screenCornerN to screenSpaceMin/screenSpaceMax area to get UV coordinates
+            uvCorner0 = MathUtilities.InverseLerp(screenSpaceMin, screenSpaceMax, screenCorner0);
+            uvCorner1 = MathUtilities.InverseLerp(screenSpaceMin, screenSpaceMax, screenCorner1);
+            uvCorner2 = MathUtilities.InverseLerp(screenSpaceMin, screenSpaceMax, screenCorner2);
+            uvCorner3 = MathUtilities.InverseLerp(screenSpaceMin, screenSpaceMax, screenCorner3);
 
-			screenSize = new Vector2Int(Math.Abs((int)screenSpaceMax.x - (int)screenSpaceMin.x),
-										Math.Abs((int)screenSpaceMax.y - (int)screenSpaceMin.y));
-			usedRenderTextureSize = new Vector2Int(
-				Math.Min(maxRenderTextureSize, screenSize.x),
-				Math.Min(maxRenderTextureSize, screenSize.y));
-			downScaleFactor = new Vector2(
-				(float)usedRenderTextureSize.x / (float)screenSize.x,
-				(float)usedRenderTextureSize.y / (float)screenSize.y);
+            screenSize = new Vector2Int(Math.Abs((int)screenSpaceMax.x - (int)screenSpaceMin.x),
+                Math.Abs((int)screenSpaceMax.y - (int)screenSpaceMin.y));
+            usedRenderTextureSize = new Vector2Int(
+                Math.Min(maxRenderTextureSize, screenSize.x),
+                Math.Min(maxRenderTextureSize, screenSize.y));
+            downScaleFactor = new Vector2(
+                usedRenderTextureSize.x / (float)screenSize.x,
+                usedRenderTextureSize.y / (float)screenSize.y);
 
-			PrepareRenderTexture();
-		}
+            PrepareRenderTexture();
+        }
 
-		protected void PrepareRenderTexture () {
-			Vector2Int textureSize = new Vector2Int(
-				Mathf.NextPowerOfTwo(usedRenderTextureSize.x),
-				Mathf.NextPowerOfTwo(usedRenderTextureSize.y));
+        protected void PrepareRenderTexture()
+        {
+            var textureSize = new Vector2Int(
+                Mathf.NextPowerOfTwo(usedRenderTextureSize.x),
+                Mathf.NextPowerOfTwo(usedRenderTextureSize.y));
 
-			if (textureSize != allocatedRenderTextureSize) {
-				if (renderTexture)
-					RenderTexture.ReleaseTemporary(renderTexture);
-				renderTexture = RenderTexture.GetTemporary(textureSize.x, textureSize.y);
-				renderTexture.filterMode = FilterMode.Point;
-				allocatedRenderTextureSize = textureSize;
-			}
-		}
+            if (textureSize != allocatedRenderTextureSize)
+            {
+                if (renderTexture)
+                    RenderTexture.ReleaseTemporary(renderTexture);
+                renderTexture = RenderTexture.GetTemporary(textureSize.x, textureSize.y);
+                renderTexture.filterMode = FilterMode.Point;
+                allocatedRenderTextureSize = textureSize;
+            }
+        }
 
-		protected Matrix4x4 CalculateProjectionMatrix (Camera targetCamera,
-			Vector3 screenSpaceMin, Vector3 screenSpaceMax, Vector2 fullSizePixels) {
-			if (targetCamera.orthographic)
-				return CalculateOrthoMatrix(targetCamera, screenSpaceMin, screenSpaceMax, fullSizePixels);
-			else
-				return CalculatePerspectiveMatrix(targetCamera, screenSpaceMin, screenSpaceMax, fullSizePixels);
-		}
+        protected Matrix4x4 CalculateProjectionMatrix(Camera targetCamera,
+            Vector3 screenSpaceMin, Vector3 screenSpaceMax, Vector2 fullSizePixels)
+        {
+            if (targetCamera.orthographic)
+                return CalculateOrthoMatrix(targetCamera, screenSpaceMin, screenSpaceMax, fullSizePixels);
+            return CalculatePerspectiveMatrix(targetCamera, screenSpaceMin, screenSpaceMax, fullSizePixels);
+        }
 
-		protected Matrix4x4 CalculateOrthoMatrix (Camera targetCamera,
-			Vector3 screenSpaceMin, Vector3 screenSpaceMax, Vector2 fullSizePixels) {
+        protected Matrix4x4 CalculateOrthoMatrix(Camera targetCamera,
+            Vector3 screenSpaceMin, Vector3 screenSpaceMax, Vector2 fullSizePixels)
+        {
+            var cameraSize = new Vector2(
+                targetCamera.orthographicSize * 2.0f * targetCamera.aspect,
+                targetCamera.orthographicSize * 2.0f);
+            var min = new Vector2(screenSpaceMin.x, screenSpaceMin.y) / fullSizePixels;
+            var max = new Vector2(screenSpaceMax.x, screenSpaceMax.y) / fullSizePixels;
+            var centerOffset = new Vector2(-0.5f, -0.5f);
+            min = (min + centerOffset) * cameraSize;
+            max = (max + centerOffset) * cameraSize;
 
-			Vector2 cameraSize = new Vector2(
-					targetCamera.orthographicSize * 2.0f * targetCamera.aspect,
-					targetCamera.orthographicSize * 2.0f);
-			Vector2 min = new Vector2(screenSpaceMin.x, screenSpaceMin.y) / fullSizePixels;
-			Vector2 max = new Vector2(screenSpaceMax.x, screenSpaceMax.y) / fullSizePixels;
-			Vector2 centerOffset = new Vector2(-0.5f, -0.5f);
-			min = (min + centerOffset) * cameraSize;
-			max = (max + centerOffset) * cameraSize;
+            return Matrix4x4.Ortho(min.x, max.x, min.y, max.y, float.MinValue, float.MaxValue);
+        }
 
-			return Matrix4x4.Ortho(min.x, max.x, min.y, max.y, float.MinValue, float.MaxValue);
-		}
+        protected Matrix4x4 CalculatePerspectiveMatrix(Camera targetCamera,
+            Vector3 screenSpaceMin, Vector3 screenSpaceMax, Vector2 fullSizePixels)
+        {
+            var frustumPlanes = targetCamera.projectionMatrix.decomposeProjection;
+            var planesSize = new Vector2(
+                frustumPlanes.right - frustumPlanes.left,
+                frustumPlanes.top - frustumPlanes.bottom);
+            var min = new Vector2(screenSpaceMin.x, screenSpaceMin.y) / fullSizePixels * planesSize;
+            var max = new Vector2(screenSpaceMax.x, screenSpaceMax.y) / fullSizePixels * planesSize;
+            frustumPlanes.right = frustumPlanes.left + max.x;
+            frustumPlanes.top = frustumPlanes.bottom + max.y;
+            frustumPlanes.left += min.x;
+            frustumPlanes.bottom += min.y;
+            return Matrix4x4.Frustum(frustumPlanes);
+        }
 
-		protected Matrix4x4 CalculatePerspectiveMatrix (Camera targetCamera,
-			Vector3 screenSpaceMin, Vector3 screenSpaceMax, Vector2 fullSizePixels) {
+        protected void AssignAtQuad()
+        {
+            var quadTransform = quad.transform;
+            quadTransform.position = transform.position;
+            quadTransform.rotation = transform.rotation;
+            quadTransform.localScale = transform.localScale;
 
-			FrustumPlanes frustumPlanes = targetCamera.projectionMatrix.decomposeProjection;
-			Vector2 planesSize = new Vector2(
-				frustumPlanes.right - frustumPlanes.left,
-				frustumPlanes.top - frustumPlanes.bottom);
-			Vector2 min = new Vector2(screenSpaceMin.x, screenSpaceMin.y) / fullSizePixels * planesSize;
-			Vector2 max = new Vector2(screenSpaceMax.x, screenSpaceMax.y) / fullSizePixels * planesSize;
-			frustumPlanes.right = frustumPlanes.left + max.x;
-			frustumPlanes.top = frustumPlanes.bottom + max.y;
-			frustumPlanes.left += min.x;
-			frustumPlanes.bottom += min.y;
-			return Matrix4x4.Frustum(frustumPlanes);
-		}
+            var v0 = quadTransform.InverseTransformPoint(worldCornerNoDistortion0);
+            var v1 = quadTransform.InverseTransformPoint(worldCornerNoDistortion1);
+            var v2 = quadTransform.InverseTransformPoint(worldCornerNoDistortion2);
+            var v3 = quadTransform.InverseTransformPoint(worldCornerNoDistortion3);
+            var vertices = new Vector3[4] { v0, v1, v2, v3 };
 
-		protected void AssignAtQuad () {
-			Transform quadTransform = quad.transform;
-			quadTransform.position = this.transform.position;
-			quadTransform.rotation = this.transform.rotation;
-			quadTransform.localScale = this.transform.localScale;
+            quadMesh.vertices = vertices;
 
-			Vector3 v0 = quadTransform.InverseTransformPoint(worldCornerNoDistortion0);
-			Vector3 v1 = quadTransform.InverseTransformPoint(worldCornerNoDistortion1);
-			Vector3 v2 = quadTransform.InverseTransformPoint(worldCornerNoDistortion2);
-			Vector3 v3 = quadTransform.InverseTransformPoint(worldCornerNoDistortion3);
-			Vector3[] vertices = new Vector3[4] { v0, v1, v2, v3 };
+            var indices = new int[6] { 0, 1, 2, 2, 1, 3 };
+            quadMesh.triangles = indices;
 
-			quadMesh.vertices = vertices;
+            var normals = new Vector3[4]
+            {
+                -Vector3.forward,
+                -Vector3.forward,
+                -Vector3.forward,
+                -Vector3.forward
+            };
+            quadMesh.normals = normals;
 
-			int[] indices = new int[6] { 0, 1, 2, 2, 1, 3 };
-			quadMesh.triangles = indices;
+            var maxU = usedRenderTextureSize.x / (float)allocatedRenderTextureSize.x;
+            var maxV = usedRenderTextureSize.y / (float)allocatedRenderTextureSize.y;
+            if (downScaleFactor.x < 1 || downScaleFactor.y < 1)
+            {
+                maxU = downScaleFactor.x * screenSize.x / allocatedRenderTextureSize.x;
+                maxV = downScaleFactor.y * screenSize.y / allocatedRenderTextureSize.y;
+            }
 
-			Vector3[] normals = new Vector3[4] {
-				-Vector3.forward,
-				-Vector3.forward,
-				-Vector3.forward,
-				-Vector3.forward
-			};
-			quadMesh.normals = normals;
+            var uv = new Vector2[4]
+            {
+                new(uvCorner0.x * maxU, uvCorner0.y * maxV),
+                new(uvCorner1.x * maxU, uvCorner1.y * maxV),
+                new(uvCorner2.x * maxU, uvCorner2.y * maxV),
+                new(uvCorner3.x * maxU, uvCorner3.y * maxV)
+            };
+            quadMesh.uv = uv;
+            AssignMeshAtRenderer();
+        }
 
-			float maxU = (float)usedRenderTextureSize.x / (float)allocatedRenderTextureSize.x;
-			float maxV = (float)usedRenderTextureSize.y / (float)allocatedRenderTextureSize.y;
-			if (downScaleFactor.x < 1 || downScaleFactor.y < 1) {
-				maxU = downScaleFactor.x * (float)screenSize.x / (float)allocatedRenderTextureSize.x;
-				maxV = downScaleFactor.y * (float)screenSize.y / (float)allocatedRenderTextureSize.y;
-			}
-			Vector2[] uv = new Vector2[4] {
-				new Vector2(uvCorner0.x * maxU, uvCorner0.y * maxV),
-				new Vector2(uvCorner1.x * maxU, uvCorner1.y * maxV),
-				new Vector2(uvCorner2.x * maxU, uvCorner2.y * maxV),
-				new Vector2(uvCorner3.x * maxU, uvCorner3.y * maxV),
-			};
-			quadMesh.uv = uv;
-			AssignMeshAtRenderer();
-		}
-
-		protected abstract void AssignMeshAtRenderer ();
+        protected abstract void AssignMeshAtRenderer();
 #endif // HAS_VECTOR2INT
-	}
+    }
 }

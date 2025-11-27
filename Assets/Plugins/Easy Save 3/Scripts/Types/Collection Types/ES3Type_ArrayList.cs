@@ -1,20 +1,23 @@
-using System;
-using UnityEngine;
+using System.Collections;
+using UnityEngine.Scripting;
 
 namespace ES3Types
 {
-    [UnityEngine.Scripting.Preserve]
+    [Preserve]
     [ES3PropertiesAttribute("_items", "_size", "_version")]
     public class ES3Type_ArrayList : ES3ObjectType
     {
-        public static ES3Type Instance = null;
+        public static ES3Type Instance;
 
-        public ES3Type_ArrayList() : base(typeof(System.Collections.ArrayList)) { Instance = this; }
+        public ES3Type_ArrayList() : base(typeof(ArrayList))
+        {
+            Instance = this;
+        }
 
 
         protected override void WriteObject(object obj, ES3Writer writer)
         {
-            var instance = (System.Collections.ArrayList)obj;
+            var instance = (ArrayList)obj;
 
             writer.WritePrivateField("_items", instance);
             writer.WritePrivateField("_size", instance);
@@ -23,31 +26,28 @@ namespace ES3Types
 
         protected override void ReadObject<T>(ES3Reader reader, object obj)
         {
-            var instance = (System.Collections.ArrayList)obj;
+            var instance = (ArrayList)obj;
             foreach (string propertyName in reader.Properties)
-            {
                 switch (propertyName)
                 {
-
                     case "_items":
-                        instance = (System.Collections.ArrayList)reader.SetPrivateField("_items", reader.Read<System.Object[]>(), instance);
+                        instance = (ArrayList)reader.SetPrivateField("_items", reader.Read<object[]>(), instance);
                         break;
                     case "_size":
-                        instance = (System.Collections.ArrayList)reader.SetPrivateField("_size", reader.Read<System.Int32>(), instance);
+                        instance = (ArrayList)reader.SetPrivateField("_size", reader.Read<int>(), instance);
                         break;
                     case "_version":
-                        instance = (System.Collections.ArrayList)reader.SetPrivateField("_version", reader.Read<System.Int32>(), instance);
+                        instance = (ArrayList)reader.SetPrivateField("_version", reader.Read<int>(), instance);
                         break;
                     default:
                         reader.Skip();
                         break;
                 }
-            }
         }
 
         protected override object ReadObject<T>(ES3Reader reader)
         {
-            var instance = new System.Collections.ArrayList();
+            var instance = new ArrayList();
             ReadObject<T>(reader, instance);
             return instance;
         }
@@ -58,7 +58,7 @@ namespace ES3Types
     {
         public static ES3Type Instance;
 
-        public ES3UserType_ArrayListArray() : base(typeof(System.Collections.ArrayList[]), ES3Type_ArrayList.Instance)
+        public ES3UserType_ArrayListArray() : base(typeof(ArrayList[]), ES3Type_ArrayList.Instance)
         {
             Instance = this;
         }

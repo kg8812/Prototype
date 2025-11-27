@@ -1,10 +1,7 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using Save.Schema;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using UnityEngine.U2D;
 using UnityEngine.UI;
 
 public class UI_KeyImage : MonoBehaviour
@@ -12,18 +9,19 @@ public class UI_KeyImage : MonoBehaviour
     [Serializable]
     public enum KeyType
     {
-        InGame,UI
+        InGame,
+        UI
     }
 
     public KeyType keyType = KeyType.InGame;
-    
-    [ShowIf("keyType", KeyType.InGame)]
-    public Define.GameKey gameKey;
-    [ShowIf("keyType", KeyType.UI)]
-    public Define.UIKey uiKey;
+
+    [ShowIf("keyType", KeyType.InGame)] public Define.GameKey gameKey;
+
+    [ShowIf("keyType", KeyType.UI)] public Define.UIKey uiKey;
+
     public Image image;
     public SpriteRenderer spriteRenderer;
-    
+
     private void Start()
     {
         DataAccess.Settings.Data.OnKeyChange.RemoveListener(SetKeyImage);
@@ -31,7 +29,7 @@ public class UI_KeyImage : MonoBehaviour
         SetKeyImage();
     }
 
-    void SetKeyImage()
+    private void SetKeyImage()
     {
         if (image != null)
         {
@@ -44,27 +42,28 @@ public class UI_KeyImage : MonoBehaviour
                     image.sprite = DataAccess.Settings.Data.GetUIKeyImage(uiKey);
                     break;
             }
+
             if (image.sprite == null)
             {
-                image.gameObject.SetActive(false); 
+                image.gameObject.SetActive(false);
                 return;
             }
-           
+
             image.gameObject.SetActive(true);
-            Vector3 pos = image.transform.position;
+            var pos = image.transform.position;
             image.SetNativeSize();
             image.transform.position = pos;
             var rt = image.GetComponent<RectTransform>();
             var rtParent = image.GetComponent<RectTransform>().parent.GetComponent<RectTransform>();
 
-            Vector3[] rtCorners = new Vector3[4];  
-            Vector3[] rtParentCorners = new Vector3[4];  
+            var rtCorners = new Vector3[4];
+            var rtParentCorners = new Vector3[4];
             rt.GetWorldCorners(rtCorners);
             rtParent.GetWorldCorners(rtParentCorners);
 
             var rtP1 = rtCorners[0];
             var rtP2 = rtCorners[2];
-        
+
             var rtParentP1 = rtParentCorners[0];
             var rtParentP2 = rtParentCorners[2];
 
@@ -78,13 +77,12 @@ public class UI_KeyImage : MonoBehaviour
 
             rt.anchorMin = min;
             rt.anchorMax = max;
-        
+
             rt.sizeDelta = Vector3.zero;
             rt.anchoredPosition = Vector2.zero;
         }
 
         if (spriteRenderer != null)
-        {
             switch (keyType)
             {
                 case KeyType.InGame:
@@ -94,6 +92,5 @@ public class UI_KeyImage : MonoBehaviour
                     spriteRenderer.sprite = DataAccess.Settings.Data.GetUIKeyImage(uiKey);
                     break;
             }
-        }
     }
 }

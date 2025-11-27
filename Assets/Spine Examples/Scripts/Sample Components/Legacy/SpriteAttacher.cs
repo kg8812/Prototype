@@ -29,156 +29,200 @@
 
 // Original Contribution by: Mitch Thompson
 
-using Spine.Unity.AttachmentTools;
+using System;
 using System.Collections.Generic;
+using Spine.Unity.AttachmentTools;
+using UnityEditor;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	public class SpriteAttacher : MonoBehaviour {
-		public const string DefaultPMAShader = "Spine/Skeleton";
-		public const string DefaultStraightAlphaShader = "Sprites/Default";
+namespace Spine.Unity.Examples
+{
+    public class SpriteAttacher : MonoBehaviour
+    {
+        public const string DefaultPMAShader = "Spine/Skeleton";
+        public const string DefaultStraightAlphaShader = "Sprites/Default";
 
-		#region Inspector
-		public bool attachOnStart = true;
-		public bool overrideAnimation = true;
-		public Sprite sprite;
-		[SpineSlot] public string slot;
-		#endregion
+        private static Dictionary<Texture, AtlasPage> atlasPageCache;
+        private bool applyPMA;
+
+        private RegionAttachment attachment;
+        private Slot spineSlot;
+
+        private void Start()
+        {
+            // Initialize slot and attachment references.
+            Initialize(false);
+
+            if (attachOnStart)
+                Attach();
+        }
+
+        private void OnDestroy()
+        {
+            var animatedSkeleton = GetComponent<ISkeletonAnimation>();
+            if (animatedSkeleton != null)
+                animatedSkeleton.UpdateComplete -= AnimationOverrideSpriteAttach;
+        }
 
 #if UNITY_EDITOR
-		void OnValidate () {
-			ISkeletonComponent skeletonComponent = GetComponent<ISkeletonComponent>();
-			SkeletonRenderer skeletonRenderer = skeletonComponent as SkeletonRenderer;
-			bool applyPMA;
+        private void OnValidate()
+        {
+            var skeletonComponent = GetComponent<ISkeletonComponent>();
+            var skeletonRenderer = skeletonComponent as SkeletonRenderer;
+            bool applyPMA;
 
-			if (skeletonRenderer != null) {
-				applyPMA = skeletonRenderer.pmaVertexColors;
-			} else {
-				SkeletonGraphic skeletonGraphic = skeletonComponent as SkeletonGraphic;
-				applyPMA = skeletonGraphic != null && skeletonGraphic.MeshGenerator.settings.pmaVertexColors;
-			}
+            if (skeletonRenderer != null)
+            {
+                applyPMA = skeletonRenderer.pmaVertexColors;
+            }
+            else
+            {
+                var skeletonGraphic = skeletonComponent as SkeletonGraphic;
+                applyPMA = skeletonGraphic != null && skeletonGraphic.MeshGenerator.settings.pmaVertexColors;
+            }
 
-			if (applyPMA) {
-				try {
-					if (sprite == null)
-						return;
-					sprite.texture.GetPixel(0, 0);
-				} catch (UnityException e) {
-					Debug.LogFormat("Texture of {0} ({1}) is not read/write enabled. SpriteAttacher requires this in order to work with a SkeletonRenderer that renders premultiplied alpha. Please check the texture settings.", sprite.name, sprite.texture.name);
-					UnityEditor.EditorGUIUtility.PingObject(sprite.texture);
-					throw e;
-				}
-			}
-		}
+            if (applyPMA)
+                try
+                {
+                    if (sprite == null)
+                        return;
+                    sprite.texture.GetPixel(0, 0);
+                }
+                catch (UnityException e)
+                {
+                    Debug.LogFormat(
+                        "Texture of {0} ({1}) is not read/write enabled. SpriteAttacher requires this in order to work with a SkeletonRenderer that renders premultiplied alpha. Please check the texture settings.",
+                        sprite.name, sprite.texture.name);
+                    EditorGUIUtility.PingObject(sprite.texture);
+                    throw e;
+                }
+        }
 #endif
+        private static AtlasPage GetPageFor(Texture texture, Shader shader)
+        {
+            if (atlasPageCache == null) atlasPageCache = new Dictionary<Texture, AtlasPage>();
+            AtlasPage atlasPage;
+            atlasPageCache.TryGetValue(texture, out atlasPage);
+            if (atlasPage == null)
+            {
+                var newMaterial = new Material(shader);
+                atlasPage = newMaterial.ToSpineAtlasPage();
+                atlasPageCache[texture] = atlasPage;
+            }
 
-		RegionAttachment attachment;
-		Slot spineSlot;
-		bool applyPMA;
+            return atlasPage;
+        }
 
-		static Dictionary<Texture, AtlasPage> atlasPageCache;
-		static AtlasPage GetPageFor (Texture texture, Shader shader) {
-			if (atlasPageCache == null) atlasPageCache = new Dictionary<Texture, AtlasPage>();
-			AtlasPage atlasPage;
-			atlasPageCache.TryGetValue(texture, out atlasPage);
-			if (atlasPage == null) {
-				Material newMaterial = new Material(shader);
-				atlasPage = newMaterial.ToSpineAtlasPage();
-				atlasPageCache[texture] = atlasPage;
-			}
-			return atlasPage;
-		}
+        private void AnimationOverrideSpriteAttach(ISkeletonAnimation animated)
+        {
+            if (overrideAnimation && isActiveAndEnabled)
+                Attach();
+        }
 
-		void Start () {
-			// Initialize slot and attachment references.
-			Initialize(false);
+        public void Initialize(bool overwrite = true)
+        {
+            if (overwrite || attachment == null)
+            {
+                // Get the applyPMA value.
+                var skeletonComponent = GetComponent<ISkeletonComponent>();
+                var skeletonRenderer = skeletonComponent as SkeletonRenderer;
+                if (skeletonRenderer != null)
+                {
+                    applyPMA = skeletonRenderer.pmaVertexColors;
+                }
+                else
+                {
+                    var skeletonGraphic = skeletonComponent as SkeletonGraphic;
+                    if (skeletonGraphic != null)
+                        applyPMA = skeletonGraphic.MeshGenerator.settings.pmaVertexColors;
+                }
 
-			if (attachOnStart)
-				Attach();
-		}
+                // Subscribe to UpdateComplete to override animation keys.
+                if (overrideAnimation)
+                {
+                    var animatedSkeleton = skeletonComponent as ISkeletonAnimation;
+                    if (animatedSkeleton != null)
+                    {
+                        animatedSkeleton.UpdateComplete -= AnimationOverrideSpriteAttach;
+                        animatedSkeleton.UpdateComplete += AnimationOverrideSpriteAttach;
+                    }
+                }
 
-		void AnimationOverrideSpriteAttach (ISkeletonAnimation animated) {
-			if (overrideAnimation && isActiveAndEnabled)
-				Attach();
-		}
+                spineSlot = spineSlot ?? skeletonComponent.Skeleton.FindSlot(slot);
+                var attachmentShader =
+                    applyPMA ? Shader.Find(DefaultPMAShader) : Shader.Find(DefaultStraightAlphaShader);
+                if (sprite == null)
+                    attachment = null;
+                else
+                    attachment = applyPMA
+                        ? sprite.ToRegionAttachmentPMAClone(attachmentShader)
+                        : sprite.ToRegionAttachment(GetPageFor(sprite.texture, attachmentShader));
+            }
+        }
 
-		public void Initialize (bool overwrite = true) {
-			if (overwrite || attachment == null) {
-				// Get the applyPMA value.
-				ISkeletonComponent skeletonComponent = GetComponent<ISkeletonComponent>();
-				SkeletonRenderer skeletonRenderer = skeletonComponent as SkeletonRenderer;
-				if (skeletonRenderer != null)
-					this.applyPMA = skeletonRenderer.pmaVertexColors;
-				else {
-					SkeletonGraphic skeletonGraphic = skeletonComponent as SkeletonGraphic;
-					if (skeletonGraphic != null)
-						this.applyPMA = skeletonGraphic.MeshGenerator.settings.pmaVertexColors;
-				}
+        /// <summary>Update the slot's attachment to the Attachment generated from the sprite.</summary>
+        public void Attach()
+        {
+            if (spineSlot != null)
+                spineSlot.Attachment = attachment;
+        }
 
-				// Subscribe to UpdateComplete to override animation keys.
-				if (overrideAnimation) {
-					ISkeletonAnimation animatedSkeleton = skeletonComponent as ISkeletonAnimation;
-					if (animatedSkeleton != null) {
-						animatedSkeleton.UpdateComplete -= AnimationOverrideSpriteAttach;
-						animatedSkeleton.UpdateComplete += AnimationOverrideSpriteAttach;
-					}
-				}
+        #region Inspector
 
-				spineSlot = spineSlot ?? skeletonComponent.Skeleton.FindSlot(slot);
-				Shader attachmentShader = applyPMA ? Shader.Find(DefaultPMAShader) : Shader.Find(DefaultStraightAlphaShader);
-				if (sprite == null)
-					attachment = null;
-				else
-					attachment = applyPMA ? sprite.ToRegionAttachmentPMAClone(attachmentShader) : sprite.ToRegionAttachment(SpriteAttacher.GetPageFor(sprite.texture, attachmentShader));
-			}
-		}
+        public bool attachOnStart = true;
+        public bool overrideAnimation = true;
+        public Sprite sprite;
+        [SpineSlot] public string slot;
 
-		void OnDestroy () {
-			ISkeletonAnimation animatedSkeleton = GetComponent<ISkeletonAnimation>();
-			if (animatedSkeleton != null)
-				animatedSkeleton.UpdateComplete -= AnimationOverrideSpriteAttach;
-		}
-
-		/// <summary>Update the slot's attachment to the Attachment generated from the sprite.</summary>
-		public void Attach () {
-			if (spineSlot != null)
-				spineSlot.Attachment = attachment;
-		}
-
-	}
+        #endregion
+    }
 
 
-	public static class SpriteAttachmentExtensions {
-		[System.Obsolete]
-		public static RegionAttachment AttachUnitySprite (this Skeleton skeleton, string slotName, Sprite sprite, string shaderName = SpriteAttacher.DefaultPMAShader, bool applyPMA = true, float rotation = 0f) {
-			return skeleton.AttachUnitySprite(slotName, sprite, Shader.Find(shaderName), applyPMA, rotation: rotation);
-		}
+    public static class SpriteAttachmentExtensions
+    {
+        [Obsolete]
+        public static RegionAttachment AttachUnitySprite(this Skeleton skeleton, string slotName, Sprite sprite,
+            string shaderName = SpriteAttacher.DefaultPMAShader, bool applyPMA = true, float rotation = 0f)
+        {
+            return skeleton.AttachUnitySprite(slotName, sprite, Shader.Find(shaderName), applyPMA, rotation);
+        }
 
-		[System.Obsolete]
-		public static RegionAttachment AddUnitySprite (this SkeletonData skeletonData, string slotName, Sprite sprite, string skinName = "", string shaderName = SpriteAttacher.DefaultPMAShader, bool applyPMA = true, float rotation = 0f) {
-			return skeletonData.AddUnitySprite(slotName, sprite, skinName, Shader.Find(shaderName), applyPMA, rotation: rotation);
-		}
+        [Obsolete]
+        public static RegionAttachment AddUnitySprite(this SkeletonData skeletonData, string slotName, Sprite sprite,
+            string skinName = "", string shaderName = SpriteAttacher.DefaultPMAShader, bool applyPMA = true,
+            float rotation = 0f)
+        {
+            return skeletonData.AddUnitySprite(slotName, sprite, skinName, Shader.Find(shaderName), applyPMA, rotation);
+        }
 
-		[System.Obsolete]
-		public static RegionAttachment AttachUnitySprite (this Skeleton skeleton, string slotName, Sprite sprite, Shader shader, bool applyPMA, float rotation = 0f) {
-			RegionAttachment att = applyPMA ? sprite.ToRegionAttachmentPMAClone(shader, rotation: rotation) : sprite.ToRegionAttachment(new Material(shader), rotation: rotation);
-			skeleton.FindSlot(slotName).Attachment = att;
-			return att;
-		}
+        [Obsolete]
+        public static RegionAttachment AttachUnitySprite(this Skeleton skeleton, string slotName, Sprite sprite,
+            Shader shader, bool applyPMA, float rotation = 0f)
+        {
+            var att = applyPMA
+                ? sprite.ToRegionAttachmentPMAClone(shader, rotation: rotation)
+                : sprite.ToRegionAttachment(new Material(shader), rotation);
+            skeleton.FindSlot(slotName).Attachment = att;
+            return att;
+        }
 
-		[System.Obsolete]
-		public static RegionAttachment AddUnitySprite (this SkeletonData skeletonData, string slotName, Sprite sprite, string skinName, Shader shader, bool applyPMA, float rotation = 0f) {
-			RegionAttachment att = applyPMA ? sprite.ToRegionAttachmentPMAClone(shader, rotation: rotation) : sprite.ToRegionAttachment(new Material(shader), rotation);
+        [Obsolete]
+        public static RegionAttachment AddUnitySprite(this SkeletonData skeletonData, string slotName, Sprite sprite,
+            string skinName, Shader shader, bool applyPMA, float rotation = 0f)
+        {
+            var att = applyPMA
+                ? sprite.ToRegionAttachmentPMAClone(shader, rotation: rotation)
+                : sprite.ToRegionAttachment(new Material(shader), rotation);
 
-			int slotIndex = skeletonData.FindSlot(slotName).Index;
-			Skin skin = skeletonData.DefaultSkin;
-			if (skinName != "")
-				skin = skeletonData.FindSkin(skinName);
+            var slotIndex = skeletonData.FindSlot(slotName).Index;
+            var skin = skeletonData.DefaultSkin;
+            if (skinName != "")
+                skin = skeletonData.FindSkin(skinName);
 
-			if (skin != null)
-				skin.SetAttachment(slotIndex, att.Name, att);
+            if (skin != null)
+                skin.SetAttachment(slotIndex, att.Name, att);
 
-			return att;
-		}
-	}
+            return att;
+        }
+    }
 }

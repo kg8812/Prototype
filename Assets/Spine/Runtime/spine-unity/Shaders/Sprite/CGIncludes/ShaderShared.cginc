@@ -20,7 +20,7 @@
 
 inline float4 calculateWorldPos(float4 vertex)
 {
-	return mul(unity_ObjectToWorld, vertex);
+    return mul(unity_ObjectToWorld, vertex);
 }
 
 #if defined(USE_LWRP) || defined(USE_URP)
@@ -42,32 +42,32 @@ inline float4 UnityPixelSnap(float4 pos)
 
 inline float4 calculateLocalPos(float4 vertex)
 {
-#if !defined(USE_LWRP) && !defined(USE_URP)
-#ifdef UNITY_INSTANCING_ENABLED
+    #if !defined(USE_LWRP) && !defined(USE_URP)
+    #ifdef UNITY_INSTANCING_ENABLED
     vertex.xy *= _Flip.xy;
-#endif
-#endif
+    #endif
+    #endif
 
-#if defined(USE_LWRP) || defined(USE_URP)
+    #if defined(USE_LWRP) || defined(USE_URP)
 	float4 pos = TransformObjectToHClip(vertex.xyz);
-#else
-	float4 pos = UnityObjectToClipPos(vertex);
-#endif
+    #else
+    float4 pos = UnityObjectToClipPos(vertex);
+    #endif
 
-#ifdef PIXELSNAP_ON
+    #ifdef PIXELSNAP_ON
 	pos = UnityPixelSnap(pos);
-#endif
+    #endif
 
-	return pos;
+    return pos;
 }
 
 inline half3 calculateWorldNormal(float3 normal)
 {
-#if defined(USE_LWRP) || defined(USE_URP)
+    #if defined(USE_LWRP) || defined(USE_URP)
 	return TransformObjectToWorldNormal(normal);
-#else
-	return UnityObjectToWorldNormal(normal);
-#endif
+    #else
+    return UnityObjectToWorldNormal(normal);
+    #endif
 }
 
 ////////////////////////////////////////
@@ -84,20 +84,20 @@ uniform half _BumpScale;
 
 half3 UnpackScaleNormal(half4 packednormal, half bumpScale)
 {
-	#if defined(UNITY_NO_DXT5nm)
+#if defined(UNITY_NO_DXT5nm)
 		return packednormal.xyz * 2 - 1;
-	#else
+#else
 		half3 normal;
 		normal.xy = (packednormal.wy * 2 - 1);
 		// Note: we allow scaled normals in LWRP since we might be using fewer instructions.
-		#if (SHADER_TARGET >= 30) || defined(USE_LWRP) || defined(USE_URP)
+#if (SHADER_TARGET >= 30) || defined(USE_LWRP) || defined(USE_URP)
 			// SM2.0: instruction count limitation
 			// SM2.0: normal scaler is not supported
 			normal.xy *= bumpScale;
-		#endif
+#endif
 		normal.z = sqrt(1.0 - saturate(dot(normal.xy, normal.xy)));
 		return normal;
-	#endif
+#endif
 }
 
 
@@ -134,111 +134,111 @@ inline half3 calculateNormalFromBumpMap(float2 texUV, half3 tangentWorld, half3 
 //
 inline fixed4 prepareLitPixelForOutput(fixed4 finalPixel, fixed textureAlpha, fixed colorAlpha) : SV_Target
 {
-#if defined(_TINT_BLACK_ON)
+    #if defined(_TINT_BLACK_ON)
 	const bool applyPMA = false;
-#else
-	const bool applyPMA = true;
-#endif
+    #else
+    const bool applyPMA = true;
+    #endif
 
-#if defined(_ALPHABLEND_ON)
+    #if defined(_ALPHABLEND_ON)
 	//Normal Alpha
 	if (applyPMA) finalPixel.rgb *= finalPixel.a;
-#elif defined(_ALPHAPREMULTIPLY_VERTEX_ONLY)
+    #elif defined(_ALPHAPREMULTIPLY_VERTEX_ONLY)
 	//PMA vertex, straight texture
 	if (applyPMA) finalPixel.rgb *= textureAlpha;
-#elif defined(_ALPHAPREMULTIPLY_ON)
-	//Pre multiplied alpha, both vertex and texture
-	// texture and vertex colors are premultiplied already
-#elif defined(_MULTIPLYBLEND)
+    #elif defined(_ALPHAPREMULTIPLY_ON)
+    //Pre multiplied alpha, both vertex and texture
+    // texture and vertex colors are premultiplied already
+    #elif defined(_MULTIPLYBLEND)
 	//Multiply
 	finalPixel = lerp(fixed4(1,1,1,1), finalPixel, finalPixel.a);
-#elif defined(_MULTIPLYBLEND_X2)
+    #elif defined(_MULTIPLYBLEND_X2)
 	//Multiply x2
 	finalPixel.rgb *= 2.0f;
 	finalPixel = lerp(fixed4(0.5f,0.5f,0.5f,0.5f), finalPixel, finalPixel.a);
-#elif defined(_ADDITIVEBLEND)
+    #elif defined(_ADDITIVEBLEND)
 	//Additive
 	finalPixel *= 2.0f;
 	if (applyPMA) finalPixel.rgb *= colorAlpha;
-#elif defined(_ADDITIVEBLEND_SOFT)
+    #elif defined(_ADDITIVEBLEND_SOFT)
 	//Additive soft
 	if (applyPMA) finalPixel.rgb *= finalPixel.a;
-#else
-	//Opaque
-	finalPixel.a = 1;
-#endif
-	return finalPixel;
+    #else
+    //Opaque
+    finalPixel.a = 1;
+    #endif
+    return finalPixel;
 }
 
 inline fixed4 calculateLitPixel(fixed4 texureColor, fixed4 color, fixed3 lighting) : SV_Target
 {
-#if !defined(_TINT_BLACK_ON)
-	fixed4 finalPixel = texureColor * color * fixed4(lighting, 1);
-#else
+    #if !defined(_TINT_BLACK_ON)
+    fixed4 finalPixel = texureColor * color * fixed4(lighting, 1);
+    #else
 	fixed4 finalPixel = texureColor * fixed4(lighting, 1);
-#endif
-	finalPixel = prepareLitPixelForOutput(finalPixel, texureColor.a, color.a);
-	return finalPixel;
+    #endif
+    finalPixel = prepareLitPixelForOutput(finalPixel, texureColor.a, color.a);
+    return finalPixel;
 }
 
 inline fixed4 calculateLitPixel(fixed4 texureColor, fixed3 lighting) : SV_Target
 {
-	// note: we let the optimizer work, removed duplicate code.
-	return calculateLitPixel(texureColor, fixed4(1, 1, 1, 1), lighting);
+    // note: we let the optimizer work, removed duplicate code.
+    return calculateLitPixel(texureColor, fixed4(1, 1, 1, 1), lighting);
 }
 
 inline fixed4 calculateAdditiveLitPixel(fixed4 texureColor, fixed4 color, fixed3 lighting) : SV_Target
 {
-	fixed4 finalPixel;
+    fixed4 finalPixel;
 
-#if defined(_ALPHABLEND_ON)	|| defined(_MULTIPLYBLEND)	|| defined(_MULTIPLYBLEND_X2) || defined(_ADDITIVEBLEND) || defined(_ADDITIVEBLEND_SOFT)
+    #if defined(_ALPHABLEND_ON)	|| defined(_MULTIPLYBLEND)	|| defined(_MULTIPLYBLEND_X2) || defined(_ADDITIVEBLEND) || defined(_ADDITIVEBLEND_SOFT)
 	//Normal Alpha, Additive and Multiply modes
 	finalPixel.rgb = (texureColor.rgb * lighting * color.rgb) * (texureColor.a * color.a);
 	finalPixel.a = 1.0;
-#elif defined(_ALPHAPREMULTIPLY_VERTEX_ONLY)
+    #elif defined(_ALPHAPREMULTIPLY_VERTEX_ONLY)
 	//PMA vertex, straight texture
 	finalPixel.rgb = texureColor.rgb * lighting * color.rgb * texureColor.a;
 	finalPixel.a = 1.0;
-#elif defined(_ALPHAPREMULTIPLY_ON)
+    #elif defined(_ALPHAPREMULTIPLY_ON)
 	//Pre multiplied alpha, both vertex and texture
 	finalPixel.rgb = texureColor.rgb * lighting * color.rgb;
 	finalPixel.a = 1.0;
-#else
-	//Opaque
-	finalPixel.rgb = texureColor.rgb * lighting * color.rgb;
-	finalPixel.a = 1.0;
-#endif
+    #else
+    //Opaque
+    finalPixel.rgb = texureColor.rgb * lighting * color.rgb;
+    finalPixel.a = 1.0;
+    #endif
 
-	return finalPixel;
+    return finalPixel;
 }
 
 inline fixed4 calculateAdditiveLitPixel(fixed4 texureColor, fixed3 lighting) : SV_Target
 {
-	fixed4 finalPixel;
+    fixed4 finalPixel;
 
-#if defined(_ALPHABLEND_ON)	|| defined(_ALPHAPREMULTIPLY_VERTEX_ONLY) || defined(_MULTIPLYBLEND) || defined(_MULTIPLYBLEND_X2) || defined(_ADDITIVEBLEND) || defined(_ADDITIVEBLEND_SOFT)
+    #if defined(_ALPHABLEND_ON)	|| defined(_ALPHAPREMULTIPLY_VERTEX_ONLY) || defined(_MULTIPLYBLEND) || defined(_MULTIPLYBLEND_X2) || defined(_ADDITIVEBLEND) || defined(_ADDITIVEBLEND_SOFT)
 	//Normal Alpha, Additive and Multiply modes
 	finalPixel.rgb = (texureColor.rgb * lighting) * texureColor.a;
 	finalPixel.a = 1.0;
-#else
-	//Pre multiplied alpha and Opaque
-	finalPixel.rgb = texureColor.rgb * lighting;
-	finalPixel.a = 1.0;
-#endif
+    #else
+    //Pre multiplied alpha and Opaque
+    finalPixel.rgb = texureColor.rgb * lighting;
+    finalPixel.a = 1.0;
+    #endif
 
-	return finalPixel;
+    return finalPixel;
 }
 
 inline fixed4 calculatePixel(fixed4 texureColor, fixed4 color) : SV_Target
 {
-	// note: we let the optimizer work, removed duplicate code.
-	return calculateLitPixel(texureColor, color, fixed3(1, 1, 1));
+    // note: we let the optimizer work, removed duplicate code.
+    return calculateLitPixel(texureColor, color, fixed3(1, 1, 1));
 }
 
 inline fixed4 calculatePixel(fixed4 texureColor) : SV_Target
 {
-	// note: we let the optimizer work, removed duplicate code.
-	return calculateLitPixel(texureColor, fixed4(1, 1, 1, 1), fixed3(1, 1, 1));
+    // note: we let the optimizer work, removed duplicate code.
+    return calculateLitPixel(texureColor, fixed4(1, 1, 1, 1), fixed3(1, 1, 1));
 }
 
 ////////////////////////////////////////
@@ -278,18 +278,18 @@ uniform fixed _Cutoff;
 		return texureColor * texureColor.a * vertexColor;\
 	}
 #else
-	#define RETURN_UNLIT_IF_ADDITIVE_SLOT(textureColor, vertexColor)
+#define RETURN_UNLIT_IF_ADDITIVE_SLOT(textureColor, vertexColor)
 #endif
 
 // Replacement for deprecated RETURN_UNLIT_IF_ADDITIVE_SLOT macro.
 #if (defined(_ALPHAPREMULTIPLY_ON) || defined(_ALPHAPREMULTIPLY_VERTEX_ONLY)) && !defined(_LIGHT_AFFECTS_ADDITIVE)
-	#if defined(_TINT_BLACK_ON)
+#if defined(_TINT_BLACK_ON)
 		#define TINTED_RESULT_PIXEL(textureColor, vertexColor, darkVertexColor, lightColorA, darkColorA) fragTintedColor(texureColor, darkVertexColor, vertexColor, lightColorA, darkColorA)
-	#elif defined(_ALPHAPREMULTIPLY_VERTEX_ONLY)
+#elif defined(_ALPHAPREMULTIPLY_VERTEX_ONLY)
 		#define TINTED_RESULT_PIXEL(textureColor, vertexColor, darkVertexColor, lightColorA, darkColorA) (texureColor * texureColor.a * vertexColor)
-	#else
+#else
 		#define TINTED_RESULT_PIXEL(textureColor, vertexColor, darkVertexColor, lightColorA, darkColorA) (texureColor * vertexColor)
-	#endif
+#endif
 
 	#define RETURN_UNLIT_IF_ADDITIVE_SLOT_TINT(textureColor, vertexColor, darkVertexColor, lightColorA, darkColorA) \
 	if (vertexColor.a == 0 && (vertexColor.r || vertexColor.g || vertexColor.b)) {\
@@ -297,7 +297,7 @@ uniform fixed _Cutoff;
 		return TINTED_RESULT_PIXEL(textureColor, vertexColor, darkVertexColor, lightColorA, darkColorA);\
 	}
 #else
-	#define RETURN_UNLIT_IF_ADDITIVE_SLOT_TINT(textureColor, vertexColor, darkVertexColor, lightColorA, darkColorA)
+#define RETURN_UNLIT_IF_ADDITIVE_SLOT_TINT(textureColor, vertexColor, darkVertexColor, lightColorA, darkColorA)
 #endif
 
 ////////////////////////////////////////
@@ -306,20 +306,20 @@ uniform fixed _Cutoff;
 
 #if !defined(USE_LWRP) && !defined(USE_URP)
 uniform fixed4 _Color;
-	#if defined(_TINT_BLACK_ON)
+#if defined(_TINT_BLACK_ON)
 	uniform fixed4 _Black;
-	#endif
+#endif
 #endif
 
 inline fixed4 calculateVertexColor(fixed4 color)
 {
-#if defined(_ALPHAPREMULTIPLY_ON) || _ALPHAPREMULTIPLY_VERTEX_ONLY
+    #if defined(_ALPHAPREMULTIPLY_ON) || _ALPHAPREMULTIPLY_VERTEX_ONLY
 	return PMAGammaToTargetSpace(color) * _Color;
-#elif !defined (UNITY_COLORSPACE_GAMMA)
-	return fixed4(GammaToLinearSpace(color.rgb), color.a) * _Color;
-#else
+    #elif !defined (UNITY_COLORSPACE_GAMMA)
+    return fixed4(GammaToLinearSpace(color.rgb), color.a) * _Color;
+    #else
 	return color * _Color;
-#endif
+    #endif
 }
 
 #if defined(_COLOR_ADJUST)
@@ -401,11 +401,11 @@ inline fixed4 applyFog(fixed4 pixel, float fogCoordOrFactorAtLWRP)
 	fixed4 fogColor = unity_FogColor;
 #endif
 
-	#if defined(USE_LWRP) || defined(USE_URP)
+#if defined(USE_LWRP) || defined(USE_URP)
 	pixel.rgb = MixFogColor(pixel.rgb, fogColor.rgb, fogCoordOrFactorAtLWRP);
-	#else
+#else
 	UNITY_APPLY_FOG_COLOR(fogCoordOrFactorAtLWRP, pixel, fogColor);
-	#endif
+#endif
 
 	return pixel;
 }
@@ -444,19 +444,19 @@ inline fixed4 calculateBlendedTexturePixel(float2 texcoord)
 
 inline fixed4 calculateTexturePixel(float2 texcoord)
 {
-	fixed4 pixel;
+    fixed4 pixel;
 
-#if _TEXTURE_BLEND
+    #if _TEXTURE_BLEND
 	pixel = calculateBlendedTexturePixel(texcoord);
-#else
-	pixel = tex2D(_MainTex, texcoord);
-#endif // !_TEXTURE_BLEND
+    #else
+    pixel = tex2D(_MainTex, texcoord);
+    #endif // !_TEXTURE_BLEND
 
-#if defined(_COLOR_ADJUST)
+    #if defined(_COLOR_ADJUST)
 	pixel = adjustColor(pixel);
-#endif // _COLOR_ADJUST
+    #endif // _COLOR_ADJUST
 
-	return pixel;
+    return pixel;
 }
 
 #if !defined(USE_LWRP) && !defined(USE_URP)
@@ -465,7 +465,7 @@ uniform fixed4 _MainTex_ST;
 
 inline float2 calculateTextureCoord(float4 texcoord)
 {
-	return TRANSFORM_TEX(texcoord, _MainTex);
+    return TRANSFORM_TEX(texcoord, _MainTex);
 }
 
 

@@ -6,11 +6,13 @@ namespace Save.Schema
     {
         public enum DataTypes
         {
-            Setting,GameData,
+            Setting,
+            GameData
         }
-        
-        const string GameDataKey ="GameDataKey";
-        const string SettingKey = "SettingKey";
+
+        private const string GameDataKey = "GameDataKey";
+        private const string SettingKey = "SettingKey";
+
         public static string GetKey(DataTypes type)
         {
             return type switch
@@ -26,15 +28,14 @@ namespace Save.Schema
     {
         public enum DataTypes
         {
-            SlotInfo,
+            SlotInfo
         }
-        
-        const string SlotInfoKey ="SlotInfoKey";
-        
-        public static string GetKey(DataTypes type,string slotIndex)
+
+        private const string SlotInfoKey = "SlotInfoKey";
+
+        public static string GetKey(DataTypes type, string slotIndex)
         {
-            
-            string slotId = SaveManager.GetSlotDataKey(slotIndex);
+            var slotId = SaveManager.GetSlotDataKey(slotIndex);
             return slotId + type switch
             {
                 DataTypes.SlotInfo => SlotInfoKey,

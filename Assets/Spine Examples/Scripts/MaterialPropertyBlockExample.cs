@@ -27,36 +27,36 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	public class MaterialPropertyBlockExample : MonoBehaviour {
+namespace Spine.Unity.Examples
+{
+    public class MaterialPropertyBlockExample : MonoBehaviour
+    {
+        public float timeInterval = 1f;
+        public Gradient randomColors = new();
+        public string colorPropertyName = "_FillColor";
 
-		public float timeInterval = 1f;
-		public Gradient randomColors = new Gradient();
-		public string colorPropertyName = "_FillColor";
+        private MaterialPropertyBlock mpb;
+        private float timeToNextColor;
 
-		MaterialPropertyBlock mpb;
-		float timeToNextColor = 0;
+        private void Start()
+        {
+            mpb = new MaterialPropertyBlock();
+        }
 
-		void Start () {
-			mpb = new MaterialPropertyBlock();
-		}
+        private void Update()
+        {
+            if (timeToNextColor <= 0)
+            {
+                timeToNextColor = timeInterval;
 
-		void Update () {
-			if (timeToNextColor <= 0) {
-				timeToNextColor = timeInterval;
+                var newColor = randomColors.Evaluate(Random.value);
+                mpb.SetColor(colorPropertyName, newColor);
+                GetComponent<MeshRenderer>().SetPropertyBlock(mpb);
+            }
 
-				Color newColor = randomColors.Evaluate(UnityEngine.Random.value);
-				mpb.SetColor(colorPropertyName, newColor);
-				GetComponent<MeshRenderer>().SetPropertyBlock(mpb);
-			}
-
-			timeToNextColor -= Time.deltaTime;
-		}
-
-	}
-
+            timeToNextColor -= Time.deltaTime;
+        }
+    }
 }

@@ -1,33 +1,37 @@
 using System;
-using System.Collections;
 using Directing;
 using Managers;
 using UI;
 using UnityEngine;
 
-public class InteractionFadePortal : MonoBehaviour,IOnInteract
+public class InteractionFadePortal : MonoBehaviour, IOnInteract
 {
     [SerializeField] private Transform toPos;
 
-    private bool portaled = false;
-
-    bool CheckPortaled()
-    {
-        return !portaled;
-    }
-
-    public Func<bool> InteractCheckEvent { get; set; }
+    private bool portaled;
 
     private void Awake()
     {
         InteractCheckEvent += CheckPortaled;
     }
 
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (other.gameObject.CompareTag("Player") && !other.isTrigger) portaled = false;
+    }
+
+    public Func<bool> InteractCheckEvent { get; set; }
+
     public void OnInteract()
     {
         Portaled();
     }
-    
+
+    private bool CheckPortaled()
+    {
+        return !portaled;
+    }
+
     public void Portaled()
     {
         portaled = true;
@@ -39,14 +43,6 @@ public class InteractionFadePortal : MonoBehaviour,IOnInteract
             CameraManager.instance.SetPlayerCamConfinerBox2D(null);
             CameraManager.instance.ToggleCameraFix(false);
             CameraManager.instance.InitPlayerCamPosition();
-        },null,0.2f);
-    }
-    
-    private void OnTriggerExit2D(Collider2D other)
-    {
-        if (other.gameObject.CompareTag("Player") && !other.isTrigger)
-        {
-            portaled = false;
-        }
+        }, null, 0.2f);
     }
 }

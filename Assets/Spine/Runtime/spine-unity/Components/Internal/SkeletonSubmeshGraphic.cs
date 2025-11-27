@@ -30,28 +30,38 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Spine.Unity {
-
+namespace Spine.Unity
+{
 	/// <summary>
-	/// A minimal MaskableGraphic subclass for rendering multiple submeshes
-	/// at a <see cref="SkeletonGraphic"/>.
+	///     A minimal MaskableGraphic subclass for rendering multiple submeshes
+	///     at a <see cref="SkeletonGraphic" />.
 	/// </summary>
 	[RequireComponent(typeof(CanvasRenderer))]
-	public class SkeletonSubmeshGraphic : MaskableGraphic {
-		public override void SetMaterialDirty () { }
-		public override void SetVerticesDirty () { }
-		protected override void OnPopulateMesh (VertexHelper vh) {
-			vh.Clear();
-		}
+    public class SkeletonSubmeshGraphic : MaskableGraphic
+    {
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            canvasRenderer.cull = false;
+        }
 
-		protected override void OnDisable () {
-			base.OnDisable();
-			this.canvasRenderer.cull = true;
-		}
+        protected override void OnDisable()
+        {
+            base.OnDisable();
+            canvasRenderer.cull = true;
+        }
 
-		protected override void OnEnable () {
-			base.OnEnable();
-			this.canvasRenderer.cull = false;
-		}
-	}
+        public override void SetMaterialDirty()
+        {
+        }
+
+        public override void SetVerticesDirty()
+        {
+        }
+
+        protected override void OnPopulateMesh(VertexHelper vh)
+        {
+            vh.Clear();
+        }
+    }
 }

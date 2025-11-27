@@ -1,13 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class ES3Defaults : ScriptableObject
 {
-    [SerializeField]
-    public ES3SerializableSettings settings = new ES3SerializableSettings();
+    [SerializeField] public ES3SerializableSettings settings = new();
 
-    public bool addMgrToSceneAutomatically = false;
+    public bool addMgrToSceneAutomatically;
     public bool autoUpdateReferences = true;
     public bool addAllPrefabsToManager = true;
     public int collectDependenciesDepth = 4;
@@ -15,10 +12,12 @@ public class ES3Defaults : ScriptableObject
     public bool updateReferencesWhenSceneChanges = true;
     public bool updateReferencesWhenSceneIsSaved = true;
     public bool updateReferencesWhenSceneIsOpened = true;
-    [Tooltip("Folders listed here will be searched for references every time the reference manager is refreshed. Path should be relative to the project folder.")]
+
+    [Tooltip(
+        "Folders listed here will be searched for references every time the reference manager is refreshed. Path should be relative to the project folder.")]
     public string[] referenceFolders = new string[0];
 
-    public bool logDebugInfo = false;
+    public bool logDebugInfo;
     public bool logWarnings = true;
     public bool logErrors = true;
 }

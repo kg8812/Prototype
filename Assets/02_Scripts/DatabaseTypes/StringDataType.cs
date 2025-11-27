@@ -1,9 +1,8 @@
-using Save.Schema;
-using UnityEngine.Serialization;
+using System;
 
 namespace Apis.DataType
 {
-    [System.Serializable]
+    [Serializable]
     public class StringDataType
     {
         public string kr;

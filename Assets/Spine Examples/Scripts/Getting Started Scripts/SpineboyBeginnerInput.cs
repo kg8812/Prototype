@@ -27,42 +27,46 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using System.Collections;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	public class SpineboyBeginnerInput : MonoBehaviour {
-		#region Inspector
-		public string horizontalAxis = "Horizontal";
-		public string attackButton = "Fire1";
-		public string aimButton = "Fire2";
-		public string jumpButton = "Jump";
+namespace Spine.Unity.Examples
+{
+    public class SpineboyBeginnerInput : MonoBehaviour
+    {
+        private void Update()
+        {
+            if (model == null) return;
 
-		public SpineboyBeginnerModel model;
+            var currentHorizontal = Input.GetAxisRaw(horizontalAxis);
+            model.TryMove(currentHorizontal);
 
-		void OnValidate () {
-			if (model == null)
-				model = GetComponent<SpineboyBeginnerModel>();
-		}
-		#endregion
+            if (Input.GetButton(attackButton))
+                model.TryShoot();
 
-		void Update () {
-			if (model == null) return;
+            if (Input.GetButtonDown(aimButton))
+                model.StartAim();
+            if (Input.GetButtonUp(aimButton))
+                model.StopAim();
 
-			float currentHorizontal = Input.GetAxisRaw(horizontalAxis);
-			model.TryMove(currentHorizontal);
+            if (Input.GetButtonDown(jumpButton))
+                model.TryJump();
+        }
 
-			if (Input.GetButton(attackButton))
-				model.TryShoot();
+        #region Inspector
 
-			if (Input.GetButtonDown(aimButton))
-				model.StartAim();
-			if (Input.GetButtonUp(aimButton))
-				model.StopAim();
+        public string horizontalAxis = "Horizontal";
+        public string attackButton = "Fire1";
+        public string aimButton = "Fire2";
+        public string jumpButton = "Jump";
 
-			if (Input.GetButtonDown(jumpButton))
-				model.TryJump();
-		}
-	}
+        public SpineboyBeginnerModel model;
 
+        private void OnValidate()
+        {
+            if (model == null)
+                model = GetComponent<SpineboyBeginnerModel>();
+        }
+
+        #endregion
+    }
 }

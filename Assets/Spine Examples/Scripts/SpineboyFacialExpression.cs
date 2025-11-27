@@ -27,63 +27,64 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	public class SpineboyFacialExpression : MonoBehaviour {
+namespace Spine.Unity.Examples
+{
+    public class SpineboyFacialExpression : MonoBehaviour
+    {
+        public SpineboyFootplanter footPlanter;
 
-		public SpineboyFootplanter footPlanter;
+        [SpineSlot] public string eyeSlotName, mouthSlotName;
 
-		[SpineSlot]
-		public string eyeSlotName, mouthSlotName;
+        [SpineAttachment(slotField: "eyeSlotName")]
+        public string shockEyeName, normalEyeName;
 
-		[SpineAttachment(slotField: "eyeSlotName")]
-		public string shockEyeName, normalEyeName;
+        [SpineAttachment(slotField: "mouthSlotName")]
+        public string shockMouthName, normalMouthName;
 
-		[SpineAttachment(slotField: "mouthSlotName")]
-		public string shockMouthName, normalMouthName;
+        public float balanceThreshold = 2.5f;
+        public float shockDuration = 1f;
 
-		public Slot eyeSlot, mouthSlot;
-		public Attachment shockEye, normalEye, shockMouth, normalMouth;
+        [Header("Debug")] public float shockTimer;
 
-		public float balanceThreshold = 2.5f;
-		public float shockDuration = 1f;
+        public Slot eyeSlot, mouthSlot;
+        public Attachment shockEye, normalEye, shockMouth, normalMouth;
 
-		[Header("Debug")]
-		public float shockTimer = 0f;
+        private void Start()
+        {
+            var skeletonAnimation = GetComponent<SkeletonAnimation>();
+            var skeleton = skeletonAnimation.Skeleton;
+            eyeSlot = skeleton.FindSlot(eyeSlotName);
+            mouthSlot = skeleton.FindSlot(mouthSlotName);
 
-		void Start () {
-			SkeletonAnimation skeletonAnimation = GetComponent<SkeletonAnimation>();
-			Skeleton skeleton = skeletonAnimation.Skeleton;
-			eyeSlot = skeleton.FindSlot(eyeSlotName);
-			mouthSlot = skeleton.FindSlot(mouthSlotName);
+            var eyeSlotIndex = skeleton.Data.FindSlot(eyeSlotName).Index;
+            shockEye = skeleton.GetAttachment(eyeSlotIndex, shockEyeName);
+            normalEye = skeleton.GetAttachment(eyeSlotIndex, normalEyeName);
 
-			int eyeSlotIndex = skeleton.Data.FindSlot(eyeSlotName).Index;
-			shockEye = skeleton.GetAttachment(eyeSlotIndex, shockEyeName);
-			normalEye = skeleton.GetAttachment(eyeSlotIndex, normalEyeName);
+            var mouthSlotIndex = skeleton.Data.FindSlot(mouthSlotName).Index;
+            shockMouth = skeleton.GetAttachment(mouthSlotIndex, shockMouthName);
+            normalMouth = skeleton.GetAttachment(mouthSlotIndex, normalMouthName);
+        }
 
-			int mouthSlotIndex = skeleton.Data.FindSlot(mouthSlotName).Index;
-			shockMouth = skeleton.GetAttachment(mouthSlotIndex, shockMouthName);
-			normalMouth = skeleton.GetAttachment(mouthSlotIndex, normalMouthName);
-		}
+        private void Update()
+        {
+            if (Mathf.Abs(footPlanter.Balance) > balanceThreshold)
+                shockTimer = shockDuration;
 
-		void Update () {
-			if (Mathf.Abs(footPlanter.Balance) > balanceThreshold)
-				shockTimer = shockDuration;
+            if (shockTimer > 0)
+                shockTimer -= Time.deltaTime;
 
-			if (shockTimer > 0)
-				shockTimer -= Time.deltaTime;
-
-			if (shockTimer > 0) {
-				eyeSlot.Attachment = shockEye;
-				mouthSlot.Attachment = shockMouth;
-			} else {
-				eyeSlot.Attachment = normalEye;
-				mouthSlot.Attachment = normalMouth;
-			}
-		}
-	}
-
+            if (shockTimer > 0)
+            {
+                eyeSlot.Attachment = shockEye;
+                mouthSlot.Attachment = shockMouth;
+            }
+            else
+            {
+                eyeSlot.Attachment = normalEye;
+                mouthSlot.Attachment = normalMouth;
+            }
+        }
+    }
 }

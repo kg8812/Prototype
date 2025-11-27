@@ -33,284 +33,362 @@
 
 using UnityEngine;
 
-namespace Spine.Unity {
-
+namespace Spine.Unity
+{
 #if NEW_PREFAB_SYSTEM
-	[ExecuteAlways]
+    [ExecuteAlways]
 #else
 	[ExecuteInEditMode]
 #endif
-	[AddComponentMenu("Spine/SkeletonAnimation")]
-	[HelpURL("http://esotericsoftware.com/spine-unity#SkeletonAnimation-Component")]
-	public class SkeletonAnimation : SkeletonRenderer, ISkeletonAnimation, IAnimationStateComponent {
+    [AddComponentMenu("Spine/SkeletonAnimation")]
+    [HelpURL("http://esotericsoftware.com/spine-unity#SkeletonAnimation-Component")]
+    public class SkeletonAnimation : SkeletonRenderer, ISkeletonAnimation, IAnimationStateComponent
+    {
+        #region IAnimationStateComponent
 
-		#region IAnimationStateComponent
-		/// <summary>
-		/// This is the Spine.AnimationState object of this SkeletonAnimation. You can control animations through it.
-		/// Note that this object, like .skeleton, is not guaranteed to exist in Awake. Do all accesses and caching to it in Start</summary>
-		public Spine.AnimationState state;
-		/// <summary>
-		/// This is the Spine.AnimationState object of this SkeletonAnimation. You can control animations through it.
-		/// Note that this object, like .skeleton, is not guaranteed to exist in Awake. Do all accesses and caching to it in Start</summary>
-		public Spine.AnimationState AnimationState {
-			get {
-				Initialize(false);
-				return this.state;
-			}
-		}
-		private bool wasUpdatedAfterInit = true;
-		#endregion
+        /// <summary>
+        ///     This is the Spine.AnimationState object of this SkeletonAnimation. You can control animations through it.
+        ///     Note that this object, like .skeleton, is not guaranteed to exist in Awake. Do all accesses and caching to it in
+        ///     Start
+        /// </summary>
+        public AnimationState state;
 
-		#region Bone and Initialization Callbacks ISkeletonAnimation
-		protected event ISkeletonAnimationDelegate _OnAnimationRebuild;
-		protected event UpdateBonesDelegate _BeforeApply;
-		protected event UpdateBonesDelegate _UpdateLocal;
-		protected event UpdateBonesDelegate _UpdateWorld;
-		protected event UpdateBonesDelegate _UpdateComplete;
+        /// <summary>
+        ///     This is the Spine.AnimationState object of this SkeletonAnimation. You can control animations through it.
+        ///     Note that this object, like .skeleton, is not guaranteed to exist in Awake. Do all accesses and caching to it in
+        ///     Start
+        /// </summary>
+        public AnimationState AnimationState
+        {
+            get
+            {
+                Initialize(false);
+                return state;
+            }
+        }
 
-		/// <summary>OnAnimationRebuild is raised after the SkeletonAnimation component is successfully initialized.</summary>
-		public event ISkeletonAnimationDelegate OnAnimationRebuild { add { _OnAnimationRebuild += value; } remove { _OnAnimationRebuild -= value; } }
+        private bool wasUpdatedAfterInit = true;
 
-		/// <summary>
-		/// Occurs before the animations are applied.
-		/// Use this callback when you want to change the skeleton state before animations are applied on top.
-		/// </summary>
-		public event UpdateBonesDelegate BeforeApply { add { _BeforeApply += value; } remove { _BeforeApply -= value; } }
+        #endregion
 
-		/// <summary>
-		/// Occurs after the animations are applied and before world space values are resolved.
-		/// Use this callback when you want to set bone local values.
-		/// </summary>
-		public event UpdateBonesDelegate UpdateLocal { add { _UpdateLocal += value; } remove { _UpdateLocal -= value; } }
+        #region Bone and Initialization Callbacks ISkeletonAnimation
 
-		/// <summary>
-		/// Occurs after the Skeleton's bone world space values are resolved (including all constraints).
-		/// Using this callback will cause the world space values to be solved an extra time.
-		/// Use this callback if want to use bone world space values, and also set bone local values.
-		/// </summary>
-		public event UpdateBonesDelegate UpdateWorld { add { _UpdateWorld += value; } remove { _UpdateWorld -= value; } }
+        protected event ISkeletonAnimationDelegate _OnAnimationRebuild;
+        protected event UpdateBonesDelegate _BeforeApply;
+        protected event UpdateBonesDelegate _UpdateLocal;
+        protected event UpdateBonesDelegate _UpdateWorld;
+        protected event UpdateBonesDelegate _UpdateComplete;
 
-		/// <summary>
-		/// Occurs after the Skeleton's bone world space values are resolved (including all constraints).
-		/// Use this callback if you want to use bone world space values, but don't intend to modify bone local values.
-		/// This callback can also be used when setting world position and the bone matrix.</summary>
-		public event UpdateBonesDelegate UpdateComplete { add { _UpdateComplete += value; } remove { _UpdateComplete -= value; } }
+        /// <summary>OnAnimationRebuild is raised after the SkeletonAnimation component is successfully initialized.</summary>
+        public event ISkeletonAnimationDelegate OnAnimationRebuild
+        {
+            add => _OnAnimationRebuild += value;
+            remove => _OnAnimationRebuild -= value;
+        }
 
-		[SerializeField] protected UpdateTiming updateTiming = UpdateTiming.InUpdate;
-		public UpdateTiming UpdateTiming { get { return updateTiming; } set { updateTiming = value; } }
+        /// <summary>
+        ///     Occurs before the animations are applied.
+        ///     Use this callback when you want to change the skeleton state before animations are applied on top.
+        /// </summary>
+        public event UpdateBonesDelegate BeforeApply
+        {
+            add => _BeforeApply += value;
+            remove => _BeforeApply -= value;
+        }
 
-		/// <summary>If enabled, AnimationState uses unscaled game time
-		/// (<c>Time.unscaledDeltaTime</c> instead of normal game time(<c>Time.deltaTime</c>),
-		/// running animations independent of e.g. game pause (<c>Time.timeScale</c>).
-		/// Instance SkeletonAnimation.timeScale will still be applied.</summary>
-		[SerializeField] protected bool unscaledTime;
-		public bool UnscaledTime { get { return unscaledTime; } set { unscaledTime = value; } }
-		#endregion
+        /// <summary>
+        ///     Occurs after the animations are applied and before world space values are resolved.
+        ///     Use this callback when you want to set bone local values.
+        /// </summary>
+        public event UpdateBonesDelegate UpdateLocal
+        {
+            add => _UpdateLocal += value;
+            remove => _UpdateLocal -= value;
+        }
 
-		#region Serialized state and Beginner API
-		[SerializeField]
-		[SpineAnimation]
-		private string _animationName;
+        /// <summary>
+        ///     Occurs after the Skeleton's bone world space values are resolved (including all constraints).
+        ///     Using this callback will cause the world space values to be solved an extra time.
+        ///     Use this callback if want to use bone world space values, and also set bone local values.
+        /// </summary>
+        public event UpdateBonesDelegate UpdateWorld
+        {
+            add => _UpdateWorld += value;
+            remove => _UpdateWorld -= value;
+        }
 
-		/// <summary>
-		/// Setting this property sets the animation of the skeleton. If invalid, it will store the animation name for the next time the skeleton is properly initialized.
-		/// Getting this property gets the name of the currently playing animation. If invalid, it will return the last stored animation name set through this property.</summary>
-		public string AnimationName {
-			get {
-				if (!valid) {
-					return _animationName;
-				} else {
-					TrackEntry entry = state.GetCurrent(0);
-					return entry == null ? null : entry.Animation.Name;
-				}
-			}
-			set {
-				Initialize(false);
-				if (_animationName == value) {
-					TrackEntry entry = state.GetCurrent(0);
-					if (entry != null && entry.Loop == loop)
-						return;
-				}
-				_animationName = value;
+        /// <summary>
+        ///     Occurs after the Skeleton's bone world space values are resolved (including all constraints).
+        ///     Use this callback if you want to use bone world space values, but don't intend to modify bone local values.
+        ///     This callback can also be used when setting world position and the bone matrix.
+        /// </summary>
+        public event UpdateBonesDelegate UpdateComplete
+        {
+            add => _UpdateComplete += value;
+            remove => _UpdateComplete -= value;
+        }
 
-				if (string.IsNullOrEmpty(value)) {
-					state.ClearTrack(0);
-				} else {
-					Spine.Animation animationObject = skeletonDataAsset.GetSkeletonData(false).FindAnimation(value);
-					if (animationObject != null)
-						state.SetAnimation(0, animationObject, loop);
-				}
-			}
-		}
+        [SerializeField] protected UpdateTiming updateTiming = UpdateTiming.InUpdate;
 
-		/// <summary>Whether or not <see cref="AnimationName"/> should loop. This only applies to the initial animation specified in the inspector, or any subsequent Animations played through .AnimationName. Animations set through state.SetAnimation are unaffected.</summary>
-		public bool loop;
+        public UpdateTiming UpdateTiming
+        {
+            get => updateTiming;
+            set => updateTiming = value;
+        }
 
-		/// <summary>
-		/// The rate at which animations progress over time. 1 means 100%. 0.5 means 50%.</summary>
-		/// <remarks>AnimationState and TrackEntry also have their own timeScale. These are combined multiplicatively.</remarks>
-		public float timeScale = 1;
-		#endregion
+        /// <summary>
+        ///     If enabled, AnimationState uses unscaled game time
+        ///     (<c>Time.unscaledDeltaTime</c> instead of normal game time(<c>Time.deltaTime</c>),
+        ///     running animations independent of e.g. game pause (<c>Time.timeScale</c>).
+        ///     Instance SkeletonAnimation.timeScale will still be applied.
+        /// </summary>
+        [SerializeField] protected bool unscaledTime;
 
-		#region Runtime Instantiation
-		/// <summary>Adds and prepares a SkeletonAnimation component to a GameObject at runtime.</summary>
-		/// <returns>The newly instantiated SkeletonAnimation</returns>
-		public static SkeletonAnimation AddToGameObject (GameObject gameObject, SkeletonDataAsset skeletonDataAsset,
-			bool quiet = false) {
-			return SkeletonRenderer.AddSpineComponent<SkeletonAnimation>(gameObject, skeletonDataAsset, quiet);
-		}
+        public bool UnscaledTime
+        {
+            get => unscaledTime;
+            set => unscaledTime = value;
+        }
 
-		/// <summary>Instantiates a new UnityEngine.GameObject and adds a prepared SkeletonAnimation component to it.</summary>
-		/// <returns>The newly instantiated SkeletonAnimation component.</returns>
-		public static SkeletonAnimation NewSkeletonAnimationGameObject (SkeletonDataAsset skeletonDataAsset,
-			bool quiet = false) {
-			return SkeletonRenderer.NewSpineGameObject<SkeletonAnimation>(skeletonDataAsset, quiet);
-		}
-		#endregion
+        #endregion
 
-		/// <summary>
-		/// Clears the previously generated mesh, resets the skeleton's pose, and clears all previously active animations.</summary>
-		public override void ClearState () {
-			base.ClearState();
-			if (state != null) state.ClearTracks();
-		}
+        #region Serialized state and Beginner API
 
-		/// <summary>
-		/// Initialize this component. Attempts to load the SkeletonData and creates the internal Spine objects and buffers.</summary>
-		/// <param name="overwrite">If set to <c>true</c>, force overwrite an already initialized object.</param>
-		public override void Initialize (bool overwrite, bool quiet = false) {
-			if (valid && !overwrite)
-				return;
+        [SerializeField] [SpineAnimation] private string _animationName;
+
+        /// <summary>
+        ///     Setting this property sets the animation of the skeleton. If invalid, it will store the animation name for the next
+        ///     time the skeleton is properly initialized.
+        ///     Getting this property gets the name of the currently playing animation. If invalid, it will return the last stored
+        ///     animation name set through this property.
+        /// </summary>
+        public string AnimationName
+        {
+            get
+            {
+                if (!valid) return _animationName;
+
+                var entry = state.GetCurrent(0);
+                return entry == null ? null : entry.Animation.Name;
+            }
+            set
+            {
+                Initialize(false);
+                if (_animationName == value)
+                {
+                    var entry = state.GetCurrent(0);
+                    if (entry != null && entry.Loop == loop)
+                        return;
+                }
+
+                _animationName = value;
+
+                if (string.IsNullOrEmpty(value))
+                {
+                    state.ClearTrack(0);
+                }
+                else
+                {
+                    var animationObject = skeletonDataAsset.GetSkeletonData(false).FindAnimation(value);
+                    if (animationObject != null)
+                        state.SetAnimation(0, animationObject, loop);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Whether or not <see cref="AnimationName" /> should loop. This only applies to the initial animation specified
+        ///     in the inspector, or any subsequent Animations played through .AnimationName. Animations set through
+        ///     state.SetAnimation are unaffected.
+        /// </summary>
+        public bool loop;
+
+        /// <summary>
+        ///     The rate at which animations progress over time. 1 means 100%. 0.5 means 50%.
+        /// </summary>
+        /// <remarks>AnimationState and TrackEntry also have their own timeScale. These are combined multiplicatively.</remarks>
+        public float timeScale = 1;
+
+        #endregion
+
+        #region Runtime Instantiation
+
+        /// <summary>Adds and prepares a SkeletonAnimation component to a GameObject at runtime.</summary>
+        /// <returns>The newly instantiated SkeletonAnimation</returns>
+        public static SkeletonAnimation AddToGameObject(GameObject gameObject, SkeletonDataAsset skeletonDataAsset,
+            bool quiet = false)
+        {
+            return AddSpineComponent<SkeletonAnimation>(gameObject, skeletonDataAsset, quiet);
+        }
+
+        /// <summary>Instantiates a new UnityEngine.GameObject and adds a prepared SkeletonAnimation component to it.</summary>
+        /// <returns>The newly instantiated SkeletonAnimation component.</returns>
+        public static SkeletonAnimation NewSkeletonAnimationGameObject(SkeletonDataAsset skeletonDataAsset,
+            bool quiet = false)
+        {
+            return NewSpineGameObject<SkeletonAnimation>(skeletonDataAsset, quiet);
+        }
+
+        #endregion
+
+        /// <summary>
+        ///     Clears the previously generated mesh, resets the skeleton's pose, and clears all previously active animations.
+        /// </summary>
+        public override void ClearState()
+        {
+            base.ClearState();
+            if (state != null) state.ClearTracks();
+        }
+
+        /// <summary>
+        ///     Initialize this component. Attempts to load the SkeletonData and creates the internal Spine objects and buffers.
+        /// </summary>
+        /// <param name="overwrite">If set to <c>true</c>, force overwrite an already initialized object.</param>
+        public override void Initialize(bool overwrite, bool quiet = false)
+        {
+            if (valid && !overwrite)
+                return;
 #if UNITY_EDITOR
-			if (BuildUtilities.IsInSkeletonAssetBuildPreProcessing)
-				return;
+            if (BuildUtilities.IsInSkeletonAssetBuildPreProcessing)
+                return;
 #endif
-			state = null; // prevent applying leftover AnimationState
-			base.Initialize(overwrite, quiet);
+            state = null; // prevent applying leftover AnimationState
+            base.Initialize(overwrite, quiet);
 
-			if (!valid)
-				return;
-			state = new Spine.AnimationState(skeletonDataAsset.GetAnimationStateData());
-			state.Dispose += OnAnimationDisposed;
-			wasUpdatedAfterInit = false;
+            if (!valid)
+                return;
+            state = new AnimationState(skeletonDataAsset.GetAnimationStateData());
+            state.Dispose += OnAnimationDisposed;
+            wasUpdatedAfterInit = false;
 
-			if (!string.IsNullOrEmpty(_animationName)) {
-				Spine.Animation animationObject = skeletonDataAsset.GetSkeletonData(false).FindAnimation(_animationName);
-				if (animationObject != null) {
-					state.SetAnimation(0, animationObject, loop);
+            if (!string.IsNullOrEmpty(_animationName))
+            {
+                var animationObject = skeletonDataAsset.GetSkeletonData(false).FindAnimation(_animationName);
+                if (animationObject != null)
+                {
+                    state.SetAnimation(0, animationObject, loop);
 #if UNITY_EDITOR
-					if (!Application.isPlaying)
-						Update(0f);
+                    if (!Application.isPlaying)
+                        Update(0f);
 #endif
-				}
-			}
+                }
+            }
 
-			if (_OnAnimationRebuild != null)
-				_OnAnimationRebuild(this);
-		}
+            if (_OnAnimationRebuild != null)
+                _OnAnimationRebuild(this);
+        }
 
-		virtual protected void Update () {
+        protected virtual void Update()
+        {
 #if UNITY_EDITOR
-			if (!Application.isPlaying) {
-				Update(0f);
-				return;
-			}
+            if (!Application.isPlaying)
+            {
+                Update(0f);
+                return;
+            }
 #endif
-			if (updateTiming != UpdateTiming.InUpdate) return;
-			Update(unscaledTime ? Time.unscaledDeltaTime : Time.deltaTime);
-		}
+            if (updateTiming != UpdateTiming.InUpdate) return;
+            Update(unscaledTime ? Time.unscaledDeltaTime : Time.deltaTime);
+        }
 
-		virtual protected void FixedUpdate () {
-			if (updateTiming != UpdateTiming.InFixedUpdate) return;
-			Update(unscaledTime ? Time.unscaledDeltaTime : Time.deltaTime);
-		}
+        protected virtual void FixedUpdate()
+        {
+            if (updateTiming != UpdateTiming.InFixedUpdate) return;
+            Update(unscaledTime ? Time.unscaledDeltaTime : Time.deltaTime);
+        }
 
-		/// <summary>Progresses the AnimationState according to the given deltaTime, and applies it to the Skeleton. Use Time.deltaTime to update manually. Use deltaTime 0 to update without progressing the time.</summary>
-		public void Update (float deltaTime) {
-			if (!valid || state == null)
-				return;
+        /// <summary>
+        ///     Progresses the AnimationState according to the given deltaTime, and applies it to the Skeleton. Use
+        ///     Time.deltaTime to update manually. Use deltaTime 0 to update without progressing the time.
+        /// </summary>
+        public void Update(float deltaTime)
+        {
+            if (!valid || state == null)
+                return;
 
-			wasUpdatedAfterInit = true;
-			if (updateMode < UpdateMode.OnlyAnimationStatus)
-				return;
-			UpdateAnimationStatus(deltaTime);
+            wasUpdatedAfterInit = true;
+            if (updateMode < UpdateMode.OnlyAnimationStatus)
+                return;
+            UpdateAnimationStatus(deltaTime);
 
-			if (updateMode == UpdateMode.OnlyAnimationStatus)
-				return;
-			ApplyAnimation();
-		}
+            if (updateMode == UpdateMode.OnlyAnimationStatus)
+                return;
+            ApplyAnimation();
+        }
 
-		protected void UpdateAnimationStatus (float deltaTime) {
-			deltaTime *= timeScale;
-			state.Update(deltaTime);
-			skeleton.Update(deltaTime);
+        protected void UpdateAnimationStatus(float deltaTime)
+        {
+            deltaTime *= timeScale;
+            state.Update(deltaTime);
+            skeleton.Update(deltaTime);
 
-			ApplyTransformMovementToPhysics();
+            ApplyTransformMovementToPhysics();
 
-			if (updateMode == UpdateMode.OnlyAnimationStatus) {
-				state.ApplyEventTimelinesOnly(skeleton, issueEvents: false);
-				return;
-			}
-		}
+            if (updateMode == UpdateMode.OnlyAnimationStatus) state.ApplyEventTimelinesOnly(skeleton, false);
+        }
 
-		public virtual void ApplyAnimation () {
-			if (_BeforeApply != null)
-				_BeforeApply(this);
+        public virtual void ApplyAnimation()
+        {
+            if (_BeforeApply != null)
+                _BeforeApply(this);
 
-			if (updateMode != UpdateMode.OnlyEventTimelines)
-				state.Apply(skeleton);
-			else
-				state.ApplyEventTimelinesOnly(skeleton, issueEvents: true);
+            if (updateMode != UpdateMode.OnlyEventTimelines)
+                state.Apply(skeleton);
+            else
+                state.ApplyEventTimelinesOnly(skeleton);
 
-			AfterAnimationApplied();
-		}
+            AfterAnimationApplied();
+        }
 
-		public void AfterAnimationApplied () {
-			if (_UpdateLocal != null)
-				_UpdateLocal(this);
+        public void AfterAnimationApplied()
+        {
+            if (_UpdateLocal != null)
+                _UpdateLocal(this);
 
-			if (_UpdateWorld == null) {
-				UpdateWorldTransform(Skeleton.Physics.Update);
-			} else {
-				UpdateWorldTransform(Skeleton.Physics.Pose);
-				_UpdateWorld(this);
-				UpdateWorldTransform(Skeleton.Physics.Update);
-			}
+            if (_UpdateWorld == null)
+            {
+                UpdateWorldTransform(Skeleton.Physics.Update);
+            }
+            else
+            {
+                UpdateWorldTransform(Skeleton.Physics.Pose);
+                _UpdateWorld(this);
+                UpdateWorldTransform(Skeleton.Physics.Update);
+            }
 
-			if (_UpdateComplete != null) {
-				_UpdateComplete(this);
-			}
-		}
+            if (_UpdateComplete != null) _UpdateComplete(this);
+        }
 
-		public override void LateUpdate () {
-			if (updateTiming == UpdateTiming.InLateUpdate && valid)
-				Update(unscaledTime ? Time.unscaledDeltaTime : Time.deltaTime);
+        public override void LateUpdate()
+        {
+            if (updateTiming == UpdateTiming.InLateUpdate && valid)
+                Update(unscaledTime ? Time.unscaledDeltaTime : Time.deltaTime);
 
-			// instantiation can happen from Update() after this component, leading to a missing Update() call.
-			if (!wasUpdatedAfterInit) Update(0);
+            // instantiation can happen from Update() after this component, leading to a missing Update() call.
+            if (!wasUpdatedAfterInit) Update(0);
 
-			base.LateUpdate();
-		}
+            base.LateUpdate();
+        }
 
-		public override void OnBecameVisible () {
-			UpdateMode previousUpdateMode = updateMode;
-			updateMode = UpdateMode.FullUpdate;
+        public override void OnBecameVisible()
+        {
+            var previousUpdateMode = updateMode;
+            updateMode = UpdateMode.FullUpdate;
 
-			// OnBecameVisible is called after LateUpdate()
-			if (previousUpdateMode != UpdateMode.FullUpdate &&
-				previousUpdateMode != UpdateMode.EverythingExceptMesh)
-				Update(0);
-			if (previousUpdateMode != UpdateMode.FullUpdate)
-				LateUpdate();
-		}
+            // OnBecameVisible is called after LateUpdate()
+            if (previousUpdateMode != UpdateMode.FullUpdate &&
+                previousUpdateMode != UpdateMode.EverythingExceptMesh)
+                Update(0);
+            if (previousUpdateMode != UpdateMode.FullUpdate)
+                LateUpdate();
+        }
 
-		protected virtual void OnAnimationDisposed (TrackEntry entry) {
-			// when updateMode disables applying animations, still ensure animations are mixed out
-			if (updateMode != UpdateMode.FullUpdate &&
-				updateMode != UpdateMode.EverythingExceptMesh) {
-				entry.Animation.Apply(skeleton, 0, 0, false, null, 0f, MixBlend.Setup, MixDirection.Out);
-			}
-		}
-	}
-
+        protected virtual void OnAnimationDisposed(TrackEntry entry)
+        {
+            // when updateMode disables applying animations, still ensure animations are mixed out
+            if (updateMode != UpdateMode.FullUpdate &&
+                updateMode != UpdateMode.EverythingExceptMesh)
+                entry.Animation.Apply(skeleton, 0, 0, false, null, 0f, MixBlend.Setup, MixDirection.Out);
+        }
+    }
 }

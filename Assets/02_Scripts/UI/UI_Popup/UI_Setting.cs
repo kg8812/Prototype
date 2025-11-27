@@ -1,18 +1,18 @@
 using Apis.Managers;
-using Default;
 using Apis.UI;
+using Default;
 using Managers;
 using Save.Schema;
-using UnityEngine.UI;
 
 namespace Apis
-{ 
+{
     public class UI_Setting : UI_Popup
     {
-        public UI_HeaderMenu_nton settingHeaderMenuNton;
         public static bool IsDirty;
+        public UI_HeaderMenu_nton settingHeaderMenuNton;
 
         private UISetting_Content[] _contents;
+
         public override void Init()
         {
             base.Init();
@@ -24,10 +24,7 @@ namespace Apis
         {
             settingHeaderMenuNton.Reset();
             // TODO: 저장된 데이터 기반으로 setting 값들 초기화
-            foreach (var content in _contents)
-            {
-                content.ResetBySaveData(DataAccess.Settings.Data);
-            }
+            foreach (var content in _contents) content.ResetBySaveData(DataAccess.Settings.Data);
             IsDirty = false;
             base.TryActivated(force);
         }
@@ -47,20 +44,13 @@ namespace Apis
         public override void CloseOwn()
         {
             if (IsDirty)
-            {
                 SystemManager.SystemCheck(LanguageManager.Str(10118801), isOn =>
                 {
-                    if (isOn)
-                    {
-                        DataAccess.Settings.Save();
-                    }
+                    if (isOn) DataAccess.Settings.Save();
                     base.CloseOwn();
                 });
-            }
             else
-            {
                 base.CloseOwn();
-            }
         }
     }
 }

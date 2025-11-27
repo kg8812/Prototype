@@ -5,6 +5,32 @@ namespace Apis
 {
     public class StrUtil
     {
+        public static string GetEquipmentName(int equipId)
+        {
+            return LanguageManager.Str(Calc.ConcatInts(EquipNameCategory, equipId));
+        }
+
+        public static string GetFlavorText(int mainId)
+        {
+            return LanguageManager.Str(Calc.ConcatInts(FlavorTextCategory, mainId));
+        }
+
+
+        public static string GetTagName(int tagId)
+        {
+            return LanguageManager.Str(Calc.ConcatInts(TagNameCategory, tagId));
+        }
+
+        public static string GetEquipmentDesc(int equipId)
+        {
+            return LanguageManager.Str(Calc.ConcatInts(EquipDescCategory, equipId));
+        }
+
+        public static string GetTagDesc(int tagId)
+        {
+            return LanguageManager.Str(Calc.ConcatInts(TagDescCategory, tagId));
+        }
+
         #region 카테고리
 
         public const int UICategory = 10;
@@ -25,24 +51,5 @@ namespace Apis
         public const int TagDescCategory = 28;
 
         #endregion
-        
-        
-
-
-        public static string GetEquipmentName(int equipId) =>
-            LanguageManager.Str(Calc.ConcatInts(EquipNameCategory, equipId));
-        
-        public static string GetFlavorText(int mainId) =>
-            LanguageManager.Str(Calc.ConcatInts(FlavorTextCategory, mainId));
-        
-        
-        public static string GetTagName(int tagId) => 
-            LanguageManager.Str(Calc.ConcatInts(TagNameCategory, tagId));
-        
-        public static string GetEquipmentDesc(int equipId) =>
-            LanguageManager.Str(Calc.ConcatInts(EquipDescCategory, equipId));
-        
-        public static string GetTagDesc(int tagId) => 
-            LanguageManager.Str(Calc.ConcatInts(TagDescCategory, tagId));
     }
 }

@@ -2,14 +2,15 @@
 
 namespace Apis.Components
 {
-    public class TS_PlayerEnter: ITriggerStrategy
+    public class TS_PlayerEnter : ITriggerStrategy
     {
-        private Trigger _triggerComponent;
+        private readonly Trigger _triggerComponent;
 
         public TS_PlayerEnter(Trigger triggerComponent)
         {
             _triggerComponent = triggerComponent;
         }
+
         public void OnTriggerEnter2D(Collider2D col)
         {
             _triggerComponent.ActivateTrigger();
@@ -17,7 +18,6 @@ namespace Apis.Components
 
         public void OnTriggerExit2D(Collider2D col)
         {
-            
         }
 
         public bool CheckAvailable(Collider2D col)

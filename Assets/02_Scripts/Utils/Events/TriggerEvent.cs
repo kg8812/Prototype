@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -11,13 +8,13 @@ public class TriggerEvent : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        triggerEnterEvent ??= new();
+        triggerEnterEvent ??= new UnityEvent<Collider2D>();
         triggerEnterEvent?.Invoke(other);
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        triggerExitEvent ??= new();
+        triggerExitEvent ??= new UnityEvent<Collider2D>();
         triggerExitEvent?.Invoke(other);
     }
 }

@@ -4,9 +4,9 @@ using UnityEngine;
 
 public interface ICdActive
 {
+    public float CurCd { get; set; }
     public void SetCD();
     public void StartCd();
-    public float CurCd { get; set; }
     public bool CheckActive();
     public void SetIconCdType(UI_AtkItemIcon icon); // 아이콘 설정
     public void Update(EventParameters parameters);
@@ -17,24 +17,25 @@ public class NormalCd : ICdActive
 {
     private readonly Skill skill;
 
+    private float _curCd;
+
+    private bool isCd;
+
     public NormalCd(Skill skill)
     {
         this.skill = skill;
         isCd = false;
     }
 
-    private bool isCd;
-
     public void SetCD()
     {
         CurCd = skill.Cd;
     }
+
     public void StartCd()
     {
         GameManager.instance.StartCoroutineWrapper(CooldownCoroutine());
     }
-
-    private float _curCd;
 
     public float CurCd
     {
@@ -62,7 +63,11 @@ public class NormalCd : ICdActive
     {
     }
 
-    IEnumerator CooldownCoroutine()
+    public void Init()
+    {
+    }
+
+    private IEnumerator CooldownCoroutine()
     {
         if (!isCd)
         {
@@ -76,15 +81,14 @@ public class NormalCd : ICdActive
             isCd = false;
         }
     }
-
-    public void Init()
-    {
-    }
 }
 
 public class StackCd : ICdActive
 {
-    private Skill skill;
+    private float _curCd;
+
+    private bool isStackCd;
+    private readonly Skill skill;
 
     public StackCd(Skill skill)
     {
@@ -95,8 +99,8 @@ public class StackCd : ICdActive
 
     public void SetCD()
     {
-        
     }
+
     public void StartCd()
     {
         if (skill.CurStack > 0)
@@ -105,10 +109,6 @@ public class StackCd : ICdActive
             GameManager.instance.StartCoroutine(MinCooldownCoroutine());
         }
     }
-
-    private bool isStackCd;
-
-    private float _curCd;
 
     public float CurCd
     {
@@ -132,27 +132,10 @@ public class StackCd : ICdActive
         icon.ChangeType(new UI_AtkItemIcon.StackUpdate(icon));
     }
 
-
-    IEnumerator MinCooldownCoroutine()
-    {
-        if (isStackCd) yield break;
-
-        isStackCd = true;
-        float temp = CurCd;
-        CurCd = skill.minStackCd;
-        while (CurCd > 0)
-        {
-            CurCd -= Time.deltaTime;
-            yield return null;
-        }
-        
-        CurCd = temp;
-        isStackCd = false;
-    }
     public void Update(EventParameters parameters)
     {
         if (isStackCd) return;
-        
+
         if (skill.CurStack >= skill.MaxStack)
         {
             CurCd = skill.Cd;
@@ -174,16 +157,36 @@ public class StackCd : ICdActive
     {
         CurCd = skill.Cd;
     }
+
+
+    private IEnumerator MinCooldownCoroutine()
+    {
+        if (isStackCd) yield break;
+
+        isStackCd = true;
+        var temp = CurCd;
+        CurCd = skill.minStackCd;
+        while (CurCd > 0)
+        {
+            CurCd -= Time.deltaTime;
+            yield return null;
+        }
+
+        CurCd = temp;
+        isStackCd = false;
+    }
 }
 
 public class GaugeCd : ICdActive
 {
-    private Skill skill;
+    private float _curCd;
+    private readonly Skill skill;
 
     public GaugeCd(Skill skill)
     {
         this.skill = skill;
     }
+
     public void SetCD()
     {
         CurCd = skill.Cd;
@@ -193,8 +196,6 @@ public class GaugeCd : ICdActive
     {
         CurCd = skill.Cd;
     }
-
-    private float _curCd;
 
     public float CurCd
     {

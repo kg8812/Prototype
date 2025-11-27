@@ -5,7 +5,7 @@ namespace Coffee.UIParticleExtensions
 {
     internal class ModifiedMaterial
     {
-        private static readonly List<MatEntry> s_Entries = new List<MatEntry>();
+        private static readonly List<MatEntry> s_Entries = new();
 
         public static Material Add(Material baseMat, Texture texture, int id, int props)
         {

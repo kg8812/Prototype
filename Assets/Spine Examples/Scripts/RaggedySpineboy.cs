@@ -27,76 +27,86 @@
  * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
-using Spine.Unity;
 using System.Collections;
 using UnityEngine;
 
-namespace Spine.Unity.Examples {
-	public class RaggedySpineboy : MonoBehaviour {
+namespace Spine.Unity.Examples
+{
+    public class RaggedySpineboy : MonoBehaviour
+    {
+        public LayerMask groundMask;
+        public float restoreDuration = 0.5f;
+        public Vector2 launchVelocity = new(50, 100);
+        private Collider2D naturalCollider;
 
-		public LayerMask groundMask;
-		public float restoreDuration = 0.5f;
-		public Vector2 launchVelocity = new Vector2(50, 100);
+        private SkeletonRagdoll2D ragdoll;
 
-		Spine.Unity.Examples.SkeletonRagdoll2D ragdoll;
-		Collider2D naturalCollider;
+        private void Start()
+        {
+            ragdoll = GetComponent<SkeletonRagdoll2D>();
+            naturalCollider = GetComponent<Collider2D>();
+        }
 
-		void Start () {
-			ragdoll = GetComponent<Spine.Unity.Examples.SkeletonRagdoll2D>();
-			naturalCollider = GetComponent<Collider2D>();
-		}
+        private void OnMouseUp()
+        {
+            if (naturalCollider.enabled)
+                Launch();
+        }
 
-		void AddRigidbody () {
-			Rigidbody2D rb = gameObject.AddComponent<Rigidbody2D>();
-			rb.freezeRotation = true;
-			naturalCollider.enabled = true;
-		}
+        private void AddRigidbody()
+        {
+            var rb = gameObject.AddComponent<Rigidbody2D>();
+            rb.freezeRotation = true;
+            naturalCollider.enabled = true;
+        }
 
-		void RemoveRigidbody () {
-			Destroy(GetComponent<Rigidbody2D>());
-			naturalCollider.enabled = false;
-		}
+        private void RemoveRigidbody()
+        {
+            Destroy(GetComponent<Rigidbody2D>());
+            naturalCollider.enabled = false;
+        }
 
-		void OnMouseUp () {
-			if (naturalCollider.enabled)
-				Launch();
-		}
+        private void Launch()
+        {
+            RemoveRigidbody();
+            ragdoll.Apply();
+            ragdoll.RootRigidbody.linearVelocity =
+                new Vector2(Random.Range(-launchVelocity.x, launchVelocity.x), launchVelocity.y);
+            StartCoroutine(WaitUntilStopped());
+        }
 
-		void Launch () {
-			RemoveRigidbody();
-			ragdoll.Apply();
-			ragdoll.RootRigidbody.linearVelocity = new Vector2(Random.Range(-launchVelocity.x, launchVelocity.x), launchVelocity.y);
-			StartCoroutine(WaitUntilStopped());
-		}
+        private IEnumerator Restore()
+        {
+            var estimatedPos = ragdoll.EstimatedSkeletonPosition;
+            Vector3 rbPosition = ragdoll.RootRigidbody.position;
 
-		IEnumerator Restore () {
-			Vector3 estimatedPos = ragdoll.EstimatedSkeletonPosition;
-			Vector3 rbPosition = ragdoll.RootRigidbody.position;
+            var skeletonPoint = estimatedPos;
+            var hit = Physics2D.Raycast(rbPosition, estimatedPos - rbPosition,
+                Vector3.Distance(estimatedPos, rbPosition), groundMask);
+            if (hit.collider != null)
+                skeletonPoint = hit.point;
 
-			Vector3 skeletonPoint = estimatedPos;
-			RaycastHit2D hit = Physics2D.Raycast((Vector2)rbPosition, (Vector2)(estimatedPos - rbPosition), Vector3.Distance(estimatedPos, rbPosition), groundMask);
-			if (hit.collider != null)
-				skeletonPoint = hit.point;
+            ragdoll.RootRigidbody.isKinematic = true;
+            ragdoll.SetSkeletonPosition(skeletonPoint);
 
-			ragdoll.RootRigidbody.isKinematic = true;
-			ragdoll.SetSkeletonPosition(skeletonPoint);
+            yield return ragdoll.SmoothMix(0, restoreDuration);
+            ragdoll.Remove();
 
-			yield return ragdoll.SmoothMix(0, restoreDuration);
-			ragdoll.Remove();
+            AddRigidbody();
+        }
 
-			AddRigidbody();
-		}
+        private IEnumerator WaitUntilStopped()
+        {
+            yield return new WaitForSeconds(0.5f);
 
-		IEnumerator WaitUntilStopped () {
-			yield return new WaitForSeconds(0.5f);
+            float t = 0;
+            while (t < 0.5f)
+            {
+                t = ragdoll.RootRigidbody.linearVelocity.magnitude > 0.09f ? 0 : t + Time.deltaTime;
+                yield return null;
+            }
 
-			float t = 0;
-			while (t < 0.5f) {
-				t = (ragdoll.RootRigidbody.linearVelocity.magnitude > 0.09f) ? 0 : t + Time.deltaTime;
-				yield return null;
-			}
-
-			StartCoroutine(Restore());
-		}
-	}
+            StartCoroutine(Restore());
+        }
+    }
 }

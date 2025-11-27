@@ -38,187 +38,215 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
-namespace Spine.Unity.Examples {
-	using MaterialReplacement = RenderExistingMesh.MaterialReplacement;
+namespace Spine.Unity.Examples
+{
+    using MaterialReplacement = RenderExistingMesh.MaterialReplacement;
 
 #if NEW_PREFAB_SYSTEM
-	[ExecuteAlways]
+    [ExecuteAlways]
 #else
 	[ExecuteInEditMode]
 #endif
-	public class RenderExistingMeshGraphic : MonoBehaviour {
-		public SkeletonGraphic referenceSkeletonGraphic;
-		public Material replacementMaterial;
+    public class RenderExistingMeshGraphic : MonoBehaviour
+    {
+        public SkeletonGraphic referenceSkeletonGraphic;
+        public Material replacementMaterial;
 
-		public MaterialReplacement[] replacementMaterials = new MaterialReplacement[0];
+        public MaterialReplacement[] replacementMaterials = new MaterialReplacement[0];
 
-		SkeletonSubmeshGraphic ownGraphic;
-		public List<SkeletonSubmeshGraphic> ownSubmeshGraphics;
-
-#if UNITY_EDITOR
-		private void Reset () {
-			Awake();
-			LateUpdate();
-		}
-#endif
-
-		void Awake () {
-			// subscribe to OnMeshAndMaterialsUpdated
-			if (referenceSkeletonGraphic) {
-				referenceSkeletonGraphic.OnMeshAndMaterialsUpdated -= UpdateOnCallback;
-				referenceSkeletonGraphic.OnMeshAndMaterialsUpdated += UpdateOnCallback;
-			}
-
-			ownGraphic = this.GetComponent<SkeletonSubmeshGraphic>();
-			if (referenceSkeletonGraphic) {
-				if (referenceSkeletonGraphic.allowMultipleCanvasRenderers)
-					EnsureCanvasRendererCount(referenceSkeletonGraphic.canvasRenderers.Count);
-				else
-					SetupSubmeshGraphic();
-			}
-		}
-
-		protected void OnDisable () {
-			if (referenceSkeletonGraphic) {
-				referenceSkeletonGraphic.OnMeshAndMaterialsUpdated -= UpdateOnCallback;
-			}
-		}
-
-		protected void OnEnable () {
-#if UNITY_EDITOR
-			// handle disabled scene reload
-			if (Application.isPlaying) {
-				Awake();
-				return;
-			}
-#endif
-			if (referenceSkeletonGraphic) {
-				referenceSkeletonGraphic.OnMeshAndMaterialsUpdated -= UpdateOnCallback;
-				referenceSkeletonGraphic.OnMeshAndMaterialsUpdated += UpdateOnCallback;
-			}
-		}
-
-		void SetupSubmeshGraphic () {
-			if (ownGraphic == null)
-				ownGraphic = this.gameObject.AddComponent<SkeletonSubmeshGraphic>();
-
-			ownGraphic.maskable = referenceSkeletonGraphic.maskable;
-#if HAS_CULL_TRANSPARENT_MESH
-			ownGraphic.canvasRenderer.cullTransparentMesh = referenceSkeletonGraphic.canvasRenderer.cullTransparentMesh;
-#endif
-			ownGraphic.canvasRenderer.SetMaterial(replacementMaterial, referenceSkeletonGraphic.mainTexture);
-		}
-
-		protected void EnsureCanvasRendererCount (int targetCount) {
-			if (ownSubmeshGraphics == null)
-				ownSubmeshGraphics = new List<SkeletonSubmeshGraphic>();
-
-#if HAS_CULL_TRANSPARENT_MESH
-			bool cullTransparentMesh = referenceSkeletonGraphic.canvasRenderer.cullTransparentMesh;
-#endif
-			Vector2 pivot = referenceSkeletonGraphic.rectTransform.pivot;
-
-			int currentCount = ownSubmeshGraphics.Count;
-			for (int i = currentCount; i < targetCount; ++i) {
-				GameObject go = new GameObject(string.Format("Renderer{0}", i), typeof(RectTransform));
-				go.transform.SetParent(this.transform, false);
-				go.transform.localPosition = Vector3.zero;
-				CanvasRenderer canvasRenderer = go.AddComponent<CanvasRenderer>();
-#if HAS_CULL_TRANSPARENT_MESH
-				canvasRenderer.cullTransparentMesh = cullTransparentMesh;
-#endif
-				SkeletonSubmeshGraphic submeshGraphic = go.AddComponent<SkeletonSubmeshGraphic>();
-				ownSubmeshGraphics.Add(submeshGraphic);
-				submeshGraphic.maskable = referenceSkeletonGraphic.maskable;
-				submeshGraphic.raycastTarget = false;
-				submeshGraphic.rectTransform.pivot = pivot;
-				submeshGraphic.rectTransform.anchorMin = Vector2.zero;
-				submeshGraphic.rectTransform.anchorMax = Vector2.one;
-				submeshGraphic.rectTransform.sizeDelta = Vector2.zero;
-			}
-		}
-
-		protected void UpdateCanvasRenderers () {
-			Mesh[] referenceMeshes = referenceSkeletonGraphic.MeshesMultipleCanvasRenderers.Items;
-			Material[] referenceMaterials = referenceSkeletonGraphic.MaterialsMultipleCanvasRenderers.Items;
-			Texture[] referenceTextures = referenceSkeletonGraphic.TexturesMultipleCanvasRenderers.Items;
-
-			int end = Math.Min(ownSubmeshGraphics.Count, referenceSkeletonGraphic.TexturesMultipleCanvasRenderers.Count);
-
-			for (int i = 0; i < end; i++) {
-				SkeletonSubmeshGraphic submeshGraphic = ownSubmeshGraphics[i];
-				CanvasRenderer reference = referenceSkeletonGraphic.canvasRenderers[i];
-
-				if (reference.gameObject.activeInHierarchy) {
-					Material usedMaterial = replacementMaterial != null ?
-						replacementMaterial : GetReplacementMaterialFor(referenceMaterials[i]);
-					if (usedMaterial == null)
-						usedMaterial = referenceMaterials[i];
-					usedMaterial = referenceSkeletonGraphic.GetModifiedMaterial(usedMaterial);
-					submeshGraphic.canvasRenderer.SetMaterial(usedMaterial, referenceTextures[i]);
-					submeshGraphic.canvasRenderer.SetMesh(referenceMeshes[i]);
-					submeshGraphic.gameObject.SetActive(true);
-				} else {
-					submeshGraphic.canvasRenderer.Clear();
-					submeshGraphic.gameObject.SetActive(false);
-				}
-			}
-		}
-
-		protected void DisableCanvasRenderers () {
-			for (int i = 0; i < ownSubmeshGraphics.Count; i++) {
-				SkeletonSubmeshGraphic submeshGraphic = ownSubmeshGraphics[i];
-				submeshGraphic.canvasRenderer.Clear();
-				submeshGraphic.gameObject.SetActive(false);
-			}
-		}
-
-		protected Material GetReplacementMaterialFor (Material originalMaterial) {
-			for (int i = 0; i < replacementMaterials.Length; ++i) {
-				MaterialReplacement entry = replacementMaterials[i];
-				if (entry.originalMaterial != null && entry.originalMaterial.shader == originalMaterial.shader)
-					return entry.replacementMaterial;
-			}
-			return null;
-		}
+        private SkeletonSubmeshGraphic ownGraphic;
+        public List<SkeletonSubmeshGraphic> ownSubmeshGraphics;
 
 #if UNITY_EDITOR
-		void LateUpdate () {
-			if (!Application.isPlaying) {
-				UpdateMesh();
-			}
-		}
+        private void Reset()
+        {
+            Awake();
+            LateUpdate();
+        }
 #endif
 
-		void UpdateOnCallback (SkeletonGraphic g) {
-			UpdateMesh();
-		}
+        private void Awake()
+        {
+            // subscribe to OnMeshAndMaterialsUpdated
+            if (referenceSkeletonGraphic)
+            {
+                referenceSkeletonGraphic.OnMeshAndMaterialsUpdated -= UpdateOnCallback;
+                referenceSkeletonGraphic.OnMeshAndMaterialsUpdated += UpdateOnCallback;
+            }
 
-		void UpdateMesh () {
-			if (!referenceSkeletonGraphic) return;
+            ownGraphic = GetComponent<SkeletonSubmeshGraphic>();
+            if (referenceSkeletonGraphic)
+            {
+                if (referenceSkeletonGraphic.allowMultipleCanvasRenderers)
+                    EnsureCanvasRendererCount(referenceSkeletonGraphic.canvasRenderers.Count);
+                else
+                    SetupSubmeshGraphic();
+            }
+        }
 
-			if (referenceSkeletonGraphic.allowMultipleCanvasRenderers) {
-				EnsureCanvasRendererCount(referenceSkeletonGraphic.canvasRenderers.Count);
-				UpdateCanvasRenderers();
-				if (ownGraphic)
-					ownGraphic.canvasRenderer.Clear();
-			} else {
-				if (ownGraphic == null)
-					ownGraphic = this.gameObject.AddComponent<SkeletonSubmeshGraphic>();
+        protected void OnDisable()
+        {
+            if (referenceSkeletonGraphic) referenceSkeletonGraphic.OnMeshAndMaterialsUpdated -= UpdateOnCallback;
+        }
 
-				DisableCanvasRenderers();
+        protected void OnEnable()
+        {
+#if UNITY_EDITOR
+            // handle disabled scene reload
+            if (Application.isPlaying)
+            {
+                Awake();
+                return;
+            }
+#endif
+            if (referenceSkeletonGraphic)
+            {
+                referenceSkeletonGraphic.OnMeshAndMaterialsUpdated -= UpdateOnCallback;
+                referenceSkeletonGraphic.OnMeshAndMaterialsUpdated += UpdateOnCallback;
+            }
+        }
 
-				Material referenceMaterial = referenceSkeletonGraphic.materialForRendering;
-				Material usedMaterial = replacementMaterial != null ? replacementMaterial : GetReplacementMaterialFor(referenceMaterial);
-				if (usedMaterial == null)
-					usedMaterial = referenceMaterial;
-				usedMaterial = referenceSkeletonGraphic.GetModifiedMaterial(usedMaterial);
-				ownGraphic.canvasRenderer.SetMaterial(usedMaterial, referenceSkeletonGraphic.mainTexture);
-				Mesh mesh = referenceSkeletonGraphic.GetLastMesh();
-				ownGraphic.canvasRenderer.SetMesh(mesh);
-			}
-		}
-	}
+        private void SetupSubmeshGraphic()
+        {
+            if (ownGraphic == null)
+                ownGraphic = gameObject.AddComponent<SkeletonSubmeshGraphic>();
+
+            ownGraphic.maskable = referenceSkeletonGraphic.maskable;
+#if HAS_CULL_TRANSPARENT_MESH
+            ownGraphic.canvasRenderer.cullTransparentMesh = referenceSkeletonGraphic.canvasRenderer.cullTransparentMesh;
+#endif
+            ownGraphic.canvasRenderer.SetMaterial(replacementMaterial, referenceSkeletonGraphic.mainTexture);
+        }
+
+        protected void EnsureCanvasRendererCount(int targetCount)
+        {
+            if (ownSubmeshGraphics == null)
+                ownSubmeshGraphics = new List<SkeletonSubmeshGraphic>();
+
+#if HAS_CULL_TRANSPARENT_MESH
+            var cullTransparentMesh = referenceSkeletonGraphic.canvasRenderer.cullTransparentMesh;
+#endif
+            var pivot = referenceSkeletonGraphic.rectTransform.pivot;
+
+            var currentCount = ownSubmeshGraphics.Count;
+            for (var i = currentCount; i < targetCount; ++i)
+            {
+                var go = new GameObject(string.Format("Renderer{0}", i), typeof(RectTransform));
+                go.transform.SetParent(transform, false);
+                go.transform.localPosition = Vector3.zero;
+                var canvasRenderer = go.AddComponent<CanvasRenderer>();
+#if HAS_CULL_TRANSPARENT_MESH
+                canvasRenderer.cullTransparentMesh = cullTransparentMesh;
+#endif
+                var submeshGraphic = go.AddComponent<SkeletonSubmeshGraphic>();
+                ownSubmeshGraphics.Add(submeshGraphic);
+                submeshGraphic.maskable = referenceSkeletonGraphic.maskable;
+                submeshGraphic.raycastTarget = false;
+                submeshGraphic.rectTransform.pivot = pivot;
+                submeshGraphic.rectTransform.anchorMin = Vector2.zero;
+                submeshGraphic.rectTransform.anchorMax = Vector2.one;
+                submeshGraphic.rectTransform.sizeDelta = Vector2.zero;
+            }
+        }
+
+        protected void UpdateCanvasRenderers()
+        {
+            var referenceMeshes = referenceSkeletonGraphic.MeshesMultipleCanvasRenderers.Items;
+            var referenceMaterials = referenceSkeletonGraphic.MaterialsMultipleCanvasRenderers.Items;
+            var referenceTextures = referenceSkeletonGraphic.TexturesMultipleCanvasRenderers.Items;
+
+            var end = Math.Min(ownSubmeshGraphics.Count,
+                referenceSkeletonGraphic.TexturesMultipleCanvasRenderers.Count);
+
+            for (var i = 0; i < end; i++)
+            {
+                var submeshGraphic = ownSubmeshGraphics[i];
+                var reference = referenceSkeletonGraphic.canvasRenderers[i];
+
+                if (reference.gameObject.activeInHierarchy)
+                {
+                    var usedMaterial = replacementMaterial != null
+                        ? replacementMaterial
+                        : GetReplacementMaterialFor(referenceMaterials[i]);
+                    if (usedMaterial == null)
+                        usedMaterial = referenceMaterials[i];
+                    usedMaterial = referenceSkeletonGraphic.GetModifiedMaterial(usedMaterial);
+                    submeshGraphic.canvasRenderer.SetMaterial(usedMaterial, referenceTextures[i]);
+                    submeshGraphic.canvasRenderer.SetMesh(referenceMeshes[i]);
+                    submeshGraphic.gameObject.SetActive(true);
+                }
+                else
+                {
+                    submeshGraphic.canvasRenderer.Clear();
+                    submeshGraphic.gameObject.SetActive(false);
+                }
+            }
+        }
+
+        protected void DisableCanvasRenderers()
+        {
+            for (var i = 0; i < ownSubmeshGraphics.Count; i++)
+            {
+                var submeshGraphic = ownSubmeshGraphics[i];
+                submeshGraphic.canvasRenderer.Clear();
+                submeshGraphic.gameObject.SetActive(false);
+            }
+        }
+
+        protected Material GetReplacementMaterialFor(Material originalMaterial)
+        {
+            for (var i = 0; i < replacementMaterials.Length; ++i)
+            {
+                var entry = replacementMaterials[i];
+                if (entry.originalMaterial != null && entry.originalMaterial.shader == originalMaterial.shader)
+                    return entry.replacementMaterial;
+            }
+
+            return null;
+        }
+
+#if UNITY_EDITOR
+        private void LateUpdate()
+        {
+            if (!Application.isPlaying) UpdateMesh();
+        }
+#endif
+
+        private void UpdateOnCallback(SkeletonGraphic g)
+        {
+            UpdateMesh();
+        }
+
+        private void UpdateMesh()
+        {
+            if (!referenceSkeletonGraphic) return;
+
+            if (referenceSkeletonGraphic.allowMultipleCanvasRenderers)
+            {
+                EnsureCanvasRendererCount(referenceSkeletonGraphic.canvasRenderers.Count);
+                UpdateCanvasRenderers();
+                if (ownGraphic)
+                    ownGraphic.canvasRenderer.Clear();
+            }
+            else
+            {
+                if (ownGraphic == null)
+                    ownGraphic = gameObject.AddComponent<SkeletonSubmeshGraphic>();
+
+                DisableCanvasRenderers();
+
+                var referenceMaterial = referenceSkeletonGraphic.materialForRendering;
+                var usedMaterial = replacementMaterial != null
+                    ? replacementMaterial
+                    : GetReplacementMaterialFor(referenceMaterial);
+                if (usedMaterial == null)
+                    usedMaterial = referenceMaterial;
+                usedMaterial = referenceSkeletonGraphic.GetModifiedMaterial(usedMaterial);
+                ownGraphic.canvasRenderer.SetMaterial(usedMaterial, referenceSkeletonGraphic.mainTexture);
+                var mesh = referenceSkeletonGraphic.GetLastMesh();
+                ownGraphic.canvasRenderer.SetMesh(mesh);
+            }
+        }
+    }
 }

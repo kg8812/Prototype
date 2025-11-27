@@ -1,40 +1,31 @@
 using System.Collections.Generic;
 using System.Linq;
-using Apis;
 using Apis.DataType;
 using Default;
-using Save.Schema;
 using Sirenix.Utilities;
-using UnityEngine;
 
 namespace Apis.SkillTrees
 {
     public class SkillTreeDatas : Database
     {
-        static Dictionary<int, SkillTree> skillTrees;
+        private static Dictionary<int, SkillTree> skillTrees;
 
-        static Dictionary<int, SkillTreeDataType> dataDict;
+        private static Dictionary<int, SkillTreeDataType> dataDict;
 
         private static HashSet<int> _equippedIndex = new();
-        public static HashSet<int> equippedIndex => _equippedIndex ??= new();
 
         private static HashSet<int> _activatedIndex = new();
-        public static HashSet<int> activatedIndex => _activatedIndex ??= new();
-        
-        public static void ApplySkillTree(int index,int level)
+        public static HashSet<int> equippedIndex => _equippedIndex ??= new HashSet<int>();
+        public static HashSet<int> activatedIndex => _activatedIndex ??= new HashSet<int>();
+
+        public static void ApplySkillTree(int index, int level)
         {
             if (skillTrees.TryGetValue(index, out var tree))
             {
                 if (tree.PlayerType != GameManager.instance.Player.playerType) return;
 
-                if (GameManager.instance.Player.ActiveSkill is PlayerActiveSkill active)
-                {
-                    active.Accept(tree,level);
-                }
-                if (GameManager.instance.Player.PassiveSkill is PlayerPassiveSkill passive)
-                {
-                    passive.Accept(tree,level);
-                }
+                if (GameManager.instance.Player.ActiveSkill is PlayerActiveSkill active) active.Accept(tree, level);
+                if (GameManager.instance.Player.PassiveSkill is PlayerPassiveSkill passive) passive.Accept(tree, level);
 
                 equippedIndex.Add(index);
             }
@@ -73,7 +64,8 @@ namespace Apis.SkillTrees
         public static List<SkillTree> GetAvailableSkillTrees()
         {
             return skillTrees.Values.Where(x =>
-                    !equippedIndex.Contains(x.Index) && activatedIndex.Contains(x.Index) && GameManager.instance.Player.playerType == x.PlayerType)
+                    !equippedIndex.Contains(x.Index) && activatedIndex.Contains(x.Index) &&
+                    GameManager.instance.Player.playerType == x.PlayerType)
                 .OrderBy(x => x.Index).ToList();
         }
 

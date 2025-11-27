@@ -5,22 +5,30 @@ public class SetParameter : StateMachineBehaviour
 {
     public enum Type
     {
-        OnEnter,OnExit , OnStateMachineEnter,OnStateMachineExit
+        OnEnter,
+        OnExit,
+        OnStateMachineEnter,
+        OnStateMachineExit
+    }
+
+    public enum Types
+    {
+        Int,
+        Float,
+        Bool,
+        Trigger
     }
 
     public Type stateType;
-    public enum Types
-    {
-        Int,Float,Bool,Trigger
-    }
     public Types types;
     public string paramName;
+
     public string value;
+
     // OnStateEnter is called when a transition starts and the state machine starts to evaluate this state
-    override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
+    public override void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         if (stateType == Type.OnEnter)
-        {
             switch (types)
             {
                 case Types.Int:
@@ -36,7 +44,6 @@ public class SetParameter : StateMachineBehaviour
                     animator.SetTrigger(paramName);
                     break;
             }
-        }
     }
 
     // OnStateUpdate is called on each Update frame between OnStateEnter and OnStateExit callbacks
@@ -46,10 +53,9 @@ public class SetParameter : StateMachineBehaviour
     //}
 
     //OnStateExit is called when a transition ends and the state machine finishes evaluating this state
-    override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
+    public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         if (stateType == Type.OnExit)
-        {
             switch (types)
             {
                 case Types.Int:
@@ -65,13 +71,12 @@ public class SetParameter : StateMachineBehaviour
                     animator.SetTrigger(paramName);
                     break;
             }
-        }
     }
 
-    public override void OnStateMachineEnter(Animator animator, int stateMachinePathHash, AnimatorControllerPlayable controller)
+    public override void OnStateMachineEnter(Animator animator, int stateMachinePathHash,
+        AnimatorControllerPlayable controller)
     {
         if (stateType == Type.OnStateMachineEnter)
-        {
             switch (types)
             {
                 case Types.Int:
@@ -87,13 +92,12 @@ public class SetParameter : StateMachineBehaviour
                     animator.SetTrigger(paramName);
                     break;
             }
-        }
     }
 
-    public override void OnStateMachineExit(Animator animator, int stateMachinePathHash, AnimatorControllerPlayable controller)
+    public override void OnStateMachineExit(Animator animator, int stateMachinePathHash,
+        AnimatorControllerPlayable controller)
     {
         if (stateType == Type.OnStateMachineExit)
-        {
             switch (types)
             {
                 case Types.Int:
@@ -109,6 +113,5 @@ public class SetParameter : StateMachineBehaviour
                     animator.SetTrigger(paramName);
                     break;
             }
-        }
     }
 }

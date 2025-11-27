@@ -1,15 +1,7 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using Apis;
-using Default;
 using DG.Tweening;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using Random = UnityEngine.Random;
 
-public class SFXPlayer : MonoBehaviour,IPoolObject
+public class SFXPlayer : MonoBehaviour, IPoolObject
 {
     public AudioSourceUtil.PlayingType playingType;
     public string audioSettingAddress;
@@ -18,23 +10,15 @@ public class SFXPlayer : MonoBehaviour,IPoolObject
 
     public float delay;
     public bool isDestroy;
-    private AudioSourceUtil _audioUtil;
     public bool isLoop;
+    [SerializeField] private bool playWhenSpawn = true;
+
+    public Define.Sound soundType = Define.Sound.SFX;
+    private AudioSourceUtil _audioUtil;
     private Sequence seq;
-    [SerializeField] bool playWhenSpawn = true;
 
     [HideInInspector] public IMonoBehaviour user;
-        
-    public Define.Sound soundType = Define.Sound.SFX;
-    
-    public void Init(IMonoBehaviour user)
-    {
-        this.user = user;
-    }
-    public void Play()
-    {
-        _audioUtil = GameManager.Sound.PlayInPosition(audioClipsAddress,audioSettingAddress,playingType,user?.Position ?? transform.position,isLoop,soundType);
-    }
+
     public void OnGet()
     {
         if (playWhenSpawn)
@@ -49,12 +33,19 @@ public class SFXPlayer : MonoBehaviour,IPoolObject
     public void OnReturn()
     {
         if (isDestroy)
-        {
             _audioUtil?.Destroy();
-        }
         else
-        {
             _audioUtil?.Stop();
-        }
+    }
+
+    public void Init(IMonoBehaviour user)
+    {
+        this.user = user;
+    }
+
+    public void Play()
+    {
+        _audioUtil = GameManager.Sound.PlayInPosition(audioClipsAddress, audioSettingAddress, playingType,
+            user?.Position ?? transform.position, isLoop, soundType);
     }
 }

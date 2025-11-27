@@ -1,5 +1,5 @@
-using System;
 using UnityEngine;
+
 namespace Command
 {
     [CreateAssetMenu(fileName = "Move", menuName = "ActorCommand/Player/Move", order = 1)]
@@ -9,12 +9,12 @@ namespace Command
 
         protected override void Invoke(Player go)
         {
-            if(direction == EActorDirection.Right && go.PressingLR[0]) return;
+            if (direction == EActorDirection.Right && go.PressingLR[0]) return;
 
-            if(!InvokeCondition(go)) return;
-            
+            if (!InvokeCondition(go)) return;
+
             go.SetDirection(direction);
-            
+
             go.SetState(EPlayerState.Move);
         }
 

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Apis.UI
 {
-    public class UI_HeaderMenu_nto1: UI_Scene
+    public class UI_HeaderMenu_nto1 : UI_Scene
     {
         [SerializeField] protected FocusParent headerController;
 
@@ -12,6 +12,11 @@ namespace Apis.UI
 
 
         protected IController _curContentController;
+
+        public void Reset()
+        {
+            headerController.MoveTo(0);
+        }
 
         public override void Init()
         {
@@ -37,11 +42,6 @@ namespace Apis.UI
             base.GamePadControl();
             headerController.GamePadControl();
             _curContentController.GamePadControl();
-        }
-
-        public void Reset()
-        {
-            headerController.MoveTo(0);
         }
     }
 }

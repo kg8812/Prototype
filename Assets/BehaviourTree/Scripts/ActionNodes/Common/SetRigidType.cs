@@ -11,20 +11,15 @@ namespace Apis.BehaviourTreeTool
         {
             base.OnStart();
             mover = _actor as IMovable;
-            
         }
 
         public override State OnUpdate()
         {
             _actor.Rb.bodyType = bodyType;
-            if(bodyType == RigidbodyType2D.Static)
-            {
+            if (bodyType == RigidbodyType2D.Static)
                 mover.ActorMovement.SetGravityToZero();
-            }
             else
-            {
                 mover.ActorMovement.ResetGravity();
-            }
             return State.Success;
         }
     }

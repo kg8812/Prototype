@@ -1,7 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
 using Apis;
-using Default;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -17,13 +14,9 @@ namespace Command
         protected override void Invoke(Player go)
         {
             var item = AttackItemManager.CurrentItem;
-            if (item != null && item.AtkSlotIndex != index)
-            {
-                go.OnAttackItemChange();
-            }
+            if (item != null && item.AtkSlotIndex != index) go.OnAttackItemChange();
 
             AttackItemManager.Attack(index);
-
         }
 
         public override bool InvokeCondition(Player player)
@@ -34,15 +27,14 @@ namespace Command
             //           +" " + player.CoolDown.GetCd(EPlayerCd.DashToAttack)
             //           +" " + player.CoolDown.GetCd(EPlayerCd.JumpToAttack)
             //           +" " + player.CoolDown.GetCd(EPlayerCd.AirAttack));
-            
+
             return player.AbleAttack
                    && player.attackStrategy.CheckAttackable(index)
                    && player.CoolDown.GetCd(EPlayerCd.DashToAttack)
                    && player.CoolDown.GetCd(EPlayerCd.JumpToAttack)
                    && player.CoolDown.GetAirAttackCd(index);
-                //    && !player.OnFinalAttack
-                //    && player.CoolDown.GetCd(EPlayerCd.AirAttack);
-                   
+            //    && !player.OnFinalAttack
+            //    && player.CoolDown.GetCd(EPlayerCd.AirAttack);
         }
     }
 }

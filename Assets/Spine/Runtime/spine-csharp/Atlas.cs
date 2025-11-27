@@ -32,34 +32,38 @@
 #endif
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Reflection;
-
 #if WINDOWS_STOREAPP
 using System.Threading.Tasks;
 using Windows.Storage;
 #endif
 
-namespace Spine {
-	public class Atlas : IEnumerable<AtlasRegion> {
-		readonly List<AtlasPage> pages = new List<AtlasPage>();
-		List<AtlasRegion> regions = new List<AtlasRegion>();
-		TextureLoader textureLoader;
+namespace Spine
+{
+    public class Atlas : IEnumerable<AtlasRegion>
+    {
+        private readonly TextureLoader textureLoader;
 
-		#region IEnumerable implementation
-		public IEnumerator<AtlasRegion> GetEnumerator () {
-			return regions.GetEnumerator();
-		}
+        #region IEnumerable implementation
 
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator () {
-			return regions.GetEnumerator();
-		}
-		#endregion
+        public IEnumerator<AtlasRegion> GetEnumerator()
+        {
+            return Regions.GetEnumerator();
+        }
 
-		public List<AtlasRegion> Regions { get { return regions; } }
-		public List<AtlasPage> Pages { get { return pages; } }
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return Regions.GetEnumerator();
+        }
+
+        #endregion
+
+        public List<AtlasRegion> Regions { get; } = new();
+
+        public List<AtlasPage> Pages { get; } = new();
 
 #if !(IS_UNITY)
 #if WINDOWS_STOREAPP
@@ -102,271 +106,339 @@ namespace Spine {
 #endif // WINDOWS_STOREAPP
 #endif
 
-		public Atlas (List<AtlasPage> pages, List<AtlasRegion> regions) {
-			if (pages == null) throw new ArgumentNullException("pages", "pages cannot be null.");
-			if (regions == null) throw new ArgumentNullException("regions", "regions cannot be null.");
-			this.pages = pages;
-			this.regions = regions;
-			this.textureLoader = null;
-		}
+        public Atlas(List<AtlasPage> pages, List<AtlasRegion> regions)
+        {
+            if (pages == null) throw new ArgumentNullException("pages", "pages cannot be null.");
+            if (regions == null) throw new ArgumentNullException("regions", "regions cannot be null.");
+            this.Pages = pages;
+            this.Regions = regions;
+            textureLoader = null;
+        }
 
-		public Atlas (TextReader reader, string imagesDir, TextureLoader textureLoader) {
-			if (reader == null) throw new ArgumentNullException("reader", "reader cannot be null.");
-			if (imagesDir == null) throw new ArgumentNullException("imagesDir", "imagesDir cannot be null.");
-			if (textureLoader == null) throw new ArgumentNullException("textureLoader", "textureLoader cannot be null.");
-			this.textureLoader = textureLoader;
+        public Atlas(TextReader reader, string imagesDir, TextureLoader textureLoader)
+        {
+            if (reader == null) throw new ArgumentNullException("reader", "reader cannot be null.");
+            if (imagesDir == null) throw new ArgumentNullException("imagesDir", "imagesDir cannot be null.");
+            if (textureLoader == null)
+                throw new ArgumentNullException("textureLoader", "textureLoader cannot be null.");
+            this.textureLoader = textureLoader;
 
-			string[] entry = new string[5];
-			AtlasPage page = null;
-			AtlasRegion region = null;
+            var entry = new string[5];
+            AtlasPage page = null;
+            AtlasRegion region = null;
 
-			Dictionary<string, Action> pageFields = new Dictionary<string, Action>(5);
-			pageFields.Add("size", () => {
-				page.width = int.Parse(entry[1], CultureInfo.InvariantCulture);
-				page.height = int.Parse(entry[2], CultureInfo.InvariantCulture);
-			});
-			pageFields.Add("format", () => {
-				page.format = (Format)Enum.Parse(typeof(Format), entry[1], false);
-			});
-			pageFields.Add("filter", () => {
-				page.minFilter = (TextureFilter)Enum.Parse(typeof(TextureFilter), entry[1], false);
-				page.magFilter = (TextureFilter)Enum.Parse(typeof(TextureFilter), entry[2], false);
-			});
-			pageFields.Add("repeat", () => {
-				if (entry[1].IndexOf('x') != -1) page.uWrap = TextureWrap.Repeat;
-				if (entry[1].IndexOf('y') != -1) page.vWrap = TextureWrap.Repeat;
-			});
-			pageFields.Add("pma", () => {
-				page.pma = entry[1] == "true";
-			});
+            var pageFields = new Dictionary<string, Action>(5);
+            pageFields.Add("size", () =>
+            {
+                page.width = int.Parse(entry[1], CultureInfo.InvariantCulture);
+                page.height = int.Parse(entry[2], CultureInfo.InvariantCulture);
+            });
+            pageFields.Add("format", () => { page.format = (Format)Enum.Parse(typeof(Format), entry[1], false); });
+            pageFields.Add("filter", () =>
+            {
+                page.minFilter = (TextureFilter)Enum.Parse(typeof(TextureFilter), entry[1], false);
+                page.magFilter = (TextureFilter)Enum.Parse(typeof(TextureFilter), entry[2], false);
+            });
+            pageFields.Add("repeat", () =>
+            {
+                if (entry[1].IndexOf('x') != -1) page.uWrap = TextureWrap.Repeat;
+                if (entry[1].IndexOf('y') != -1) page.vWrap = TextureWrap.Repeat;
+            });
+            pageFields.Add("pma", () => { page.pma = entry[1] == "true"; });
 
-			Dictionary<string, Action> regionFields = new Dictionary<string, Action>(8);
-			regionFields.Add("xy", () => { // Deprecated, use bounds.
-				region.x = int.Parse(entry[1], CultureInfo.InvariantCulture);
-				region.y = int.Parse(entry[2], CultureInfo.InvariantCulture);
-			});
-			regionFields.Add("size", () => { // Deprecated, use bounds.
-				region.width = int.Parse(entry[1], CultureInfo.InvariantCulture);
-				region.height = int.Parse(entry[2], CultureInfo.InvariantCulture);
-			});
-			regionFields.Add("bounds", () => {
-				region.x = int.Parse(entry[1], CultureInfo.InvariantCulture);
-				region.y = int.Parse(entry[2], CultureInfo.InvariantCulture);
-				region.width = int.Parse(entry[3], CultureInfo.InvariantCulture);
-				region.height = int.Parse(entry[4], CultureInfo.InvariantCulture);
-			});
-			regionFields.Add("offset", () => { // Deprecated, use offsets.
-				region.offsetX = int.Parse(entry[1], CultureInfo.InvariantCulture);
-				region.offsetY = int.Parse(entry[2], CultureInfo.InvariantCulture);
-			});
-			regionFields.Add("orig", () => { // Deprecated, use offsets.
-				region.originalWidth = int.Parse(entry[1], CultureInfo.InvariantCulture);
-				region.originalHeight = int.Parse(entry[2], CultureInfo.InvariantCulture);
-			});
-			regionFields.Add("offsets", () => {
-				region.offsetX = int.Parse(entry[1], CultureInfo.InvariantCulture);
-				region.offsetY = int.Parse(entry[2], CultureInfo.InvariantCulture);
-				region.originalWidth = int.Parse(entry[3], CultureInfo.InvariantCulture);
-				region.originalHeight = int.Parse(entry[4], CultureInfo.InvariantCulture);
-			});
-			regionFields.Add("rotate", () => {
-				string value = entry[1];
-				if (value == "true")
-					region.degrees = 90;
-				else if (value != "false")
-					region.degrees = int.Parse(value, CultureInfo.InvariantCulture);
-			});
-			regionFields.Add("index", () => {
-				region.index = int.Parse(entry[1], CultureInfo.InvariantCulture);
-			});
+            var regionFields = new Dictionary<string, Action>(8);
+            regionFields.Add("xy", () =>
+            {
+                // Deprecated, use bounds.
+                region.x = int.Parse(entry[1], CultureInfo.InvariantCulture);
+                region.y = int.Parse(entry[2], CultureInfo.InvariantCulture);
+            });
+            regionFields.Add("size", () =>
+            {
+                // Deprecated, use bounds.
+                region.width = int.Parse(entry[1], CultureInfo.InvariantCulture);
+                region.height = int.Parse(entry[2], CultureInfo.InvariantCulture);
+            });
+            regionFields.Add("bounds", () =>
+            {
+                region.x = int.Parse(entry[1], CultureInfo.InvariantCulture);
+                region.y = int.Parse(entry[2], CultureInfo.InvariantCulture);
+                region.width = int.Parse(entry[3], CultureInfo.InvariantCulture);
+                region.height = int.Parse(entry[4], CultureInfo.InvariantCulture);
+            });
+            regionFields.Add("offset", () =>
+            {
+                // Deprecated, use offsets.
+                region.offsetX = int.Parse(entry[1], CultureInfo.InvariantCulture);
+                region.offsetY = int.Parse(entry[2], CultureInfo.InvariantCulture);
+            });
+            regionFields.Add("orig", () =>
+            {
+                // Deprecated, use offsets.
+                region.originalWidth = int.Parse(entry[1], CultureInfo.InvariantCulture);
+                region.originalHeight = int.Parse(entry[2], CultureInfo.InvariantCulture);
+            });
+            regionFields.Add("offsets", () =>
+            {
+                region.offsetX = int.Parse(entry[1], CultureInfo.InvariantCulture);
+                region.offsetY = int.Parse(entry[2], CultureInfo.InvariantCulture);
+                region.originalWidth = int.Parse(entry[3], CultureInfo.InvariantCulture);
+                region.originalHeight = int.Parse(entry[4], CultureInfo.InvariantCulture);
+            });
+            regionFields.Add("rotate", () =>
+            {
+                var value = entry[1];
+                if (value == "true")
+                    region.degrees = 90;
+                else if (value != "false")
+                    region.degrees = int.Parse(value, CultureInfo.InvariantCulture);
+            });
+            regionFields.Add("index", () => { region.index = int.Parse(entry[1], CultureInfo.InvariantCulture); });
 
-			string line = reader.ReadLine();
-			// Ignore empty lines before first entry.
-			while (line != null && line.Trim().Length == 0)
-				line = reader.ReadLine();
-			// Header entries.
-			while (true) {
-				if (line == null || line.Trim().Length == 0) break;
-				if (ReadEntry(entry, line) == 0) break; // Silently ignore all header fields.
-				line = reader.ReadLine();
-			}
-			// Page and region entries.
-			List<string> names = null;
-			List<int[]> values = null;
-			while (true) {
-				if (line == null) break;
-				if (line.Trim().Length == 0) {
-					page = null;
-					line = reader.ReadLine();
-				} else if (page == null) {
-					page = new AtlasPage();
-					page.name = line.Trim();
-					while (true) {
-						if (ReadEntry(entry, line = reader.ReadLine()) == 0) break;
-						Action field;
-						if (pageFields.TryGetValue(entry[0], out field)) field(); // Silently ignore unknown page fields.
-					}
-					textureLoader.Load(page, Path.Combine(imagesDir, page.name));
-					pages.Add(page);
-				} else {
-					region = new AtlasRegion();
-					region.page = page;
-					region.name = line;
-					while (true) {
-						int count = ReadEntry(entry, line = reader.ReadLine());
-						if (count == 0) break;
-						Action field;
-						if (regionFields.TryGetValue(entry[0], out field))
-							field();
-						else {
-							if (names == null) {
-								names = new List<string>(8);
-								values = new List<int[]>(8);
-							}
-							names.Add(entry[0]);
-							int[] entryValues = new int[count];
-							for (int i = 0; i < count; i++)
-								int.TryParse(entry[i + 1], NumberStyles.Any, CultureInfo.InvariantCulture, out entryValues[i]); // Silently ignore non-integer values.
-							values.Add(entryValues);
-						}
-					}
-					if (region.originalWidth == 0 && region.originalHeight == 0) {
-						region.originalWidth = region.width;
-						region.originalHeight = region.height;
-					}
-					if (names != null && names.Count > 0) {
-						region.names = names.ToArray();
-						region.values = values.ToArray();
-						names.Clear();
-						values.Clear();
-					}
-					region.u = region.x / (float)page.width;
-					region.v = region.y / (float)page.height;
-					if (region.degrees == 90) {
-						region.u2 = (region.x + region.height) / (float)page.width;
-						region.v2 = (region.y + region.width) / (float)page.height;
+            var line = reader.ReadLine();
+            // Ignore empty lines before first entry.
+            while (line != null && line.Trim().Length == 0)
+                line = reader.ReadLine();
+            // Header entries.
+            while (true)
+            {
+                if (line == null || line.Trim().Length == 0) break;
+                if (ReadEntry(entry, line) == 0) break; // Silently ignore all header fields.
+                line = reader.ReadLine();
+            }
 
-						int tempSwap = region.packedWidth;
-						region.packedWidth = region.packedHeight;
-						region.packedHeight = tempSwap;
-					} else {
-						region.u2 = (region.x + region.width) / (float)page.width;
-						region.v2 = (region.y + region.height) / (float)page.height;
-					}
-					regions.Add(region);
-				}
-			}
-		}
+            // Page and region entries.
+            List<string> names = null;
+            List<int[]> values = null;
+            while (true)
+            {
+                if (line == null) break;
+                if (line.Trim().Length == 0)
+                {
+                    page = null;
+                    line = reader.ReadLine();
+                }
+                else if (page == null)
+                {
+                    page = new AtlasPage();
+                    page.name = line.Trim();
+                    while (true)
+                    {
+                        if (ReadEntry(entry, line = reader.ReadLine()) == 0) break;
+                        Action field;
+                        if (pageFields.TryGetValue(entry[0], out field))
+                            field(); // Silently ignore unknown page fields.
+                    }
 
-		static private int ReadEntry (string[] entry, string line) {
-			if (line == null) return 0;
-			line = line.Trim();
-			if (line.Length == 0) return 0;
-			int colon = line.IndexOf(':');
-			if (colon == -1) return 0;
-			entry[0] = line.Substring(0, colon).Trim();
-			for (int i = 1, lastMatch = colon + 1; ; i++) {
-				int comma = line.IndexOf(',', lastMatch);
-				if (comma == -1) {
-					entry[i] = line.Substring(lastMatch).Trim();
-					return i;
-				}
-				entry[i] = line.Substring(lastMatch, comma - lastMatch).Trim();
-				lastMatch = comma + 1;
-				if (i == 4) return 4;
-			}
-		}
+                    textureLoader.Load(page, Path.Combine(imagesDir, page.name));
+                    Pages.Add(page);
+                }
+                else
+                {
+                    region = new AtlasRegion();
+                    region.page = page;
+                    region.name = line;
+                    while (true)
+                    {
+                        var count = ReadEntry(entry, line = reader.ReadLine());
+                        if (count == 0) break;
+                        Action field;
+                        if (regionFields.TryGetValue(entry[0], out field))
+                        {
+                            field();
+                        }
+                        else
+                        {
+                            if (names == null)
+                            {
+                                names = new List<string>(8);
+                                values = new List<int[]>(8);
+                            }
 
-		public void FlipV () {
-			for (int i = 0, n = regions.Count; i < n; i++) {
-				AtlasRegion region = regions[i];
-				region.v = 1 - region.v;
-				region.v2 = 1 - region.v2;
-			}
-		}
+                            names.Add(entry[0]);
+                            var entryValues = new int[count];
+                            for (var i = 0; i < count; i++)
+                                int.TryParse(entry[i + 1], NumberStyles.Any, CultureInfo.InvariantCulture,
+                                    out entryValues[i]); // Silently ignore non-integer values.
+                            values.Add(entryValues);
+                        }
+                    }
 
-		/// <summary>Returns the first region found with the specified name. This method uses string comparison to find the region, so the result
-		/// should be cached rather than calling this method multiple times.</summary>
-		/// <returns>The region, or null.</returns>
-		public AtlasRegion FindRegion (string name) {
-			for (int i = 0, n = regions.Count; i < n; i++)
-				if (regions[i].name == name) return regions[i];
-			return null;
-		}
+                    if (region.originalWidth == 0 && region.originalHeight == 0)
+                    {
+                        region.originalWidth = region.width;
+                        region.originalHeight = region.height;
+                    }
 
-		public void Dispose () {
-			if (textureLoader == null) return;
-			for (int i = 0, n = pages.Count; i < n; i++)
-				textureLoader.Unload(pages[i].rendererObject);
-		}
-	}
+                    if (names != null && names.Count > 0)
+                    {
+                        region.names = names.ToArray();
+                        region.values = values.ToArray();
+                        names.Clear();
+                        values.Clear();
+                    }
 
-	public enum Format {
-		Alpha,
-		Intensity,
-		LuminanceAlpha,
-		RGB565,
-		RGBA4444,
-		RGB888,
-		RGBA8888
-	}
+                    region.u = region.x / (float)page.width;
+                    region.v = region.y / (float)page.height;
+                    if (region.degrees == 90)
+                    {
+                        region.u2 = (region.x + region.height) / (float)page.width;
+                        region.v2 = (region.y + region.width) / (float)page.height;
 
-	public enum TextureFilter {
-		Nearest,
-		Linear,
-		MipMap,
-		MipMapNearestNearest,
-		MipMapLinearNearest,
-		MipMapNearestLinear,
-		MipMapLinearLinear
-	}
+                        var tempSwap = region.packedWidth;
+                        region.packedWidth = region.packedHeight;
+                        region.packedHeight = tempSwap;
+                    }
+                    else
+                    {
+                        region.u2 = (region.x + region.width) / (float)page.width;
+                        region.v2 = (region.y + region.height) / (float)page.height;
+                    }
 
-	public enum TextureWrap {
-		MirroredRepeat,
-		ClampToEdge,
-		Repeat
-	}
+                    Regions.Add(region);
+                }
+            }
+        }
 
-	public class AtlasPage {
-		public string name;
-		public int width, height;
-		public Format format = Format.RGBA8888;
-		public TextureFilter minFilter = TextureFilter.Nearest;
-		public TextureFilter magFilter = TextureFilter.Nearest;
-		public TextureWrap uWrap = TextureWrap.ClampToEdge;
-		public TextureWrap vWrap = TextureWrap.ClampToEdge;
-		public bool pma;
-		public object rendererObject;
+        private static int ReadEntry(string[] entry, string line)
+        {
+            if (line == null) return 0;
+            line = line.Trim();
+            if (line.Length == 0) return 0;
+            var colon = line.IndexOf(':');
+            if (colon == -1) return 0;
+            entry[0] = line.Substring(0, colon).Trim();
+            for (int i = 1, lastMatch = colon + 1;; i++)
+            {
+                var comma = line.IndexOf(',', lastMatch);
+                if (comma == -1)
+                {
+                    entry[i] = line.Substring(lastMatch).Trim();
+                    return i;
+                }
 
-		public AtlasPage Clone () {
-			return MemberwiseClone() as AtlasPage;
-		}
-	}
+                entry[i] = line.Substring(lastMatch, comma - lastMatch).Trim();
+                lastMatch = comma + 1;
+                if (i == 4) return 4;
+            }
+        }
 
-	public class AtlasRegion : TextureRegion {
-		public AtlasPage page;
-		public string name;
-		public int x, y;
-		public float offsetX, offsetY;
-		public int originalWidth, originalHeight;
-		public int packedWidth { get { return width; } set { width = value; } }
-		public int packedHeight { get { return height; } set { height = value; } }
-		public int degrees;
-		public bool rotate;
-		public int index;
-		public string[] names;
-		public int[][] values;
+        public void FlipV()
+        {
+            for (int i = 0, n = Regions.Count; i < n; i++)
+            {
+                var region = Regions[i];
+                region.v = 1 - region.v;
+                region.v2 = 1 - region.v2;
+            }
+        }
 
-		override public int OriginalWidth { get { return originalWidth; } }
-		override public int OriginalHeight { get { return originalHeight; } }
+        /// <summary>
+        ///     Returns the first region found with the specified name. This method uses string comparison to find the region, so
+        ///     the result
+        ///     should be cached rather than calling this method multiple times.
+        /// </summary>
+        /// <returns>The region, or null.</returns>
+        public AtlasRegion FindRegion(string name)
+        {
+            for (int i = 0, n = Regions.Count; i < n; i++)
+                if (Regions[i].name == name)
+                    return Regions[i];
+            return null;
+        }
 
-		public AtlasRegion Clone () {
-			return MemberwiseClone() as AtlasRegion;
-		}
-	}
+        public void Dispose()
+        {
+            if (textureLoader == null) return;
+            for (int i = 0, n = Pages.Count; i < n; i++)
+                textureLoader.Unload(Pages[i].rendererObject);
+        }
+    }
 
-	public interface TextureLoader {
-		void Load (AtlasPage page, string path);
-		void Unload (Object texture);
-	}
+    public enum Format
+    {
+        Alpha,
+        Intensity,
+        LuminanceAlpha,
+        RGB565,
+        RGBA4444,
+        RGB888,
+        RGBA8888
+    }
+
+    public enum TextureFilter
+    {
+        Nearest,
+        Linear,
+        MipMap,
+        MipMapNearestNearest,
+        MipMapLinearNearest,
+        MipMapNearestLinear,
+        MipMapLinearLinear
+    }
+
+    public enum TextureWrap
+    {
+        MirroredRepeat,
+        ClampToEdge,
+        Repeat
+    }
+
+    public class AtlasPage
+    {
+        public Format format = Format.RGBA8888;
+        public TextureFilter magFilter = TextureFilter.Nearest;
+        public TextureFilter minFilter = TextureFilter.Nearest;
+        public string name;
+        public bool pma;
+        public object rendererObject;
+        public TextureWrap uWrap = TextureWrap.ClampToEdge;
+        public TextureWrap vWrap = TextureWrap.ClampToEdge;
+        public int width, height;
+
+        public AtlasPage Clone()
+        {
+            return MemberwiseClone() as AtlasPage;
+        }
+    }
+
+    public class AtlasRegion : TextureRegion
+    {
+        public int degrees;
+        public int index;
+        public string name;
+        public string[] names;
+        public float offsetX, offsetY;
+        public int originalWidth, originalHeight;
+        public AtlasPage page;
+        public bool rotate;
+        public int[][] values;
+        public int x, y;
+
+        public int packedWidth
+        {
+            get => width;
+            set => width = value;
+        }
+
+        public int packedHeight
+        {
+            get => height;
+            set => height = value;
+        }
+
+        public override int OriginalWidth => originalWidth;
+        public override int OriginalHeight => originalHeight;
+
+        public AtlasRegion Clone()
+        {
+            return MemberwiseClone() as AtlasRegion;
+        }
+    }
+
+    public interface TextureLoader
+    {
+        void Load(AtlasPage page, string path);
+        void Unload(object texture);
+    }
 }

@@ -30,52 +30,61 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Spine.Unity.Editor {
-	[CustomEditor(typeof(SkeletonMecanimRootMotion))]
-	[CanEditMultipleObjects]
-	public class SkeletonMecanimRootMotionInspector : SkeletonRootMotionBaseInspector {
-		protected SerializedProperty mecanimLayerFlags;
+namespace Spine.Unity.Editor
+{
+    [CustomEditor(typeof(SkeletonMecanimRootMotion))]
+    [CanEditMultipleObjects]
+    public class SkeletonMecanimRootMotionInspector : SkeletonRootMotionBaseInspector
+    {
+        protected SerializedProperty mecanimLayerFlags;
 
-		protected GUIContent mecanimLayersLabel;
+        protected GUIContent mecanimLayersLabel;
 
-		protected override void OnEnable () {
-			base.OnEnable();
-			mecanimLayerFlags = serializedObject.FindProperty("mecanimLayerFlags");
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            mecanimLayerFlags = serializedObject.FindProperty("mecanimLayerFlags");
 
-			mecanimLayersLabel = new UnityEngine.GUIContent("Mecanim Layers", "Mecanim layers to apply root motion at. Defaults to the first Mecanim layer.");
-		}
+            mecanimLayersLabel = new GUIContent("Mecanim Layers",
+                "Mecanim layers to apply root motion at. Defaults to the first Mecanim layer.");
+        }
 
-		override public void OnInspectorGUI () {
+        public override void OnInspectorGUI()
+        {
+            base.MainPropertyFields();
+            MecanimLayerMaskPropertyField();
 
-			base.MainPropertyFields();
-			MecanimLayerMaskPropertyField();
+            base.OptionalPropertyFields();
+            serializedObject.ApplyModifiedProperties();
+        }
 
-			base.OptionalPropertyFields();
-			serializedObject.ApplyModifiedProperties();
-		}
+        protected string[] GetLayerNames()
+        {
+            var maxLayerCount = 0;
+            var maxIndex = 0;
+            for (var i = 0; i < targets.Length; ++i)
+            {
+                var skeletonMecanim = ((SkeletonMecanimRootMotion)targets[i]).SkeletonMecanim;
+                var count = skeletonMecanim.Translator.MecanimLayerCount;
+                if (count > maxLayerCount)
+                {
+                    maxLayerCount = count;
+                    maxIndex = i;
+                }
+            }
 
-		protected string[] GetLayerNames () {
-			int maxLayerCount = 0;
-			int maxIndex = 0;
-			for (int i = 0; i < targets.Length; ++i) {
-				SkeletonMecanim skeletonMecanim = ((SkeletonMecanimRootMotion)targets[i]).SkeletonMecanim;
-				int count = skeletonMecanim.Translator.MecanimLayerCount;
-				if (count > maxLayerCount) {
-					maxLayerCount = count;
-					maxIndex = i;
-				}
-			}
-			if (maxLayerCount == 0)
-				return new string[0];
-			SkeletonMecanim skeletonMecanimMaxLayers = ((SkeletonMecanimRootMotion)targets[maxIndex]).SkeletonMecanim;
-			return skeletonMecanimMaxLayers.Translator.MecanimLayerNames;
-		}
+            if (maxLayerCount == 0)
+                return new string[0];
+            var skeletonMecanimMaxLayers = ((SkeletonMecanimRootMotion)targets[maxIndex]).SkeletonMecanim;
+            return skeletonMecanimMaxLayers.Translator.MecanimLayerNames;
+        }
 
-		protected void MecanimLayerMaskPropertyField () {
-			string[] layerNames = GetLayerNames();
-			if (layerNames.Length > 0)
-				mecanimLayerFlags.intValue = EditorGUILayout.MaskField(
-					mecanimLayersLabel, mecanimLayerFlags.intValue, layerNames);
-		}
-	}
+        protected void MecanimLayerMaskPropertyField()
+        {
+            var layerNames = GetLayerNames();
+            if (layerNames.Length > 0)
+                mecanimLayerFlags.intValue = EditorGUILayout.MaskField(
+                    mecanimLayersLabel, mecanimLayerFlags.intValue, layerNames);
+        }
+    }
 }

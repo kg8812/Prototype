@@ -5,30 +5,37 @@ using UnityEngine;
 
 namespace Command
 {
-    public enum ECommandType {
-        None, Special, Attack, Dash, Jump, Heal
+    public enum ECommandType
+    {
+        None,
+        Special,
+        Attack,
+        Dash,
+        Jump,
+        Heal
     }
 
     public class InputBuffer
     {
-        private readonly Actor user;
-        private EActorDirection currentDirection;
         private readonly PriorityQueue<CommandExecutor.CommandInfo, ComparableActionType> actionBuffer;
         private readonly Dictionary<ECommandType, EActorDirection> directionBuffer;
         private readonly Dictionary<ECommandType, Coroutine> timers;
+        private readonly Actor user;
 
         private ActorController _controller;
-        
-        public InputBuffer(Actor p,ActorController controller)
+        private EActorDirection currentDirection;
+
+        public InputBuffer(Actor p, ActorController controller)
         {
             user = p;
             currentDirection = user.Direction;
-            if(p is Player player)
-                actionBuffer = new(player.MaxActionBufferSize);
+            if (p is Player player)
+                actionBuffer =
+                    new PriorityQueue<CommandExecutor.CommandInfo, ComparableActionType>(player.MaxActionBufferSize);
             else
-                actionBuffer = new(3);
-            timers = new();
-            directionBuffer = new();
+                actionBuffer = new PriorityQueue<CommandExecutor.CommandInfo, ComparableActionType>(3);
+            timers = new Dictionary<ECommandType, Coroutine>();
+            directionBuffer = new Dictionary<ECommandType, EActorDirection>();
             _controller = controller;
         }
 
@@ -39,10 +46,10 @@ namespace Command
             var command = input.commandType;
 
             // TODO: skill도 attack으로 취급했을 때, enqueue 내부에서 중복 체크 제대로 안돼서 둘 다 queue될 수 있음
-            if(!actionBuffer.Enqueue(input, new ComparableActionType(command)))
+            if (!actionBuffer.Enqueue(input, new ComparableActionType(command)))
                 return;
 
-            if(!directionBuffer.TryAdd(command, currentDirection))
+            if (!directionBuffer.TryAdd(command, currentDirection))
                 directionBuffer[command] = currentDirection;
 
             StartTimer(input);
@@ -50,9 +57,9 @@ namespace Command
 
         public void Routine()
         {
-            foreach(var (command,_) in actionBuffer)
+            foreach (var (command, _) in actionBuffer)
             {
-                if(!InvokeCondition(command))
+                if (!InvokeCondition(command))
                     continue;
 
                 Invoke(command);
@@ -65,12 +72,9 @@ namespace Command
         {
             if (input == null || input.Commands.Count == 0) return false;
 
-            bool result = false;
+            var result = false;
 
-            foreach (var command in input.Commands)
-            {
-                result = result || command.InvokeCondition(user);
-            }
+            foreach (var command in input.Commands) result = result || command.InvokeCondition(user);
             return result;
         }
 
@@ -79,15 +83,13 @@ namespace Command
             // string inputName = input.Commands[0].name;
             // if(inputName.Equals("Dash") || inputName.Equals("Attack")) 
 
-            if(timers.TryGetValue(input.commandType, out var prev)){
+            if (timers.TryGetValue(input.commandType, out var prev))
+            {
                 GameManager.instance.StopCoroutineWrapper(prev);
                 timers.Remove(input.commandType);
             }
 
-            if (directionBuffer.TryGetValue(input.commandType, out var value))
-            {
-                InvokeDirection(value);
-            }
+            if (directionBuffer.TryGetValue(input.commandType, out var value)) InvokeDirection(value);
 
             input.Invoke(user);
 
@@ -104,8 +106,9 @@ namespace Command
 
         public void SetDirection(EActorDirection direction)
         {
-            this.currentDirection = direction;
+            currentDirection = direction;
         }
+
         public EActorDirection GetDirection()
         {
             // 지금 누르고 있는 방향 확인 용
@@ -115,13 +118,15 @@ namespace Command
         private void StartTimer(CommandExecutor.CommandInfo command)
         {
             // 기존 타이머 취소
-            if(timers.TryGetValue(command.commandType, out var prev)){
+            if (timers.TryGetValue(command.commandType, out var prev))
+            {
                 GameManager.instance.StopCoroutineWrapper(prev);
                 timers.Remove(command.commandType);
             }
 
             // 새 타이머 시작
-            IEnumerator timeout(){
+            IEnumerator timeout()
+            {
                 yield return new WaitForSeconds(command.timeout);
                 // timeout시 timer list에서 coroutine 제거, 버퍼 돼 있는 커맨드 제거 
                 timers.Remove(command.commandType);
@@ -131,7 +136,7 @@ namespace Command
 
             timers.Add(command.commandType, GameManager.instance.StartCoroutineWrapper(timeout()));
         }
-        
+
         public void ClearBuffer()
         {
             actionBuffer.Clear();
@@ -141,25 +146,25 @@ namespace Command
 
     public interface IBufferCommand
     {
-        public bool InvokeCondition(Actor actor);      // 커맨드 실행 조건
+        public bool InvokeCondition(Actor actor); // 커맨드 실행 조건
     }
 
     public class ComparableActionType : IComparable<ComparableActionType>
     {
-        private readonly ECommandType _commandType;
-        public ECommandType CommandType => _commandType;   
         public ComparableActionType(ECommandType commandType)
         {
-            _commandType = commandType;
+            CommandType = commandType;
         }
+
+        public ECommandType CommandType { get; }
 
         public int CompareTo(ComparableActionType other)
         {
-            if(Equals(other)) return 0;
+            if (Equals(other)) return 0;
 
-            GameManager GI = GameManager.instance;
+            var GI = GameManager.instance;
 
-            if(GI == null || GI.Player == null) return 0;
+            if (GI == null || GI.Player == null) return 0;
 
             var current = GI.Player.CurrentCommand;
 
@@ -172,10 +177,10 @@ namespace Command
         {
             return currentCommand switch
             {
-                ECommandType.Attack => new int[] { 6, 1, 4, 2, 3, 5 },
-                ECommandType.Dash => new int[] { 6, 1, 3, 4, 2, 5 },
-                _ => new int[] { 6, 1, 2, 3, 4, 5 },
+                ECommandType.Attack => new[] { 6, 1, 4, 2, 3, 5 },
+                ECommandType.Dash => new[] { 6, 1, 3, 4, 2, 5 },
+                _ => new[] { 6, 1, 2, 3, 4, 5 }
             };
         }
-    } 
+    }
 }
