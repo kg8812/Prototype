@@ -20,11 +20,10 @@ namespace PlayerState
             else
                 _player.AnimController.DeactivateLeg();
 
-            if (_player.weaponAtkInfo.atkCombo == 0)
-            {
-                _player.AnimController.ResetTrigger(EAnimationTrigger.Attack);
-                _player.AnimController.Trigger(EAnimationTrigger.AttackInit);
-            }
+            
+            _player.AnimController.ResetTrigger(EAnimationTrigger.Attack);
+            _player.AnimController.Trigger(EAnimationTrigger.AttackInit);
+            
         }
 
         public void OnExitAnimate()
@@ -49,8 +48,8 @@ namespace PlayerState
 
             _player.ExecuteEvent(EventType.OnAttackStateEnter, null);
 
-            _player.Attack();
-
+            // 공격 넣기 player.Attack()
+            
             _player.StateEvent.ExecuteEventOnce(EventType.OnAttackStateEnter, null);
 
             _player.StateEvent.AddEvent(EventType.OnAttackSuccess, Escape);

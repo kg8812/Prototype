@@ -20,7 +20,6 @@ namespace Apis
         {
             new DatabaseManager().Init();
             MonsterData = MonsterModel.monsterDict[monsterId];
-            GetComponent<ItemDropper>().DropperId = MonsterModel.monsterDict[monsterId].dropIndex;
             StatManager.BaseStat.Set(ActorStatType.MaxHp, MonsterData.maxHp);
             StatManager.BaseStat.Set(ActorStatType.Atk, MonsterData.atkPower);
             StatManager.BaseStat.Set(ActorStatType.MoveSpeed, MonsterData.moveSpeed);

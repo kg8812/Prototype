@@ -15,7 +15,6 @@ namespace Apis.CommonMonster2
             _cM = monster;
             _cM.IsDead = true;
             _cM.PgController.ForceCancel();
-            _cM.ItemDropper?.Drop();
             _cM.animator.SetTrigger(_deadAnim);
             _invincibleGuid = _cM.AddInvincibility();
             _cM.MoveComponent.Stop();

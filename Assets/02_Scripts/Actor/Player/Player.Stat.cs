@@ -83,12 +83,10 @@ public partial class Player
         if (_unitData == null) return;
         ActiveSkill?.UnEquip();
         PassiveSkill?.UnEquip();
-        Mecanim.Initialize(true);
         StatManager.BaseStat = new BaseStat(_unitData.baseStat);
         ActiveSkill = _unitData.activeSkill;
         PassiveSkill = _unitData.passiveSkill;
         UpdatePlayerStat(_unitData);
-        _overrider?.Init(this);
         UpdateSkills();
     }
 

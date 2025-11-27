@@ -18,105 +18,11 @@ namespace Apis
         }
         // 팩토리 매니저       
 
-        public Factory_AccPickUp AccPickUp { get; private set; } // 악세 픽업 팩토리
-        public Factory_WeaponPickUp WeaponPickUp { get; private set; } // 무기 픽업 팩토리
-
-        public Factory_ActiveSkillPickUp ActiveSkillPickUp { get; private set; }
-        public Factory_Acc Acc { get; private set; } // 악세 팩토리
-        public Factory_Weapon Weapon { get; private set; } // 무기 팩토리
-        public Factory_ActiveSkillItem ActiveSkillItem { get; private set; }
-        public Factory_Etc Etc { get; private set; } // 기타 팩토리
-        public List<Weapon> WeaponList => Weapon.WpDict.Values.ToList();
-        public List<Accessory> Accessories => Acc.AccDict.Values.ToList();
-
-        public Accessory RandAcc => Acc.CreateRandom();
-
-        public Weapon RandWeapon => Weapon.CreateRandom();
-
-        public ActiveSkillItem RandActiveSkill => ActiveSkillItem.CreateRandom();
-
         public void LoadItems()
         {
             if (isInit) return;
             isInit = true;
             // 팩토리 초기화
-            var accs = ResourceUtil.LoadAll<Accessory>("Prefabs/Items/Accessory");
-            var weapons = ResourceUtil.LoadAll<Weapon>("Prefabs/Items/Weapon");
-            var activeSkills = ResourceUtil.LoadAll<ActiveSkill>("Prefabs/Items/ActiveSkill");
-            var activeSkillItem = new[]
-            {
-                ResourceUtil.Load<ActiveSkillItem>("ActiveSkillItem")
-            };
-
-            var etcs = ResourceUtil.LoadAll<EtcItem>("EtcItems");
-            AccPickUp = new Factory_AccPickUp(new[]
-                { ResourceUtil.Load<Acc_PickUp>("Prefabs/Items/Accessory/AccPickUp") });
-            WeaponPickUp = new Factory_WeaponPickUp(new[]
-                { ResourceUtil.Load<Weapon_PickUp>("Prefabs/Items/Weapon/WeaponPickUp") });
-            ActiveSkillPickUp = new Factory_ActiveSkillPickUp(new[]
-                { ResourceUtil.Load<ActiveSkill_PickUp>("Prefabs/Items/ActiveSkill/ActiveSkillPickUp") });
-            foreach (var x in accs) x.Init();
-
-            foreach (var x in weapons) x.Init();
-            Acc = new Factory_Acc(accs);
-            Weapon = new Factory_Weapon(weapons);
-            // TODO: skill list
-            ActiveSkillItem = new Factory_ActiveSkillItem(activeSkills, activeSkillItem);
-            Etc = new Factory_Etc(etcs);
-        }
-
-        public Accessory GetAcc(int itemId)
-        {
-            return Acc.CreateNew(itemId);
-        }
-
-        public Weapon GetWeapon(int itemId)
-        {
-            return Weapon.CreateNew(itemId);
-        }
-
-        public ActiveSkillItem GetActiveSkill(int skillId)
-        {
-            return ActiveSkillItem.CreateNew(skillId);
-        }
-
-        public EtcItem GetEtcItem(int itemId)
-        {
-            return Etc.CreateNew(itemId);
-        }
-
-        //인벤에 악세서리 추가
-        public void AddAcc(int index)
-        {
-            if (!AccessoryData.DataLoad.TryGetData(index, out var data)) return;
-            // string n = LanguageManager.Str(data.accName);
-            if (InvenManager.instance.Acc.IsFull(InvenType.Storage))
-            {
-                var pickUp = GameManager.Item.AccPickUp.CreateNew(data.accId);
-                pickUp.transform.position = GameManager.instance.ControllingEntity.transform.position;
-            }
-            else
-            {
-                var acc = GameManager.Item.GetAcc(data.accId);
-                InvenManager.instance.Acc.Add(acc, InvenType.Storage);
-            }
-        }
-
-        // 인벤에 무기 추가
-        public void AddWeapon(int index)
-        {
-            if (!WeaponData.DataLoad.TryGetWeaponData(index, out var data)) return;
-            // string n = LanguageManager.Str(data.weaponNameString);
-            if (InvenManager.instance.AttackItem.IsFull(InvenType.Storage))
-            {
-                var pickUp = GameManager.Item.WeaponPickUp.CreateNew(data.weaponId);
-                pickUp.transform.position = GameManager.instance.ControllingEntity.transform.position;
-            }
-            else
-            {
-                var wp = GameManager.Item.GetWeapon(data.weaponId);
-                InvenManager.instance.AttackItem.Add(wp, InvenType.Storage);
-            }
         }
     }
 }

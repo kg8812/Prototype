@@ -10,12 +10,7 @@ namespace Apis
 {
     public enum MonsterType
     {
-        Common,
-        Elite,
-        Boss
     }
-
-    public delegate void OnFloatValueChanged(float value);
 
     public partial class Monster : Actor, IRecognition, IMovable, IPoolObject
     {
@@ -42,9 +37,6 @@ namespace Apis
         {
             get { return _atkInfo ??= ResourceUtil.Load<ProjectileInfo>("MonsterAtkInfo"); }
         }
-
-        // 참조 dragon
-        public ItemDropper ItemDropper { get; private set; }
 
         public bool ableMove
         {
@@ -116,7 +108,6 @@ namespace Apis
             OnRemove ??= new UnityEvent<UnityAction<Monster>>();
             OnAdd.AddListener(x => { x.Invoke(this); });
             OnRemove.AddListener(x => { x.Invoke(this); });
-            ItemDropper = GetComponent<ItemDropper>();
             InteractCheckEvent -= Check;
             InteractCheckEvent += Check;
 
@@ -150,7 +141,6 @@ namespace Apis
         protected virtual void InitMonsterData(MonsterDataType monsterDataType)
         {
             MonsterData = monsterDataType;
-            ItemDropper.DropperId = monsterDataType.dropIndex;
             StatManager.BaseStat.Set(ActorStatType.MaxHp, MonsterData.maxHp);
             StatManager.BaseStat.Set(ActorStatType.Atk, MonsterData.atkPower);
             StatManager.BaseStat.Set(ActorStatType.MoveSpeed, MonsterData.moveSpeed);

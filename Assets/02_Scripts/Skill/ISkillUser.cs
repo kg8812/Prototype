@@ -27,22 +27,4 @@ namespace Apis
         // 패시브 스킬 사용자
         public PassiveSkill PassiveSkill { get; }
     }
-
-    public interface IWeaponSkillUser : IMonoBehaviour
-    {
-        public MagicSkill MagicSkill { get; }
-        public List<SkillAttachment> WeaponSkillAttachments { get; }
-
-        public void AddWeaponSkillAttachment(SkillAttachment attachment)
-        {
-            WeaponSkillAttachments.Add(attachment);
-            MagicSkill?.Decorate();
-        }
-
-        public void RemoveWeaponSkillAttachment(SkillAttachment attachment)
-        {
-            WeaponSkillAttachments.Remove(attachment);
-            MagicSkill?.Decorate();
-        }
-    }
 }

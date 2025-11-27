@@ -6,9 +6,7 @@ using UnityEngine.Events;
 
 public partial class Player
 {
-    [TabGroup("기획쪽 수정 변수들/group1", "조작감")] [LabelText("공격 모션 최소 재생 시간")] [SerializeField]
-    private float _attackEscapeTime;
-
+    [TabGroup("기획쪽 수정 변수들/group1", "조작감")] 
     [LabelText("컨트롤러 버퍼 시간")] [SerializeField]
     private float _bufferTime = 0.5f;
 
@@ -16,24 +14,7 @@ public partial class Player
 
     private Coroutine jumpCoroutine;
     public float BufferTime => _bufferTime;
-
-    public float GroundAtkWeaponEscapeTime(int index)
-    {
-        if (AttackItemManager.CurrentItem is Weapon weapon)
-            return _attackEscapeTime * weapon.atkSpeed * (weapon.GroundCancelTimes[index] / 100) / (1 + AtkSpeed / 100);
-
-        return 0;
-    }
-
-    public float AirAtkWeaponEscapeTime(int index)
-    {
-        if (AttackItemManager.CurrentItem is Weapon weapon)
-            return _attackEscapeTime * weapon.atkSpeed *
-                (weapon.AirCancelTimes[index] / 100) / (1 + AtkSpeed / 100);
-
-        return 0;
-    }
-
+    
     public void StopJumpCoroutine()
     {
         if (jumpCoroutine == null) return;

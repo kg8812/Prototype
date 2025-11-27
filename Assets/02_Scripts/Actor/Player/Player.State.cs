@@ -237,7 +237,6 @@ public partial class Player : Actor
     {
         if (OnAttack)
         {
-            weaponAtkInfo.atkCombo = 0;
             animator.SetTrigger("CancelMotion");
         }
     }

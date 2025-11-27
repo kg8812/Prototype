@@ -72,6 +72,7 @@ public partial class Player : IDashUser, IMovable, IPlayer
     }
 
     public int InteractionColliderNum => _interactionColliders.Count;
+    public IPlayerAttack attackStrategy;
 
     protected override void Awake()
     {
@@ -79,13 +80,12 @@ public partial class Player : IDashUser, IMovable, IPlayer
         DontDestroyOnLoad(gameObject);
         GameManager.Scene.WhenSceneLoaded.AddListener(s => { _interactionColliders.Clear(); });
         AnimController = GetComponent<PlayerAnimator>();
-        attackStrategy = new PlayerWeaponAttack(this);
+        attackStrategy = new PlayerBasicAttack(this);
         Controller = GetComponent<ActorController>();
         PlayerCollisionCollider = transform.GetChild(5).GetComponent<CapsuleCollider2D>();
         // animator = transform.GetChild(0).GetComponent<Animator>();
         Rb = GetComponent<Rigidbody2D>();
 
-        BonusStatEvent += () => InvenManager.instance.Acc.BonusStat;
         attackColliders = GetComponentsInChildren<AttackObject>(true);
         name = "Player";
 
@@ -103,11 +103,6 @@ public partial class Player : IDashUser, IMovable, IPlayer
             x.AddEvent(EventType.OnAttackSuccess, info =>
             {
                 ExecuteEvent(EventType.OnColliderAttack, info);
-                if (AttackItemManager.CurrentItem is Weapon weapon && info?.target is Actor)
-                {
-                    weapon.SFXPlayer?.Init(this);
-                    weapon.SFXPlayer?.Play();
-                }
             });
         });
 
@@ -131,7 +126,6 @@ public partial class Player : IDashUser, IMovable, IPlayer
     protected override void Start()
     {
         base.Start();
-        _overrider.Init(this);
         // awake 구분 원래 자리
 
         if (GameManager.instance.Player == this) GameManager.instance.afterPlayerStart.Invoke(this);

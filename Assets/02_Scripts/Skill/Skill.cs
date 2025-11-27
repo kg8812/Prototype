@@ -209,7 +209,6 @@ namespace Apis
             hit = owner.gameObject.GetComponent<IOnHit>();
             activeUser = owner.gameObject.GetComponent<IActiveSkillUser>();
             passiveUser = owner.gameObject.GetComponent<IPassiveSkillUser>();
-            weaponSkillUser = owner.gameObject.GetComponent<IWeaponSkillUser>();
 
             eventUser?.EventManager.AddEvent(EventType.OnUpdate, UpdateEvent);
             isStop = false;
@@ -414,7 +413,6 @@ namespace Apis
         [HideInInspector] public IDashUser dashUser;
         [HideInInspector] public IActiveSkillUser activeUser;
         [HideInInspector] public IPassiveSkillUser passiveUser;
-        [HideInInspector] public IWeaponSkillUser weaponSkillUser;
 
         protected virtual bool UseAtkRatio => true;
         protected virtual bool UseRatio => true;

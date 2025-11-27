@@ -9,8 +9,6 @@ public partial class GameManager : Singleton<GameManager>
 {
     private static DatabaseManager _data;
 
-    private static DropManager _drop;
-
     private static SceneLoadManager _scene;
 
     private static UIManager _ui;
@@ -40,20 +38,6 @@ public partial class GameManager : Singleton<GameManager>
             }
 
             return _data;
-        }
-    }
-
-    public static DropManager Drop
-    {
-        get
-        {
-            if (_drop == null)
-            {
-                _drop = new DropManager();
-                _drop.Init();
-            }
-
-            return _drop;
         }
     }
 

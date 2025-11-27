@@ -17,48 +17,37 @@ public partial class Player
         public void Attack(int combo);
     }
 
-    public class PlayerWeaponAttack : IPlayerAttack
+    public class PlayerBasicAttack : IPlayerAttack
     {
         private readonly Player player;
 
-        public PlayerWeaponAttack(Player player)
+        public PlayerBasicAttack(Player player)
         {
             this.player = player;
         }
 
         float IPlayerAttack.GroundAttackEscapeTime(int index)
         {
-            return player.GroundAtkWeaponEscapeTime(index);
+            return 0;
         }
 
         float IPlayerAttack.AirAttackEscapeTime(int index)
         {
-            return player.AirAtkWeaponEscapeTime(index);
+            return 0;
         }
 
         public void Attack()
         {
-            if (AttackItemManager.CurrentItem is Weapon weapon)
-            {
-                player.animator.SetInteger("AttackType", weapon.AtkMotionType);
-                EventParameters parameters = new(player);
-                player.ExecuteEvent(EventType.OnAttack, parameters);
-                player.animator.SetTrigger("Attack");
-            }
+            
         }
 
         public bool CheckAttackable(int index)
         {
-            var item = AttackItemManager.GetItem(index);
-            return item != null && item.TryAttack();
+            return true;
         }
 
         public void Attack(int combo)
         {
-            if (AttackItemManager.CurrentItem is Weapon weapon)
-                weapon.Attack(combo);
-            else
-                Debug.LogError("무기가 할당되지 않음");
         }
     }
 

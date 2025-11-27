@@ -20,14 +20,7 @@ namespace Apis
 
         [SerializeField] private EActorDirection startDirection;
 
-        [TabGroup("기획쪽 수정 변수들/group1", "기본 스탯")] [LabelText("그로기 최대 게이지")]
-        public float MaxGauge;
-
-        [TabGroup("기획쪽 수정 변수들/group1", "기본 스탯")] [LabelText("초당 그로기 회복량")]
-        public float Recovery;
-
         [HideInInspector] public BehaviourTreeRunner treeRunner;
-        public int cutSceneId;
 
         [Title("이벤트")] public UnityEvent OnBattleStart = new();
 
@@ -38,8 +31,6 @@ namespace Apis
         public int taskIndex;
 
         [HideInInspector] public int currentAtkPattern;
-
-        private readonly List<(int rad, Color color)> radiusList = new();
 
         protected readonly IDictionary<BossState, IState<BossMonster>> stateDict =
             new Dictionary<BossState, IState<BossMonster>>();
@@ -92,10 +83,7 @@ namespace Apis
             stateMachine = new StateMachine<BossMonster>(this, stateDict[BossState.Wait]);
             Direction = startDirection;
             colliderList = GetComponentsInChildren<AttackObject>(true).ToList();
-            BehaviourTree.Traverse(GetComponent<BehaviourTreeRunner>().tree.rootNode, a =>
-            {
-                if (a is IfPlayerDistance pd) radiusList.Add((pd.distance, pd.color));
-            });
+            
             SetState(isTest ? BossState.Move : BossState.Wait);
             SetAttackPatterns();
         }

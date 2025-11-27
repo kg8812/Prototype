@@ -8,7 +8,6 @@ public abstract class Item : SerializedMonoBehaviour
     // public abstract string FlavourText { get; } // 아이템 플레이버 텍스트 
     // public abstract string Description { get; } // 아이템 효과 설명
 
-    private ItemSaveData _saveData;
 
     protected Actor user;
 
@@ -19,15 +18,6 @@ public abstract class Item : SerializedMonoBehaviour
 
     // public abstract string Name { get; } // 아이템 이름
     public Sprite Image { get; protected set; } // 아이템 이미지 
-
-    public virtual ItemSaveData SaveData
-    {
-        get => _saveData ??= new ItemSaveData
-        {
-            ItemId = ItemId
-        };
-        set => _saveData = value;
-    }
 
     public ItemSlot slot { get; set; }
 

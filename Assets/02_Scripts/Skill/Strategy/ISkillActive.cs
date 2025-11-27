@@ -118,12 +118,6 @@ namespace Apis
                 }
                 else if (skill != null)
                 {
-                    var index = skill.Item.AtkSlotIndex;
-                    EndSkillCommand.ForEach(x =>
-                    {
-                        if (x is EndWeaponSkill es) es.index = skill.Item.AtkSlotIndex;
-                    });
-
                     original = controller.Executors[Define.GameKey.Attack].keyUpCommand.Commands;
                     controller.Executors[Define.GameKey.Attack].keyUpCommand.Commands = EndSkillCommand;
                 }
@@ -436,10 +430,6 @@ namespace Apis
                 {
                     original = controller.Executors[Define.GameKey.Attack].keyUpCommand.Commands;
                     controller.Executors[Define.GameKey.Attack].keyUpCommand.Commands = EndSkillCommand;
-                    EndSkillCommand.ForEach(x =>
-                    {
-                        if (x is EndWeaponSkill es) es.index = skill.Item.AtkSlotIndex;
-                    });
                 }
             }
 

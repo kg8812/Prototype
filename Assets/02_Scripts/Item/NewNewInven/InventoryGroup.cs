@@ -11,7 +11,6 @@ namespace NewNewInvenSpace
 
     public class InventoryGroup
     {
-        protected PresetType _presetType;
         public Dictionary<InvenType, InventoryList> Invens;
 
         public InventoryGroup(int eqMaxCnt, int eqCnt, int stMaxCnt, int stCnt)
@@ -25,12 +24,6 @@ namespace NewNewInvenSpace
                 if (!MoveInvenType(ind, InvenType.Equipment, InvenType.Storage)) Abandon(ind, InvenType.Equipment);
             };
             Invens[InvenType.Storage].BeforeItemExcepted = (ind, item) => Abandon(ind, InvenType.Storage);
-        }
-
-        public virtual PresetType PresetType
-        {
-            get => _presetType;
-            set => _presetType = value;
         }
 
         public virtual bool Add(Item item, InvenType type)

@@ -8,9 +8,6 @@ namespace Apis
 {
     public enum DropItemType
     {
-        Accessory,
-        ActiveSkill,
-        Weapon
     }
 
     public abstract class DropItem : MonoBehaviour, IOnInteract

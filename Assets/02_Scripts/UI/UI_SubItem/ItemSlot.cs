@@ -52,7 +52,6 @@ namespace Apis
                 itemImg.sprite = item.Image;
                 itemImg.enabled = true;
                 item.slot = this;
-                item.SaveData.slotIndex = ind;
             }
             else
             {

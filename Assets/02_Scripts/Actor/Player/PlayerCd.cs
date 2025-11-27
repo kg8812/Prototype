@@ -8,7 +8,6 @@ public enum EPlayerCd
 {
     Dash,
     Jump,
-    AirAttack,
     Skill,
     DashToAttack,
     DashToJump,
@@ -19,7 +18,6 @@ public enum EPlayerCd
 
 public class PlayerCd
 {
-    private readonly bool[] AirAttackCd;
     private readonly Dictionary<EPlayerCd, Coroutine> CdCoroutineDict;
     private readonly Dictionary<EPlayerCd, bool> CdDict;
     private readonly Dictionary<EPlayerCd, UnityAction> CdEventDict;
@@ -31,7 +29,6 @@ public class PlayerCd
         CdCoroutineDict = new Dictionary<EPlayerCd, Coroutine>();
         CdDict = new Dictionary<EPlayerCd, bool>();
         CdEventDict = new Dictionary<EPlayerCd, UnityAction>();
-        AirAttackCd = new bool[4];
         Init();
     }
 
@@ -84,8 +81,6 @@ public class PlayerCd
             CdCoroutineDict.Add(cd, null);
             CdDict.Add(cd, true);
         }
-
-        for (var i = 0; i < AirAttackCd.Length; i++) AirAttackCd[i] = false;
     }
 
     public void StopCd(EPlayerCd state)
@@ -121,36 +116,4 @@ public class PlayerCd
     {
         return CdDict[state];
     }
-
-    /* 공중 공격 쿨다운용 */
-
-    #region AirAttackCd
-
-    public void SetAirAttackCd(int index, bool isCd)
-    {
-        if (index > 3) return;
-
-        AirAttackCd[index] = isCd;
-    }
-
-    public void ResetAirAttackCd()
-    {
-        for (var i = 0; i < AirAttackCd.Length; i++) AirAttackCd[i] = false;
-    }
-
-    public bool GetAirAttackCd(int index)
-    {
-        if (!_player.onAir) return true;
-
-        var MaxAirAtk = _player.animator.GetInteger("MaxAirAtk");
-        return MaxAirAtk == 0 || (_player.weaponAtkInfo.atkCombo != MaxAirAtk
-                                  && !AirAttackCd[index]);
-    }
-
-    public bool HasAirAttackCd(int index)
-    {
-        return AirAttackCd[index];
-    }
-
-    #endregion
 }
