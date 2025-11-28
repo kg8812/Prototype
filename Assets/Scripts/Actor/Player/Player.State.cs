@@ -39,15 +39,10 @@ public partial class Player : Actor
 
     public bool AbleDash { get; private set; }
 
-    public bool IsCrouch { get; } = false;
-
-    public bool IsDrop { get; private set; }
-
     public bool AbleAttack => GetAbleState(EPlayerState.Attack);
 
     public bool ableMove => MoveComponent.ableMove;
     public bool ableJump => MoveComponent.ableJump;
-    public bool IsClimb { get; set; }
     public bool IsMove { get; set; }
 
     public bool OnAttack { get; set; }
@@ -134,7 +129,7 @@ public partial class Player : Actor
         IdleOn();
         yield return new WaitUntil(() =>
         {
-            return !IsMove && !onAir && !OnAttack && !IsDash && !IsCrouch && !IsClimb && IsReadyIdle;
+            return !IsMove && !onAir && !OnAttack && !IsDash && IsReadyIdle;
         });
         action.Invoke();
     }
@@ -188,35 +183,6 @@ public partial class Player : Actor
         // if(!isGravityOn) return;
 
         ActorMovement.SetGravityToZero();
-    }
-
-    public void DropOver(Collider2D platform)
-    {
-        if (!IsDrop || platform == null) return;
-
-        Physics2D.IgnoreCollision(PlayerCollisionCollider, platform, false);
-        IsDrop = false;
-    }
-
-    public Collider2D DropStart()
-    {
-        if (!IsDropable(out var platform)) return null;
-
-        Physics2D.IgnoreCollision(PlayerCollisionCollider, platform, true);
-
-        IsDrop = true;
-
-        return platform;
-    }
-
-    public bool IsDropable(out Collider2D platform)
-    {
-        RaycastHit2D hit;
-        hit = Physics2D.Raycast(transform.position, Vector2.down, searchDepth, LayerMasks.Platform);
-
-        platform = hit.collider;
-
-        return !(hit.collider == null) && Controller.IsPressingDown;
     }
 
     public Tweener DashLanding(float time, float distance, Ease graph)
@@ -293,7 +259,6 @@ public partial class Player : Actor
         AirDashed = 0;
         IsReadyIdle = true;
 
-        IsClimb = false;
         IsMove = false;
         OnAttack = false;
         OnFinalAttack = false;

@@ -59,7 +59,7 @@ namespace Apis
         {
             var Player = _skill.user as Player;
             var playerCheck = Player == null ||
-                              ((_skill.usableWhenAttack || !Player.OnAttack) && !Player.IsSkill && !Player.IsClimb);
+                              ((_skill.usableWhenAttack || !Player.OnAttack) && !Player.IsSkill);
             return !_skill.usePlayerCheck || playerCheck;
         }
     }
@@ -222,7 +222,7 @@ namespace Apis
         {
             var Player = _skill.user as Player;
             var playerCheck = Player == null ||
-                              ((_skill.usableWhenAttack || !Player.OnAttack) && !Player.IsSkill && !Player.IsClimb);
+                              ((_skill.usableWhenAttack || !Player.OnAttack) && !Player.IsSkill);
             return !_skill.usePlayerCheck || playerCheck;
         }
     }
@@ -317,7 +317,7 @@ namespace Apis
         {
             var Player = _skill.user as Player;
             var playerCheck = Player == null ||
-                              ((_skill.usableWhenAttack || !Player.OnAttack) && !Player.IsSkill && !Player.IsClimb);
+                              ((_skill.usableWhenAttack || !Player.OnAttack) && !Player.IsSkill);
             return !_skill.usePlayerCheck || playerCheck;
         }
     }
@@ -378,7 +378,7 @@ namespace Apis
             var _skill = isToggleOn ? secondSkill : baseSkill;
             var Player = _skill.user as Player;
             var playerCheck = Player == null ||
-                              ((_skill.usableWhenAttack || !Player.OnAttack) && !Player.IsSkill && !Player.IsClimb);
+                              ((_skill.usableWhenAttack || !Player.OnAttack) && !Player.IsSkill);
             return !_skill.usePlayerCheck || playerCheck;
         }
     }
@@ -469,7 +469,7 @@ namespace Apis
         {
             var Player = _skill.user as Player;
             var playerCheck = Player == null ||
-                              ((_skill.usableWhenAttack || !Player.OnAttack) && !Player.IsSkill && !Player.IsClimb);
+                              ((_skill.usableWhenAttack || !Player.OnAttack) && !Player.IsSkill);
             return !_skill.usePlayerCheck || playerCheck;
         }
     }

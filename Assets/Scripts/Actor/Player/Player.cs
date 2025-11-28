@@ -50,8 +50,6 @@ public partial class Player : IDashUser, IMovable, IPlayer
     public PlayerType playerType => _playerType;
     public ActorController Controller { get; private set; }
 
-    public CapsuleCollider2D PlayerCollisionCollider { get; private set; }
-
     public PlayerAnimator AnimController { get; private set; }
 
     public override Animator animator => AnimController.Animator;
@@ -82,7 +80,6 @@ public partial class Player : IDashUser, IMovable, IPlayer
         AnimController = GetComponent<PlayerAnimator>();
         attackStrategy = new PlayerBasicAttack(this);
         Controller = GetComponent<ActorController>();
-        PlayerCollisionCollider = transform.GetChild(5).GetComponent<CapsuleCollider2D>();
         // animator = transform.GetChild(0).GetComponent<Animator>();
         Rb = GetComponent<Rigidbody2D>();
 
@@ -93,6 +90,7 @@ public partial class Player : IDashUser, IMovable, IPlayer
 
         animator.keepAnimatorStateOnDisable = true;
         resister = GetComponentInChildren<PlayerResister>();
+        
         // 플레이어 자세 교정 -> scene Load event 등록
         GameManager.Scene.WhenSceneLoaded.AddListener(CorrectingPlayerPostureAction);
         AddEvent(EventType.OnDestroy,
