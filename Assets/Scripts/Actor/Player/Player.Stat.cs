@@ -10,16 +10,16 @@ public partial class Player
     [TabGroup("기획쪽 수정 변수들/group1", "조작감")] [LabelText("점프 후 공격 딜레이")] [SerializeField]
     private float jumpToAttackDelay; //점프 후 공격까지 딜레이 시간
 
-    [TabGroup("기획쪽 수정 변수들/group1", "조작감")] [LabelText("대쉬 후 공격 딜레이")] [SerializeField]
-    private float dashToAttackDelay; // 대쉬 후 공격까지 딜레이 시간
+    [TabGroup("기획쪽 수정 변수들/group1", "조작감")] [LabelText("회피 후 공격 딜레이")] [SerializeField]
+    private float dashToAttackDelay; // 회피 후 공격까지 딜레이 시간
 
-    [TabGroup("기획쪽 수정 변수들/group1", "조작감")] [LabelText("대쉬 후 이동 딜레이")] [SerializeField]
+    [TabGroup("기획쪽 수정 변수들/group1", "조작감")] [LabelText("회피 후 이동 딜레이")] [SerializeField]
     private float dashToMoveDelay = 0.3f;
 
-    [TabGroup("기획쪽 수정 변수들/group1", "조작감")] [LabelText("대쉬 후 점프 딜레이")] [SerializeField]
-    private float dashToJumpDelay = 0.01f; // 대쉬 후 공격까지 딜레이 시간
+    [TabGroup("기획쪽 수정 변수들/group1", "조작감")] [LabelText("회피 후 점프 딜레이")] [SerializeField]
+    private float dashToJumpDelay = 0.01f; // 회피 후 공격까지 딜레이 시간
 
-    [TabGroup("기획쪽 수정 변수들/group1", "조작감")] [LabelText("지상 대쉬 후 착지 시간")] [SerializeField]
+    [TabGroup("기획쪽 수정 변수들/group1", "조작감")] [LabelText("지상 회피 후 착지 시간")] [SerializeField]
     private float dashLandingTime = 0.6f;
 
 

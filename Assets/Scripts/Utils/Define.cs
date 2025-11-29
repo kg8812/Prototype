@@ -12,7 +12,8 @@ public class Define
         Up,
         Jump,
         Attack,
-        ActiveSkill
+        ActiveSkill,
+        Dash,
     }
 
     public enum UIKey

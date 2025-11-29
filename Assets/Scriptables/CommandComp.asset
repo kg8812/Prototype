@@ -19,6 +19,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: 207ddd4fe956beb48a8a4ec930d7f057, type: 2}
     - {fileID: 11400000, guid: 820e442ed182b4647b2af1fe537d2c2e, type: 2}
     - {fileID: 11400000, guid: 65815f4aad683944a9f544140ead22c7, type: 2}
+    - {fileID: 11400000, guid: a31cca41e3a317f438537e44a6ea597b, type: 2}
     SerializedBytesString: 
     Prefab: {fileID: 0}
     PrefabModificationsReferencedUnityObjects: []
@@ -43,7 +44,7 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 12
-      Data: 7
+      Data: 8
     - Name: 
       Entry: 7
       Data: 
@@ -421,6 +422,63 @@ MonoBehaviour:
     - Name: keyCommand
       Entry: 7
       Data: 29|System.Collections.Generic.List`1[[Command.ActorCommand, Assembly-CSharp]],
+        mscorlib
+    - Name: 
+      Entry: 12
+      Data: 0
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 3
+      Data: 7
+    - Name: $v
+      Entry: 7
+      Data: 30|Command.CommandList, Assembly-CSharp
+    - Name: keyDownCommand
+      Entry: 7
+      Data: 31|System.Collections.Generic.List`1[[Command.ActorCommand, Assembly-CSharp]],
+        mscorlib
+    - Name: 
+      Entry: 12
+      Data: 1
+    - Name: 
+      Entry: 10
+      Data: 3
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: keyUpCommand
+      Entry: 7
+      Data: 32|System.Collections.Generic.List`1[[Command.ActorCommand, Assembly-CSharp]],
+        mscorlib
+    - Name: 
+      Entry: 12
+      Data: 0
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: keyCommand
+      Entry: 7
+      Data: 33|System.Collections.Generic.List`1[[Command.ActorCommand, Assembly-CSharp]],
         mscorlib
     - Name: 
       Entry: 12

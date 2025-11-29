@@ -45,7 +45,8 @@ namespace Save.Schema
                 { Define.GameKey.Up, KeyCode.UpArrow },
                 { Define.GameKey.Jump, KeyCode.Space },
                 { Define.GameKey.ActiveSkill, KeyCode.D },
-                { Define.GameKey.Attack, KeyCode.Z }
+                { Define.GameKey.Attack, KeyCode.Z },
+                {Define.GameKey.Dash,KeyCode.LeftShift},
             };
         }
 
@@ -93,7 +94,8 @@ namespace Save.Schema
                 { Define.GameKey.Up, Gamepad.current.leftStick.up },
                 { Define.GameKey.Jump, Gamepad.current.buttonSouth },
                 { Define.GameKey.ActiveSkill, Gamepad.current.leftTrigger },
-                { Define.GameKey.Attack, Gamepad.current.buttonWest }
+                { Define.GameKey.Attack, Gamepad.current.buttonWest },
+                {Define.GameKey.Dash,Gamepad.current.buttonEast},
             };
 
         public UnityEvent OnKeyChange => _onKeyChange ??= new UnityEvent();
@@ -268,7 +270,8 @@ namespace Save.Schema
                     (Define.GameKey.Up, KeyCode.W),
                     (Define.GameKey.Jump, KeyCode.Space),
                     (Define.GameKey.ActiveSkill, KeyCode.R),
-                    (Define.GameKey.Attack, KeyCode.Mouse0)
+                    (Define.GameKey.Attack, KeyCode.Mouse0),
+                    (Define.GameKey.Dash, KeyCode.LeftShift),
                 };
 
             return new List<(Define.GameKey, KeyCode)>
@@ -279,7 +282,8 @@ namespace Save.Schema
                 (Define.GameKey.Up, KeyCode.UpArrow),
                 (Define.GameKey.Jump, KeyCode.Space),
                 (Define.GameKey.ActiveSkill, KeyCode.D),
-                (Define.GameKey.Attack, KeyCode.Z)
+                (Define.GameKey.Attack, KeyCode.Z),
+                (Define.GameKey.Dash, KeyCode.LeftShift),
             };
         }
     }
