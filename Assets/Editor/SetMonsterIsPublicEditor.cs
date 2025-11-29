@@ -10,7 +10,7 @@ public class SetMonsterIsPublicEditor : EditorWindow
     public static void SetMonsterExistSetting()
     {
         // Get all GameObjects in the current scene
-        var allObjects = FindObjectsOfType<GameObject>();
+        var allObjects = FindObjectsByType<GameObject>(FindObjectsSortMode.None);
 
         var count = 0;
 

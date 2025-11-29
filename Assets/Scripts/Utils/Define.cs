@@ -136,6 +136,7 @@ public class Define
 
     public class PlayerData
     {
+        public const string Player1 = "Player1Data";
     }
 
     #endregion

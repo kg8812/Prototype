@@ -12,7 +12,6 @@ namespace Command
         Attack,
         Dash,
         Jump,
-        Heal
     }
 
     public class InputBuffer

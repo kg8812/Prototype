@@ -104,8 +104,6 @@ public partial class Player : IDashUser, IMovable, IPlayer
             });
         });
 
-        var index = animator.GetLayerIndex("BeastLayer");
-        animator.SetLayerWeight(index, 0);
         CoolDown = new PlayerCd(this);
         CoyoteCurrentJump = new CoyoteVar<int>(jumpCoyoteTime);
         MaxDropVel = initMaxDropVel;

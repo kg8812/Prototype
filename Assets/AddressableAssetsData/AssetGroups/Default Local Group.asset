@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Default Local Group
   m_GUID: 2d64f78a7beaa4246a9b304730f648e8
   m_SerializeEntries:
+  - m_GUID: 17a89da695eae634386c57a4ed019f1d
+    m_Address: Player
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4ed4d17a01b92ca4d9d815e7964a1a4b
     m_Address: SoundMixer
     m_ReadOnly: 0
@@ -22,6 +27,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8640f6839adf1194db221ed9cfb0dcaa
     m_Address: Prefabs/UI/FadeCanv
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e6a89cca9c272f842bba0e4210fa64bf
+    m_Address: Player1Data
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -46,7 +46,7 @@ public class ActorController : SerializedMonoBehaviour, IController
     public virtual void KeyControl()
     {
         if (!isEnabled) return;
-
+        
         foreach (var x in Executors)
         {
             if (InputManager.GetKeyDown(GetKeyCode(x.Key)))
@@ -57,6 +57,7 @@ public class ActorController : SerializedMonoBehaviour, IController
 
             if (InputManager.GetKey(GetKeyCode(x.Key)))
             {
+                Debug.Log(x.Value);
                 Press(x.Value.keyCommand);
             }
             else
@@ -136,11 +137,11 @@ public class ActorController : SerializedMonoBehaviour, IController
 
     public void ChangeCommands(CommandComp comp)
     {
-        Executors.ForEach(x =>
+        Executors.Keys.ForEach(x =>
         {
-            x.Value.keyDownCommand.Commands = comp.Commands[x.Key].keyDownCommand;
-            x.Value.keyUpCommand.Commands = comp.Commands[x.Key].keyUpCommand;
-            x.Value.keyCommand.Commands = comp.Commands[x.Key].keyCommand;
+            Executors[x].keyDownCommand.Commands = comp.Commands[x].keyDownCommand;
+            Executors[x].keyUpCommand.Commands = comp.Commands[x].keyUpCommand;
+            Executors[x].keyCommand.Commands = comp.Commands[x].keyCommand;
         });
         inputEmptyMove = comp.inputEmptyMove;
         inputIdle = comp.inputIdle;
