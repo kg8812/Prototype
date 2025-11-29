@@ -9,6 +9,7 @@ namespace Command
         {
             // if(go.IsClimb) return;
             // if(go.IsBlockIdle) return;
+
             if (!InvokeCondition(go)) return;
 
             go.SetState(EPlayerState.Idle);

@@ -108,12 +108,7 @@ namespace PlayerState
             base.FixedUpdate();
             if (_player.PressingDir != 0)
             {
-                if (!_player.PhysicTest)
-                    _player.ActorMovement.Move(_player.Direction, (100 - skill.chargeMoveDebuff) / 100f);
-                else
-                    _player.MoveComponent.ForceActorMovement.Move(_player.Direction,
-                        (100 - skill.chargeMoveDebuff) / 100f, false, _player.MoveResistFactor,
-                        _player.PreattackMoveSpeed);
+                _player.ActorMovement.Move(_player.Direction, (100 - skill.chargeMoveDebuff) / 100f);
             }
         }
 

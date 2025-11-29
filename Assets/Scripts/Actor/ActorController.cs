@@ -57,7 +57,6 @@ public class ActorController : SerializedMonoBehaviour, IController
 
             if (InputManager.GetKey(GetKeyCode(x.Key)))
             {
-                Debug.Log(x.Value);
                 Press(x.Value.keyCommand);
             }
             else

@@ -1,3 +1,5 @@
+using PlayerState;
+
 public class Define
 {
     #region Enums
@@ -299,13 +301,13 @@ public static class NextState
             EPlayerState.Move => new[]
             {
                 EPlayerState.Jump, EPlayerState.Attack, EPlayerState.Dash,
-                EPlayerState.Skill
+                EPlayerState.Skill, EPlayerState.Idle
             },
-            EPlayerState.Dash => new[] { EPlayerState.Jump },
+            EPlayerState.Dash => new[] { EPlayerState.Jump,EPlayerState.Idle },
             EPlayerState.Run => new[]
             {
                 EPlayerState.Run, EPlayerState.Jump, EPlayerState.Attack,
-                EPlayerState.Dash, EPlayerState.Skill, EPlayerState.Move
+                EPlayerState.Dash, EPlayerState.Skill, EPlayerState.Move, EPlayerState.Idle
             },
             _ => null
         };

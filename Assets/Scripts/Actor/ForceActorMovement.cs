@@ -161,7 +161,7 @@ public class ForceActorMovement : ActorMovement
     {
         if (_mover.Rb.linearVelocity.x == 0) return;
 
-        var castCenter = (Vector2)collider.bounds.center + Vector2.down * _height * 0.49f;
+        var castCenter = (Vector2)collider.bounds.center + Vector2.down * (_height * 0.49f);
 
         var amount = Mathf.Min(_mover.Rb.linearVelocity.magnitude, frictionAmount);
 

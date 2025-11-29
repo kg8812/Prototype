@@ -22,7 +22,7 @@ namespace PlayerState
 
             base.FixedUpdate();
 
-            if (_player.PhysicTest) _player.MoveComponent.ForceActorMovement.Friction(5);
+            _player.MoveComponent.ForceActorMovement.Friction(5);
             _player.resister.Resist();
         }
 

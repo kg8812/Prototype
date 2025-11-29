@@ -17,7 +17,6 @@ using Skill = PlayerState.Skill;
 public partial class Player : Actor
 {
     private const float searchDepth = 0.1f;
-    public bool PhysicTest;
     public uint MaxAirDash = 1;
     public bool StateLog;
 
@@ -268,11 +267,11 @@ public partial class Player : Actor
 
         foreach (var state in Enum.GetValues(typeof(EPlayerState)))
             if (!_AbleState.TryAdd((EPlayerState)state, false))
-                _AbleState[(EPlayerState)state] = false;
+                SetAbleState((EPlayerState)state,false);
 
-        _AbleState[EPlayerState.Idle] = true;
+        SetAbleState(EPlayerState.Idle);
 
-        StateEvent.AddEvent(EventType.OnIdle, e => { _AbleState[EPlayerState.Idle] = false; });
+        StateEvent.AddEvent(EventType.OnIdle, e => { SetAbleState(EPlayerState.Idle,false); });
         CurrentState = EPlayerState.Idle;
     }
 
@@ -283,10 +282,7 @@ public partial class Player : Actor
 
     public bool GetAbleState(EPlayerState state)
     {
-        if (!_AbleState.TryGetValue(state, out var value))
-            return false;
-
-        return value;
+        return _AbleState.GetValueOrDefault(state, false);
     }
 
     public void SetDropMaxVel(float value)
