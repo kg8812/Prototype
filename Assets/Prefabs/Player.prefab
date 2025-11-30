@@ -208,10 +208,10 @@ MonoBehaviour:
   dashDelaySpeedGraph: 3
   dashDelayDistance: 0.7
   dashDelayCancelTime: 0.3
-  dashCoolTime: 0
-  jumpToAttackDelay: 0
-  dashToAttackDelay: 0
-  dashToMoveDelay: 0.3
+  dashCoolTime: 0.3
+  jumpToAttackDelay: 0.3
+  dashToAttackDelay: 0.3
+  dashToMoveDelay: 0.7
   dashToJumpDelay: 0.01
   dashLandingTime: 0.6
   playerStat:
@@ -225,6 +225,7 @@ MonoBehaviour:
   maxDirectionBufferSize: 1
   maxMoveVel: 7
   moveResistFactor: 2.5
+  stopResistFactor: 2.5
   preattackMoveSpeed: 2
   initMaxDropVel: 7
   dropResistFactor: 1

@@ -302,13 +302,13 @@ public static class NextState
             EPlayerState.Move => new[]
             {
                 EPlayerState.Jump, EPlayerState.Attack, EPlayerState.Dash,
-                EPlayerState.Skill, EPlayerState.Idle
+                EPlayerState.Skill, EPlayerState.Idle, EPlayerState.Move
             },
-            EPlayerState.Dash => new[] { EPlayerState.Jump,EPlayerState.Idle },
+            EPlayerState.Dash => new[] { EPlayerState.Jump, EPlayerState.Attack },
             EPlayerState.Run => new[]
             {
                 EPlayerState.Run, EPlayerState.Jump, EPlayerState.Attack,
-                EPlayerState.Dash, EPlayerState.Skill, EPlayerState.Move, EPlayerState.Idle
+                EPlayerState.Dash, EPlayerState.Skill
             },
             _ => null
         };

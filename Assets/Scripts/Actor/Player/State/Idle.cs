@@ -22,7 +22,7 @@ namespace PlayerState
 
             base.FixedUpdate();
 
-            _player.MoveComponent.ForceActorMovement.Friction(5);
+            _player.MoveComponent.ForceActorMovement.Friction(_player.StopResistFactor);
             _player.resister.Resist();
         }
 

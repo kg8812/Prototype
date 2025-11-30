@@ -12,8 +12,6 @@ public enum EPlayerCd
     DashToAttack,
     DashToJump,
     JumpToAttack,
-    AttackComboDelay,
-    AttackAfterDelay
 }
 
 public class PlayerCd

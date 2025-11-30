@@ -20,7 +20,7 @@ namespace Command
 
         public override bool InvokeCondition(Player go)
         {
-            return true;
+            return go.GetAbleState(EPlayerState.Move);
         }
     }
 }

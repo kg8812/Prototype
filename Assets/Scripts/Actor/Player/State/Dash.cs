@@ -41,6 +41,7 @@ namespace PlayerState
         {
             base.OnEnter(t);
 
+            Debug.Log("Dash");
 
             _player.ExecuteEvent(EventType.OnDash, new EventParameters(_player));
             _player.StateEvent.ExecuteEvent(EventType.OnDash, null);
@@ -83,6 +84,7 @@ namespace PlayerState
         {
             base.OnExit();
 
+            Debug.Log("DashExit");
             dashStrategy?.OnEnd();
 
             dashTweener?.Kill();

@@ -120,6 +120,8 @@ public partial class Player
     [TabGroup("기획쪽 수정 변수들/group1", "물리")] [LabelText("이동 저항 정도")] [SerializeField]
     private float moveResistFactor = 2.5f;
 
+    [TabGroup("기획쪽 수정 변수들/group1", "물리")] [LabelText("정지 저항 속도")] [SerializeField]
+    private float stopResistFactor = 2.5f;
     [TabGroup("기획쪽 수정 변수들/group1", "물리")] [LabelText("사전 동작 최대 이동 속도")] [SerializeField]
     private float preattackMoveSpeed = 2f;
 
@@ -154,6 +156,7 @@ public partial class Player
     public float AirStopResistFactor => airStopResistFactor;
     public float JumpForce => playerStat.JumpPower;
     public float RunVel => runVel;
+    public float StopResistFactor => stopResistFactor;
 
     #endregion
 }
