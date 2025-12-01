@@ -51,7 +51,7 @@ namespace Apis
 
         private readonly IBuffCollectionUpdate _stackStrategy;
         private readonly SubBuffType _type;
-        private readonly Actor actor;
+        private readonly IBuffUser actor;
 
         public readonly Buff dummyBuff;
         private readonly int maxStack;
@@ -62,7 +62,7 @@ namespace Apis
         private List<SubBuff> list;
         public CustomQueue<SubBuff> queue = new();
 
-        public SubBuffTypeList(SubBuffType type, Actor actor)
+        public SubBuffTypeList(SubBuffType type, IBuffUser actor)
         {
             BuffDatabase.DataLoad.TryGetSubBuffIndex(type, out var index);
             BuffDatabase.DataLoad.TryGetSubBuffOption(index, out option);
@@ -158,7 +158,7 @@ namespace Apis
             _stackStrategy.CurTime = Duration;
             var sub = SubBuffResources.Get(dummyBuff);
             if (sub == null) return null;
-            sub.Actor = actor;
+            sub.User = actor;
             sub.target = target;
             AddSub(sub);
 

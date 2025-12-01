@@ -5,14 +5,14 @@ namespace Apis
 {
     public class DotDmgUpdate : IBuffUpdate
     {
-        private readonly Actor actor;
+        private readonly IBuffUser _user;
         private List<SubBuff> buffs;
         private float time;
 
-        public DotDmgUpdate(List<SubBuff> buffList, Actor actor)
+        public DotDmgUpdate(List<SubBuff> buffList, IBuffUser user)
         {
             buffs = buffList;
-            this.actor = actor;
+            _user = user;
         }
 
         public void Notify(List<SubBuff> value)
@@ -34,7 +34,10 @@ namespace Apis
                     amount += dot.Dmg;
                 }
 
-                actor.CurHp -= amount;
+                if (_user.gameObject.TryGetComponent(out IOnHit hit))
+                {
+                    hit.CurHp -= amount;
+                }
                 time = 0;
             }
         }

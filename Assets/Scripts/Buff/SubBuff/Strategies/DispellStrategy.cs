@@ -21,61 +21,53 @@ namespace Apis
 
         public class OnHit : IDispell
         {
-            private Actor actor;
+            private IEventUser actor;
 
             public void OnAdd(Buff buff)
             {
-                actor = buff.buffActor;
+                actor = buff.buffUser.gameObject.GetComponent<IEventUser>();
 
-                if (actor == null) return;
-
-                actor.AddEvent(EventType.OnAfterHit, buff.RemoveBuff);
+                actor?.EventManager.AddEvent(EventType.OnAfterHit, buff.RemoveBuff);
             }
 
             public void OnRemove(Buff buff)
             {
-                if (actor == null) return;
-                actor.RemoveEvent(EventType.OnAfterHit, buff.RemoveBuff);
+                actor?.EventManager.RemoveEvent(EventType.OnAfterHit, buff.RemoveBuff);
             }
         }
 
         public class OnAttackSuccess : IDispell
         {
-            private Actor actor;
+            private IEventUser actor;
 
             public void OnAdd(Buff buff)
             {
-                actor = buff.buffActor;
-                if (actor == null) return;
+                actor = buff.buffUser.gameObject.GetComponent<IEventUser>();
 
-                actor.AddEvent(EventType.OnAttackSuccess, buff.RemoveBuff);
+
+                actor?.EventManager.AddEvent(EventType.OnAttackSuccess, buff.RemoveBuff);
             }
 
             public void OnRemove(Buff buff)
             {
-                if (actor == null) return;
-
-                actor.RemoveEvent(EventType.OnAttackSuccess, buff.RemoveBuff);
+                actor?.EventManager.RemoveEvent(EventType.OnAttackSuccess, buff.RemoveBuff);
             }
         }
 
         public class OnDeath : IDispell
         {
-            private Actor actor;
+            private IEventUser actor;
 
             public void OnAdd(Buff buff)
             {
-                actor = buff.buffActor;
-                if (actor == null) return;
+                actor = buff.buffUser.gameObject.GetComponent<IEventUser>();
 
-                actor.AddEvent(EventType.OnDeath, buff.RemoveBuff);
+                actor?.EventManager.AddEvent(EventType.OnDeath, buff.RemoveBuff);
             }
 
             public void OnRemove(Buff buff)
             {
-                if (actor == null) return;
-
-                actor.RemoveEvent(EventType.OnDeath, buff.RemoveBuff);
+                actor?.EventManager.RemoveEvent(EventType.OnDeath, buff.RemoveBuff);
             }
         }
 
@@ -85,7 +77,7 @@ namespace Apis
 
             public void OnAdd(Buff buff)
             {
-                if (buff.buffActor is Summon summon)
+                if (buff.buffUser.gameObject.TryGetComponent(out Summon summon))
                 {
                     master = summon.Master;
                     if (master == null) return;
@@ -102,41 +94,36 @@ namespace Apis
 
         public class OnAttackEnd : IDispell
         {
-            private Actor actor;
+            private IEventUser actor;
 
             public void OnAdd(Buff buff)
             {
-                actor = buff.buffActor;
-                if (actor == null) return;
+                actor = buff.buffUser.gameObject.GetComponent<IEventUser>();
 
-                actor.AddEvent(EventType.OnAttackEnd, buff.RemoveBuff);
+
+                actor?.EventManager.AddEvent(EventType.OnAttackEnd, buff.RemoveBuff);
             }
 
             public void OnRemove(Buff buff)
             {
-                if (actor == null) return;
-
-                actor.RemoveEvent(EventType.OnAttackEnd, buff.RemoveBuff);
+                actor?.EventManager.RemoveEvent(EventType.OnAttackEnd, buff.RemoveBuff);
             }
         }
 
         public class OnSubBuffRemove : IDispell
         {
-            private Actor actor;
+            private IEventUser actor;
 
             public void OnAdd(Buff buff)
             {
-                actor = buff.buffActor;
-                if (actor == null) return;
+                actor = buff.buffUser.gameObject.GetComponent<IEventUser>();
 
-                actor.AddEvent(EventType.OnSubBuffRemove, buff.RemoveBuff);
+                actor?.EventManager.AddEvent(EventType.OnSubBuffRemove, buff.RemoveBuff);
             }
 
             public void OnRemove(Buff buff)
             {
-                if (actor == null) return;
-
-                actor.RemoveEvent(EventType.OnSubBuffRemove, buff.RemoveBuff);
+                actor?.EventManager.RemoveEvent(EventType.OnSubBuffRemove, buff.RemoveBuff);
             }
         }
     }

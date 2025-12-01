@@ -157,12 +157,6 @@ namespace Apis
             SetState(BossState.Move);
         }
 
-        public override void EndStun()
-        {
-            base.EndStun();
-            animator.SetTrigger("End");
-        }
-
         public void SetState(BossState state)
         {
             animator.ResetTrigger("ChangeState");
@@ -172,11 +166,6 @@ namespace Apis
             animator.SetTrigger("ChangeState");
 
             this.state = state;
-        }
-
-        public override void StartStun(IEventUser actor, float duration)
-        {
-            base.StartStun(actor, duration);
         }
 
         public override void OnRecognized()
@@ -382,13 +371,6 @@ namespace Apis
                 tween.x.KillWhenBoxCast(this, 0.5f, Vector2.left * DirectionScale, new Vector2(0.2f, 1),
                     LayerMasks.Wall);
             return tween;
-        }
-
-        [Button]
-        public void Make()
-        {
-            StartStun(GameManager.instance.Player, 1f);
-            CancelAttack();
         }
 
         public override void Die()

@@ -7,14 +7,14 @@ namespace Apis
     {
         private BonusStat stat;
 
-        public SubBuffManager(Actor user)
+        public SubBuffManager(IBuffUser user)
         {
             User = user;
             Collector = new SubBuffCollector(this);
         }
         //버프 관리 클래스
 
-        public Actor User { get; }
+        public IBuffUser User { get; }
 
         public SubBuffCollector Collector { get; }
 
@@ -49,32 +49,16 @@ namespace Apis
         /// <param name="target"> 버프를 부여한 유닛, null 처리해도됨</param>
         /// <param name="buff"> 이 버프를 부여하는 효과</param>
         /// <param name="subBuff"> 추가할 버프</param>
-        public void AddBuff(IEventUser target, Buff buff, SubBuff subBuff)
+        public bool AddSubBuff(IBuffUser target, Buff buff, SubBuff subBuff)
         {
-            if (subBuff == null || buff == null) return;
-            if (IsImmune(subBuff.Type)) return;
-
-            BuffEventData buffData = new()
-            {
-                activatedSubBuff = subBuff,
-                takenSubBuff = subBuff
-            };
-            EventParameters parameters = new(target, User)
-            {
-                buffData = buffData
-            };
+            if (subBuff == null || buff == null) return false;
+            if (IsImmune(subBuff.Type)) return false;
 
             if (target != null) subBuff.target = target.gameObject;
 
             Collector.AddBuff(buff, subBuff);
-
-            target?.EventManager.ExecuteEvent(EventType.OnSubBuffApply, parameters);
-
-            parameters = new EventParameters(User, target?.gameObject.GetComponent<IOnHit>())
-            {
-                buffData = buffData
-            };
-            User.ExecuteEvent(EventType.OnSubBuffTaken, parameters);
+            
+            return true;
         }
 
         /// <summary>
@@ -84,46 +68,28 @@ namespace Apis
         /// </summary>
         /// <param name="target">버프를 부여한 유닛, null 처리해도됨</param>
         /// <param name="type">버프 타입</param>
-        public void AddSubBuff(SubBuffType type, IEventUser target)
+        public SubBuff AddSubBuff(SubBuffType type, IBuffUser target)
         {
-            if (IsImmune(type)) return;
+            if (IsImmune(type)) return null;
 
             var sub = Collector.AddSubBuff(type, target?.gameObject);
 
-            BuffEventData buffData = new()
-            {
-                activatedSubBuff = sub,
-                takenSubBuff = sub
-            };
-            if (sub == null || target == null) return;
-
-            EventParameters parameters = new(target, User)
-            {
-                buffData = buffData
-            };
-
-            target.EventManager.ExecuteEvent(EventType.OnSubBuffApply, parameters);
-
-            parameters = new EventParameters(User, target as IOnHit)
-            {
-                buffData = buffData
-            };
-            User.ExecuteEvent(EventType.OnSubBuffTaken, parameters);
+            return sub;
         }
 
-        public void RemoveSubBuff(Buff buff, SubBuff subBuff)
+        public bool RemoveSubBuff(Buff buff, SubBuff subBuff)
         {
-            Collector.RemoveSubBuff(buff, subBuff);
+            return Collector.RemoveSubBuff(buff, subBuff);
         }
 
-        public void RemoveSubBuff(Buff buff)
+        public SubBuff RemoveSubBuff(Buff buff)
         {
-            Collector.RemoveSubBuff(buff);
+            return Collector.RemoveSubBuff(buff);
         }
 
-        public void RemoveBuff(Buff buff)
+        public bool RemoveBuff(Buff buff)
         {
-            Collector.RemoveBuff(buff);
+            return Collector.RemoveBuff(buff);
         }
 
         public void RemoveType(SubBuffType type)

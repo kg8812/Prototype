@@ -8,7 +8,7 @@ using Random = UnityEngine.Random;
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(IActorRenderer))]
-public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAttackable, IDirection, IAnimator
+public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAttackable, IDirection, IAnimator , IImmunity
 {
     [Tooltip("플레이어 충돌 시 밀어냄 발생 유무")] [LabelText("플레이어 밀침")]
     public bool IsResist = true;
@@ -69,12 +69,10 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
     protected virtual void Start()
     {
         ResetCurHp();
-        BonusStatEvent += () => SubBuffManager.Stats;
     }
 
     protected virtual void Update()
     {
-        SubBuffManager.Update();
     }
 
     protected virtual void FixedUpdate()
@@ -301,7 +299,6 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
                 new EventParameters(GameManager.instance.Player, this));
 
         IsDead = true;
-        RemoveAllBuff();
     }
 
     public void ResetDirection()

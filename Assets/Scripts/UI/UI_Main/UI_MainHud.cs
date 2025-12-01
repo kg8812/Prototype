@@ -84,7 +84,7 @@ namespace UI
             Get<UI_Base>((int)SubItems.HpBar).GetComponent<UI_HpBar>().Init(player);
 
             // TODO: 일단 activated에서 init쪽으로 옮겼는데 나중에 문제 생기면 고치기
-            buffs.Init(player);
+            buffs.Init(player.BuffSystem);
         }
 
         //Enum.GetValues로 사용중, Enum목록 제거하지 말것

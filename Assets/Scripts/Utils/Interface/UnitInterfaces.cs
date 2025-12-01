@@ -137,9 +137,19 @@ namespace Apis
     public interface IStatUser : IMonoBehaviour
     {
         public StatManager StatManager { get; }
+        
+        public void AddStat(ActorStatType statType, float amount, ValueType type)
+        {
+            StatManager.AddStat(statType, amount, type);
+        }
     }
-
-    public interface IBarrierUser : IMonoBehaviour
+    
+    public interface IImmunity
+    {
+        public ImmunityController ImmunityController { get; }
+    }
+    
+    public interface IBarrierUser
     {
         public BarrierCalculator BarrierCalculator { get; }
     }

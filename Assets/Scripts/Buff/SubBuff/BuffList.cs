@@ -5,15 +5,15 @@ namespace Apis
 {
     public class BuffList : ISubject<BuffList>, IObserver<SubBuffList>
     {
-        private readonly Actor actor;
+        private readonly IBuffUser _user;
 
         private List<IObserver<BuffList>> _observers;
 
         public Dictionary<Buff, SubBuffList> buffs = new();
 
-        public BuffList(Actor actor)
+        public BuffList(IBuffUser user)
         {
-            this.actor = actor;
+            _user = user;
         }
 
         public int Count // 서브버프 개수
@@ -82,7 +82,7 @@ namespace Apis
             if (b == null)
             {
                 var temp = buffs.ToDictionary(kv => kv.Key, kv => kv.Value);
-                temp.Add(buff, new SubBuffList(buff, actor));
+                temp.Add(buff, new SubBuffList(buff, _user));
                 buffs = temp;
 
                 temp[buff].CurTime = temp[buff].Duration;
@@ -92,7 +92,7 @@ namespace Apis
                 NotifyObservers();
 
                 BuffInfo info = new() { subList = temp[buff], buff = buff };
-                actor.SubBuffManager.Collector.buffUIEvent.Invoke(info);
+                _user.SubBuffManager.Collector.buffUIEvent.Invoke(info);
             }
             else
             {

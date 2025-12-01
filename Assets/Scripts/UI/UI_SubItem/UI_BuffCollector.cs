@@ -11,7 +11,7 @@ namespace UI
     {
         [HideInInspector] public List<UI_BuffIcon> icons = new();
         [HideInInspector] public UI_BuffDesc description;
-        private Actor _actor;
+        private IBuffUser _user;
 
         private readonly Dictionary<int, UI_BuffIcon> groupIcons = new();
 
@@ -32,21 +32,32 @@ namespace UI
             description.TurnOff();
         }
 
-        public void Init(Actor actor)
+        public void Init(IBuffUser user)
         {
-            _actor = actor;
-            actor?.SubBuffManager.Collector.buffUIEvent.AddListener(Invoke);
-            actor?.AddEvent(EventType.OnBuffGroupAdd, SetBuffIcon);
-            actor?.AddEvent(EventType.OnBuffGroupRemove, RemoveBuffIcon);
+            if (user == null) return;
+            
+            _user = user;
+            user.SubBuffManager.Collector.buffUIEvent.AddListener(Invoke);
+            if (user.gameObject.TryGetComponent(out IEventUser eventUser))
+            {
+                eventUser.EventManager.AddEvent(EventType.OnBuffGroupAdd, SetBuffIcon);
+                eventUser.EventManager.AddEvent(EventType.OnBuffGroupRemove, RemoveBuffIcon);
+            }
+            
         }
 
         protected override void Deactivated()
         {
             base.Deactivated();
-            if (_actor == null) return;
-            _actor.SubBuffManager.Collector.buffUIEvent.RemoveListener(Invoke);
-            _actor.RemoveEvent(EventType.OnBuffGroupAdd, SetBuffIcon);
-            _actor.RemoveEvent(EventType.OnBuffGroupRemove, RemoveBuffIcon);
+            if (_user == null) return;
+            _user.SubBuffManager.Collector.buffUIEvent.RemoveListener(Invoke);
+            
+            if (_user.gameObject.TryGetComponent(out IEventUser eventUser))
+            {
+                eventUser.EventManager.RemoveEvent(EventType.OnBuffGroupAdd, SetBuffIcon);
+                eventUser.EventManager.RemoveEvent(EventType.OnBuffGroupRemove, RemoveBuffIcon);
+            }
+            
         }
 
         public void SetDescPivot(Vector2 pivot)

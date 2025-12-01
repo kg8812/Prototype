@@ -2,6 +2,7 @@ namespace Apis
 {
     public abstract class Buff_Stat : Buff_Base
     {
+        
         protected Buff_Stat(Buff buff) : base(buff)
         {
             switch (buff.ValueType)
@@ -21,7 +22,8 @@ namespace Apis
         public override void PermanentApply()
         {
             base.PermanentApply();
-            actor.AddStat(StatType, amount[0], buff.ValueType);
+            var _statUser = _user?.gameObject.GetComponent<IStatUser>();
+            _statUser?.AddStat(StatType, amount[0], buff.ValueType);
         }
 
         public override void TempApply(EventParameters parameters)

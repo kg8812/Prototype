@@ -11,12 +11,12 @@ namespace Apis
         private IApplyType _applyStrategy;
         private BuffDataType _data;
 
-        public Actor buffActor;
+        public IBuffUser buffUser;
 
         public BuffDispellStrategy.IDispell dispell;
-        public Actor subBuffActor;
+        public IBuffUser subBuffUser;
 
-        public Buff(BuffDataType data, IEventUser act)
+        public Buff(BuffDataType data, IBuffUser act)
         {
             _data = data;
             CreateDispell();
@@ -37,7 +37,7 @@ namespace Apis
             Icon = ResourceUtil.Load<Sprite>(_data.buffIconPath);
 
             Array.Resize(ref data.buffPower, 5);
-            buffActor = act as Actor;
+            buffUser = act;
         }
 
         public SubBuff ActivatedSubBuff { get; private set; }
@@ -101,17 +101,17 @@ namespace Apis
 
         public void RemoveBuff(EventParameters _)
         {
-            if (subBuffActor != null) subBuffActor.RemoveSubBuff(this);
+            if (subBuffUser != null) subBuffUser.RemoveSubBuff(this);
         }
 
-        public SubBuff AddSubBuff(Actor actor, EventParameters parameters)
+        public SubBuff AddSubBuff(IBuffUser actor, EventParameters parameters)
         {
-            subBuffActor = actor;
+            subBuffUser = actor;
             ActivatedSubBuff = SubBuffResources.Get(this);
 
             if (ActivatedSubBuff == null)
             {
-                subBuffActor = null;
+                subBuffUser = null;
                 return null;
             }
 

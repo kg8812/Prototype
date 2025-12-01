@@ -32,7 +32,7 @@ public partial class Actor : IStatUser, IBarrierUser
     public virtual float Atk => StatManager.GetFinalStat(ActorStatType.Atk);
 
     public BarrierCalculator BarrierCalculator =>
-        _barrierCalculator ??= new BarrierCalculator(EventManager, SubBuffManager);
+        _barrierCalculator ??= new BarrierCalculator(EventManager);
 
     public bool IsInvincible => ImmunityController?.IsImmune("Invincible") ?? false;
 
@@ -103,11 +103,6 @@ public partial class Actor : IStatUser, IBarrierUser
     {
         HealText?.ResetVariables();
         DmgText?.ResetVariables();
-    }
-
-    public void AddStat(ActorStatType statType, float amount, ValueType type)
-    {
-        StatManager.AddStat(statType, amount, type);
     }
 
     #region 대쉬 관련 (임시, 수치 정해지면 actormovement 내에 const로 뺄 듯)

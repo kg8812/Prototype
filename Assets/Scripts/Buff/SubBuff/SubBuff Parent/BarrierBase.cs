@@ -29,13 +29,13 @@ namespace Apis
         {
             base.OnAdd();
 
-            if (actor is IEventUser eventUser) eventUser.EventManager.ExecuteEvent(EventType.OnBarrierChange, null);
+            if (_user is IEventUser eventUser) eventUser.EventManager.ExecuteEvent(EventType.OnBarrierChange, null);
         }
 
         public override void OnRemove()
         {
             base.OnRemove();
-            if (actor is IEventUser eventUser) eventUser.EventManager.ExecuteEvent(EventType.OnBarrierChange, null);
+            if (_user is IEventUser eventUser) eventUser.EventManager.ExecuteEvent(EventType.OnBarrierChange, null);
         }
 
         #region 배리어 적용 인터페이스

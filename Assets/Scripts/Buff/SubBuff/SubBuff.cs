@@ -9,7 +9,7 @@ namespace Apis
 
         public readonly UnityEvent<SubBuff> OnBuffAdd = new();
         public readonly UnityEvent<SubBuff> OnBuffRemove = new();
-        protected Actor actor;
+        protected IBuffUser _user;
         protected float[] amount;
 
         public Buff buff;
@@ -23,17 +23,17 @@ namespace Apis
             amount = buff.BuffPower;
             var dispelType = buff.BuffDispellType;
             this.buff = buff;
-            actor = buff.subBuffActor;
+            _user = buff.subBuffUser;
 
             if (dispelType == 0) duration = 0;
         }
 
         public float Duration => duration;
 
-        public Actor Actor
+        public IBuffUser User
         {
-            get => actor;
-            set => actor = value;
+            get => _user;
+            set => _user = value;
         }
 
         public float[] Amount => amount;
@@ -50,14 +50,14 @@ namespace Apis
 
         public virtual void OnAdd()
         {
-            if (actor.SubBuffCount(Type) == 1) OnTypeAdd();
+            if (_user.SubBuffCount(Type) == 1) OnTypeAdd();
             OnBuffAdd.Invoke(this);
             buff.dispell.OnAdd(buff);
         }
 
         public virtual void OnRemove()
         {
-            if (actor.SubBuffCount(Type) == 0) OnTypeRemove();
+            if (_user.SubBuffCount(Type) == 0) OnTypeRemove();
 
             OnBuffRemove.Invoke(this);
             buff.dispell.OnRemove(buff);
@@ -85,15 +85,15 @@ namespace Apis
 
         protected void SpawnEffect(string address, Vector2 offset)
         {
-            var effect = GameManager.Factory.Get(FactoryManager.FactoryType.Effect, address, actor.Position);
+            var effect = GameManager.Factory.Get(FactoryManager.FactoryType.Effect, address, _user.Position);
 
-            effect.transform.SetParent(actor.transform);
+            effect.transform.SetParent(_user.transform);
             effect.gameObject.name = Type.ToString();
         }
 
         protected void RemoveEffect()
         {
-            var effect = actor.transform.Find(Type.ToString())?.gameObject;
+            var effect = _user.transform.Find(Type.ToString())?.gameObject;
             GameManager.Factory.Return(effect);
         }
     }

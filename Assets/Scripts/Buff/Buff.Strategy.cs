@@ -4,7 +4,7 @@ namespace Apis
     {
         public interface IApplyType
         {
-            void Apply(Actor actor, EventParameters parameters);
+            void Apply(IBuffUser actor, EventParameters parameters);
         }
 
         public class PermanentApply : IApplyType
@@ -16,7 +16,7 @@ namespace Apis
                 this.buff = buff;
             }
 
-            public void Apply(Actor actor, EventParameters _)
+            public void Apply(IBuffUser actor, EventParameters _)
             {
                 if (buff.ActivatedSubBuff == null) return;
 
@@ -34,9 +34,9 @@ namespace Apis
                 this.buff = buff;
             }
 
-            public void Apply(Actor actor, EventParameters _)
+            public void Apply(IBuffUser actor, EventParameters _)
             {
-                actor.AddSubBuff(buff.buffActor, buff, buff.ActivatedSubBuff);
+                actor.AddSubBuff(buff.buffUser, buff, buff.ActivatedSubBuff);
             }
         }
 
@@ -49,7 +49,7 @@ namespace Apis
                 this.buff = buff;
             }
 
-            public void Apply(Actor actor, EventParameters parameters)
+            public void Apply(IBuffUser actor, EventParameters parameters)
             {
                 if (parameters != null)
                     buff.ActivatedSubBuff?.TempApply(parameters);

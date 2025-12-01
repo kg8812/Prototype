@@ -264,18 +264,6 @@ public partial class Player : IDashUser, IMovable, IPlayer
         playerStat.dashTime = tempTime;
     }
 
-    public override void StartStun(IEventUser actor, float duration)
-    {
-        base.StartStun(actor, duration);
-        ControlOff(true);
-    }
-
-    public override void EndStun()
-    {
-        base.EndStun();
-        ControlOn();
-    }
-
 
     private void UpdateSkills()
     {

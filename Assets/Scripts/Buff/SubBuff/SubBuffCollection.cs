@@ -4,7 +4,7 @@ namespace Apis
 {
     public abstract class SubBuffCollection : ISubject<List<SubBuff>>
     {
-        protected readonly Actor actor;
+        protected readonly IBuffUser _user;
         public readonly Buff buff;
         private readonly IBuffUpdate buffUpdate;
         protected readonly IBuffCollectionUpdate stackDecrease;
@@ -12,9 +12,9 @@ namespace Apis
 
         protected List<SubBuff> list;
 
-        public SubBuffCollection(Buff buff, Actor actor)
+        public SubBuffCollection(Buff buff, IBuffUser user)
         {
-            this.actor = actor;
+            _user = user;
             this.buff = buff;
 
             stackDecrease = new SingleStackDecrease(this, buff.BuffDuration);
@@ -22,7 +22,7 @@ namespace Apis
             var subBuff = SubBuffResources.Get(buff);
 
             if (subBuff is Debuff_DotDmg)
-                buffUpdate = new DotDmgUpdate(list, actor);
+                buffUpdate = new DotDmgUpdate(list, user);
             else
                 buffUpdate = new BuffNoUpdate();
             Attach(stackDecrease);

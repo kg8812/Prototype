@@ -32,9 +32,9 @@ namespace Apis
 
         public void ChangeEventType(EventType toType)
         {
-            _actor.EventManager.RemoveEvent(eventType, EffectOn);
+            _actor.RemoveEvent(eventType, EffectOn);
             eventType = toType;
-            _actor.EventManager.AddEvent(eventType, EffectOn);
+            _actor.AddEvent(eventType, EffectOn);
         }
 
         private void EffectOn(EventParameters _)

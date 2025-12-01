@@ -7,7 +7,7 @@ namespace Apis
     {
         protected readonly List<IObserver<SubBuffList>> observers2 = new();
 
-        public SubBuffList(Buff buff, Actor actor) : base(buff, actor)
+        public SubBuffList(Buff buff, IBuffUser actor) : base(buff, actor)
         {
             list = new List<SubBuff>();
         }

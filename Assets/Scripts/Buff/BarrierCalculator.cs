@@ -3,14 +3,35 @@ using Apis;
 public class BarrierCalculator
 {
     private float _barrier;
-    private readonly SubBuffManager buffManager;
 
     private readonly IEventManager user;
 
-    public BarrierCalculator(IEventManager user, SubBuffManager buffManager)
+    public delegate float FloatCalculateDelegate(float barrier);
+    FloatCalculateDelegate _barrierAddEvent;
+    FloatCalculateDelegate _barrierMinusEvent;
+    
+    public event FloatCalculateDelegate BarrierAddEvent
+    {
+        add
+        {
+            _barrierAddEvent -= value;
+            _barrierAddEvent += value;
+        }
+        remove => _barrierAddEvent -= value;
+    }
+    
+    public event FloatCalculateDelegate BarrierMinusEvent
+    {
+        add
+        {
+            _barrierMinusEvent -= value;
+            _barrierMinusEvent += value;
+        }
+        remove => _barrierMinusEvent -= value;
+    }
+    public BarrierCalculator(IEventManager user)
     {
         this.user = user;
-        this.buffManager = buffManager;
     }
 
     public float Barrier
@@ -19,10 +40,11 @@ public class BarrierCalculator
         {
             float value = 0;
 
-            buffManager.Traverse(x =>
+            if (_barrierAddEvent != null)
             {
-                if (x is BarrierBase barrier) value += barrier.Barrier;
-            });
+                value = _barrierAddEvent.Invoke(value);
+            }
+            
             return _barrier + value;
         }
     }
@@ -50,25 +72,10 @@ public class BarrierCalculator
 
     private float MinusBarrier(float dmg)
     {
-        buffManager.Traverse(x =>
+        if (_barrierMinusEvent != null)
         {
-            if (dmg <= 0) return;
-
-            if (x is BarrierBase barrier)
-            {
-                if (barrier.Barrier > dmg)
-                {
-                    barrier.Barrier -= dmg;
-                    dmg = 0;
-                }
-                else
-                {
-                    dmg -= barrier.Barrier;
-                    barrier.Barrier = 0;
-                    barrier.onBarrierDestroy.Invoke();
-                }
-            }
-        });
+            dmg = _barrierMinusEvent.Invoke(dmg);
+        }
 
         if (dmg <= 0) return dmg;
 

@@ -34,7 +34,7 @@ namespace Apis
         {
             if (buff == null || subBuff == null) return;
 
-            subBuff.Actor = manager.User;
+            subBuff.User = manager.User;
             switch (buff.BuffCategory)
             {
                 case 0:
@@ -99,47 +99,41 @@ namespace Apis
         }
 
         // 버프 제거 함수 : 버프 타입 입력
-        public void RemoveSubBuff(Buff buff, SubBuff subBuff) // 특정 효과내의 특정 버프 제거
+        public bool RemoveSubBuff(Buff buff, SubBuff subBuff) // 특정 효과내의 특정 버프 제거
         {
-            if (buff == null || subBuff == null) return;
+            if (buff == null || subBuff == null) return false;
 
             if (uniqueBuffs.ContainsKey(subBuff.Type))
                 uniqueBuffs[subBuff.Type].RemoveSubBuff(buff, subBuff);
             else if (subBuffs.ContainsKey(subBuff.Type)) subBuffs[subBuff.Type].RemoveSubBuff();
-            EventParameters parameters = new(manager.User)
-            {
-                buffData = new BuffEventData { removedSubBuff = subBuff }
-            };
-            manager.User.ExecuteEvent(EventType.OnSubBuffRemove, parameters);
+
+            return true;
         }
 
-        public void RemoveSubBuff(Buff buff)
+        public SubBuff RemoveSubBuff(Buff buff)
         {
-            if (buff == null) return;
+            if (buff == null) return null;
 
-            EventParameters parameters = new(manager.User);
 
             foreach (var x in uniqueBuffs.Keys)
+            {
                 if (uniqueBuffs[x].buffs.ContainsKey(buff))
                 {
-                    parameters.buffData.removedSubBuff = uniqueBuffs[x].RemoveSubBuff(buff);
-                    manager.User.ExecuteEvent(EventType.OnSubBuffRemove, parameters);
-
-                    return;
+                    return uniqueBuffs[x].RemoveSubBuff(buff);
                 }
+            }
 
             foreach (var x in subBuffs.Keys)
             {
-                parameters.buffData.removedSubBuff = subBuffs[x].RemoveSubBuff(buff);
-                manager.User.ExecuteEvent(EventType.OnSubBuffRemove, parameters);
-
-                return;
+                return subBuffs[x].RemoveSubBuff(buff);
             }
+
+            return null;
         }
 
-        public void RemoveBuff(Buff buff) // 특정 효과 제거
+        public bool RemoveBuff(Buff buff) // 특정 효과 제거
         {
-            if (buff == null) return;
+            if (buff == null) return false;
 
             foreach (var x in uniqueBuffs.Keys)
             {
@@ -163,12 +157,7 @@ namespace Apis
                 }
             }
 
-            EventParameters parameters = new(manager?.User)
-            {
-                buffData = new BuffEventData { removedSubBuff = buff?.ActivatedSubBuff }
-            };
-
-            manager?.User.ExecuteEvent(EventType.OnSubBuffRemove, parameters);
+            return true;
         }
 
         public void RemoveType(SubBuffType type)

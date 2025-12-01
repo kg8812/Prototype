@@ -94,7 +94,7 @@ namespace Apis.CommonMonster2
 
             // TODO: 씬 전환 시스템이 바뀜에 따라 어떻게 할지 다시 작성해야함.
             GameManager.Scene.WhenSceneLoadBegin.AddListener(SceneLoadBegin);
-            EventManager.AddEvent(EventType.OnDestroy,
+            AddEvent(EventType.OnDestroy,
                 _ => { GameManager.Scene.WhenSceneLoadBegin.RemoveListener(SceneLoadBegin); });
         }
 
