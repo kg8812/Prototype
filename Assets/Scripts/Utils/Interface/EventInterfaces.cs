@@ -10,6 +10,10 @@ namespace Apis
         List<IEventChild> EventChildren { get; }
     }
 
+    public interface IEventData
+    {
+        public void Reset();
+    }
     public interface IEventManager
     {
         // 이벤트 매니저

@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using Apis;
 using Apis.CommonMonster2;
 using EventData;
+using Sirenix.Utilities;
 using UnityEngine;
 
 public class EventParameters
@@ -11,24 +13,31 @@ public class EventParameters
     public readonly IEventUser user; // 효과 사용자
 
     // 데이터 목록
-
-    public AttackEventData atkData; // 공격 관련 파라미터
-    public BuffEventData buffData; // 버프 관련 파라미터
-    public CollideEventData collideData; // 충돌 관련 파라미터
-    public HitEventData hitData; // 피격 관련 파라미터
-    public KnockBackData knockBackData; // 넉백 관련 파라미터
-    public KnockBackData KnockBackData; // 그로기넉백 관련 파라미터
+    
     public IEventUser master; // 실 사용자 (이벤트 사용을 무기가 했을 시, 무기를 장착한 플레이어)
-
-    public MonsterState monsterState; // common monster에서만 씀.
-    public SkillEventData skillData; // 스킬 관련 파라미터
-
-    public StatEventData statData; // 스탯 관련 파라미터
-    // 무기로 이벤트를 사용했을 때 플레이어에 적용되는 효과들이 있어서 필요함
 
     public IOnHit target; // 공격하는 타겟
 
+    private readonly Dictionary<Type, IEventData> datas 
+        = new ();
 
+    public T Get<T>() where T : class, IEventData, new()
+    {
+        if (!datas.ContainsKey(typeof(T)))
+        {
+            T instance = new T();
+            Set(instance);
+        }
+
+        return (datas[typeof(T)] ?? (datas[typeof(T)] = new T())) as T;
+    }
+
+    public void Set<T>(T data) where T : class, IEventData
+    {
+        datas.TryAdd(typeof(T), data);
+        
+        datas[typeof(T)] = data;
+    }
     public EventParameters(IEventUser user)
     {
         this.user = user;
@@ -44,27 +53,15 @@ public class EventParameters
 
     public void Reset()
     {
-        atkData.Reset();
-        knockBackData.Reset();
-        KnockBackData.Reset();
-        hitData.Reset();
-        buffData.Reset();
-        statData.Reset();
-        collideData.Reset();
-        skillData.Reset();
+        datas.Values.ForEach(x => x.Reset());
     }
 }
 
 
 namespace EventData
 {
-    public interface IReset
-    {
-        public void Reset();
-    }
-
     [Serializable]
-    public struct KnockBackData : IReset
+    public class KnockBackData : IEventData
     {
         public enum KnockBackType
         {
@@ -104,7 +101,7 @@ namespace EventData
         }
     }
 
-    public struct AttackEventData : IReset
+    public class AttackEventData : IEventData
     {
         public enum HitReactionType
         {
@@ -133,7 +130,7 @@ namespace EventData
         }
     }
 
-    public struct HitEventData : IReset
+    public class HitEventData : IEventData
     {
         public float dmg; // 받을 데미지
         public bool isHitContinue; // 피격 모션 고정시킬지 여부(true인 경우 피격 모션 해제는 Player.IdleOn으로 따로 해줘야 함)
@@ -151,51 +148,13 @@ namespace EventData
         }
     }
 
-    public struct BuffEventData : IReset
-    {
-        public int buffGroupId; // 버프 그룹 ID
-
-        public SubBuff activatedSubBuff; // 적용시킨 버프
-        public SubBuff removedSubBuff; // 제거된 버프
-        public SubBuff takenSubBuff; // 받은 버프
-
-        public void Reset()
-        {
-            buffGroupId = 0;
-            activatedSubBuff = null;
-            removedSubBuff = null;
-            takenSubBuff = null;
-        }
-    }
-
-    public struct StatEventData : IReset
-    {
-        private BonusStat _stat;
-        public BonusStat stat => _stat ??= new BonusStat(); // 임시 추가 스탯
-
-        public void Reset()
-        {
-            stat.Reset();
-        }
-    }
-
-    public struct CollideEventData : IReset
+    public class CollideEventData : IEventData
     {
         public Collider2D collider; // 충돌한 콜라이더
 
         public void Reset()
         {
             collider = null;
-        }
-    }
-
-    public struct SkillEventData : IReset
-    {
-        public Skill usedSkill; // 사용한 스킬
-
-        public void Reset()
-        {
-            usedSkill = null;
         }
     }
 }

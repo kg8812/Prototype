@@ -34,13 +34,12 @@ namespace Apis
         public override void Active()
         {
             base.Active();
-            eventUser?.EventManager.ExecuteEvent(EventType.OnSkill, new EventParameters(eventUser)
+            EventParameters parameters = new(eventUser);
+            parameters.Set(new SkillEventData
             {
-                skillData = new SkillEventData
-                {
-                    usedSkill = this
-                }
+                usedSkill = this
             });
+            eventUser?.EventManager.ExecuteEvent(EventType.OnSkill, parameters);
         }
 
         public override void EndMotion()

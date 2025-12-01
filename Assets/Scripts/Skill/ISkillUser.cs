@@ -27,4 +27,14 @@ namespace Apis
         // 패시브 스킬 사용자
         public PassiveSkill PassiveSkill { get; }
     }
+    
+    public class SkillEventData : IEventData
+    {
+        public Skill usedSkill; // 사용한 스킬
+
+        public void Reset()
+        {
+            usedSkill = null;
+        }
+    }
 }

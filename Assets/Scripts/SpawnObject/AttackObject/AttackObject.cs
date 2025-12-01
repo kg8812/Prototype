@@ -127,8 +127,6 @@ namespace Apis
             isHitReaction = info.isHitReaction;
             hitReactionType = info.hitReactionType;
             knockBackData = info.knockBackData;
-            KnockBackData =
-                info.isSameDefaultKnockBack ? info.knockBackData : info.KnockBackData;
             attackType = info.attackType;
             targetLayer = info.targetLayer;
             AdditionalAtkCount = info.AdditionalAtkCount;
@@ -239,10 +237,8 @@ namespace Apis
                     yield return new WaitForEndOfFrame();
                 }
 
-                var tempParam = new EventParameters(parameters.user, parameters.target)
-                {
-                    collideData = new CollideEventData { collider = parameters.collideData.collider }
-                };
+                var tempParam = new EventParameters(parameters.user, parameters.target);
+                tempParam.Set(new CollideEventData { collider = parameters.Get<CollideEventData>().collider });
 
                 DoAttackInvoke(tempParam);
             }
@@ -251,19 +247,18 @@ namespace Apis
         public EventParameters Attack(EventParameters targetParameters)
         {
             targetParameters.Reset();
-            targetParameters.atkData.isHitReaction = isHitReaction;
-            targetParameters.atkData.atkStrategy = _atkStrategy;
-            targetParameters.atkData.attackType = attackType;
-            targetParameters.atkData.attackGuid = firedAtkGuid;
+            targetParameters.Get<AttackEventData>().isHitReaction = isHitReaction;
+            targetParameters.Get<AttackEventData>().atkStrategy = _atkStrategy;
+            targetParameters.Get<AttackEventData>().attackType = attackType;
+            targetParameters.Get<AttackEventData>().attackGuid = firedAtkGuid;
             // targetParameters.atkData.hitPoint = Position;
-            if (isCrit) targetParameters.atkData.isfixedCrit = true;
+            if (isCrit) targetParameters.Get<AttackEventData>().isfixedCrit = true;
 
             // targetParameters.knockBackData.knockBackForce = atkObjInfo.knockBackForce;
             // targetParameters.knockBackData.knockBackTime = atkObjInfo.knockBackTime;
             // targetParameters.knockBackData.knockBackAngle = atkObjInfo.knockBackAngle;
 
-            targetParameters.knockBackData = knockBackData;
-            targetParameters.KnockBackData = KnockBackData;
+            targetParameters.Set(knockBackData);
             targetParameters.master = _eventUser;
 
             firstAttackedTarget ??= targetParameters.target.gameObject;
@@ -271,7 +266,7 @@ namespace Apis
             var parameters = _attacker.Attack(targetParameters);
             if (!isAttacked)
             {
-                if (targetParameters.atkData.attackType == Define.AttackType.BasicAttack)
+                if (targetParameters.Get<AttackEventData>().attackType == Define.AttackType.BasicAttack)
                     _eventUser?.EventManager.ExecuteEvent(EventType.OnFirstAttack, parameters);
 
                 isAttacked = true;
@@ -279,7 +274,7 @@ namespace Apis
 
             if (parameters == null) return null;
 
-            if (!Mathf.Approximately(parameters.hitData.dmgReceived, 0))
+            if (!Mathf.Approximately(parameters.Get<HitEventData>().dmgReceived, 0))
             {
                 ExecuteEvent(EventType.OnAfterAtk, parameters);
                 if (hitEffect != null)
@@ -468,10 +463,7 @@ namespace Apis
 
         [TabGroup("InfoGroup/공격설정", "공격 오브젝트 설정")] [LabelText("일반 넉백")]
         public KnockBackData knockBackData;
-
-        [TabGroup("InfoGroup/공격설정", "공격 오브젝트 설정")] [LabelText("그로기 넉백")]
-        public KnockBackData KnockBackData;
-
+        
         [TabGroup("InfoGroup/공격설정", "공격 오브젝트 설정")] [LabelText("타겟 레이어")]
         public LayerMask targetLayer;
 

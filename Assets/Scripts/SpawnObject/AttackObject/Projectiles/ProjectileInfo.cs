@@ -19,10 +19,7 @@ namespace Apis
 
         [TabGroup("공격 오브젝트 설정")] [LabelText("일반 넉백 데이터")]
         public KnockBackData knockBackData;
-
-        [HideIf("isSameDefaultKnockBack", false)] [TabGroup("공격 오브젝트 설정")] [LabelText("그로기 넉백 데이터")]
-        public KnockBackData KnockBackData;
-
+        
         [TabGroup("공격 오브젝트 설정")] [LabelText("타겟 레이어")]
         public LayerMask targetLayer;
 

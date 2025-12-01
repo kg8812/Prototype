@@ -84,11 +84,9 @@ namespace Apis
                 
                 if (user.gameObject.TryGetComponent(out IEventUser eventUser))
                 {
-                    
-                    EventParameters parameters = new(eventUser, SubBuffManager.User.gameObject.GetComponent<IOnHit>())
-                    {
-                        buffData = buffData
-                    };
+
+                    EventParameters parameters = new(eventUser, SubBuffManager.User.gameObject.GetComponent<IOnHit>());
+                    parameters.Set(buffData);
 
                     eventUser?.EventManager.ExecuteEvent(EventType.OnSubBuffApply, parameters);
                 }
@@ -97,10 +95,9 @@ namespace Apis
                 {
                     EventParameters parameters =
                         new EventParameters(eventUser2,
-                            eventUser?.gameObject.GetComponent<IOnHit>())
-                        {
-                            buffData = buffData
-                        };
+                            eventUser?.gameObject.GetComponent<IOnHit>());
+                    parameters.Set(buffData);
+                       
                     eventUser2.EventManager.ExecuteEvent(EventType.OnSubBuffTaken, parameters);
                 }
             }
@@ -123,10 +120,8 @@ namespace Apis
                 
                 if (user.gameObject.TryGetComponent(out IEventUser eventUser))
                 {
-                    EventParameters parameters = new(eventUser, SubBuffManager.User.gameObject.GetComponent<IOnHit>())
-                    {
-                        buffData = buffData
-                    };
+                    EventParameters parameters = new(eventUser, SubBuffManager.User.gameObject.GetComponent<IOnHit>());
+                    parameters.Set(buffData);
                     eventUser?.EventManager.ExecuteEvent(EventType.OnSubBuffApply, parameters);
                 }
 
@@ -134,10 +129,8 @@ namespace Apis
                 {
                     EventParameters parameters =
                         new EventParameters(eventUser2,
-                            eventUser?.gameObject.GetComponent<IOnHit>())
-                        {
-                            buffData = buffData
-                        };
+                            eventUser?.gameObject.GetComponent<IOnHit>());
+                    parameters.Set(buffData);
                     eventUser2.EventManager.ExecuteEvent(EventType.OnSubBuffTaken, parameters);
                 }
             }
@@ -154,10 +147,9 @@ namespace Apis
             {
                 if (SubBuffManager.User.gameObject.TryGetComponent(out IEventUser eventUser))
                 {
-                    EventParameters parameters = new(eventUser)
-                    {
-                        buffData = new BuffEventData { removedSubBuff = subBuff }
-                    };
+                    EventParameters parameters = new(eventUser);
+                    parameters.Set(new BuffEventData(){removedSubBuff = subBuff});
+                    
                     eventUser.EventManager.ExecuteEvent(EventType.OnSubBuffRemove, parameters);
                 }
                 
@@ -177,7 +169,7 @@ namespace Apis
                 if (SubBuffManager.User.gameObject.TryGetComponent(out IEventUser eventUser))
                 {
                     EventParameters parameters = new(eventUser);
-                    parameters.buffData.removedSubBuff = sub;
+                    parameters.Get<BuffEventData>().removedSubBuff = sub;
                     eventUser.EventManager.ExecuteEvent(EventType.OnSubBuffRemove, parameters);
                 }
             }
@@ -193,10 +185,8 @@ namespace Apis
 
             if (SubBuffManager.User.gameObject.TryGetComponent(out IEventUser eventUser))
             {
-                EventParameters parameters = new(eventUser)
-                {
-                    buffData = new BuffEventData { removedSubBuff = buff?.ActivatedSubBuff }
-                };
+                EventParameters parameters = new(eventUser);
+                parameters.Set(new BuffEventData { removedSubBuff = buff?.ActivatedSubBuff });
 
                 eventUser.EventManager.ExecuteEvent(EventType.OnSubBuffRemove, parameters);
             }

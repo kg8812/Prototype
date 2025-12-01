@@ -32,10 +32,10 @@ namespace Apis
             switch (buff.ValueType)
             {
                 case ValueType.Value:
-                    parameters.statData.stat.AddValue(StatType, amount[0]);
+                    parameters.Get<StatEventData>().stat.AddValue(StatType, amount[0]);
                     break;
                 case ValueType.Ratio:
-                    parameters.statData.stat.AddRatio(StatType, amount[0]);
+                    parameters.Get<StatEventData>().stat.AddRatio(StatType, amount[0]);
                     break;
             }
         }

@@ -1,4 +1,5 @@
 using Apis;
+using EventData;
 
 public class BarrierCalculator
 {
@@ -51,15 +52,15 @@ public class BarrierCalculator
 
     public void Calculate(EventParameters parameters)
     {
-        parameters.hitData.dmg = (int)MinusBarrier(parameters.hitData.dmg);
-        if (_barrier >= parameters.hitData.dmg)
+        parameters.Get<HitEventData>().dmg = (int)MinusBarrier(parameters.Get<HitEventData>().dmg);
+        if (_barrier >= parameters.Get<HitEventData>().dmg)
         {
-            _barrier -= parameters.hitData.dmg;
-            parameters.hitData.dmg = 0;
+            _barrier -= parameters.Get<HitEventData>().dmg;
+            parameters.Get<HitEventData>().dmg = 0;
         }
         else
         {
-            parameters.hitData.dmg -= (int)_barrier;
+            parameters.Get<HitEventData>().dmg -= (int)_barrier;
             _barrier = 0;
         }
     }

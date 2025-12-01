@@ -1,5 +1,6 @@
 using System;
 using Apis;
+using EventData;
 using UnityEngine;
 
 public class DestroyableObject : MonoBehaviour, IOnHit
@@ -60,7 +61,7 @@ public class DestroyableObject : MonoBehaviour, IOnHit
         DestroyObj(parameters);
 
 
-        return parameters.atkData.dmg;
+        return parameters.Get<AttackEventData>().dmg;
     }
 
     public float MaxHp => 10;

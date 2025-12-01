@@ -103,12 +103,12 @@ namespace UI
         private void SetBuffIcon(EventParameters parameters)
         {
             if (parameters == null ||
-                !BuffDatabase.DataLoad.TryGetBuffGroupData(parameters.buffData.buffGroupId, out var group)) return;
+                !BuffDatabase.DataLoad.TryGetBuffGroupData(parameters.Get<BuffEventData>().buffGroupId, out var group)) return;
             if (!group.showIcon) return;
 
             var icon = GameManager.UI.MakeSubItem("UI_BuffIcon", transform).GetComponent<UI_BuffIcon>();
 
-            groupIcons.Add(parameters.buffData.buffGroupId, icon);
+            groupIcons.Add(parameters.Get<BuffEventData>().buffGroupId, icon);
             icon.Init(group);
             description.transform.SetAsLastSibling();
         }
@@ -117,10 +117,10 @@ namespace UI
         {
             if (parameters == null) return;
 
-            if (groupIcons.ContainsKey(parameters.buffData.buffGroupId))
+            if (groupIcons.ContainsKey(parameters.Get<BuffEventData>().buffGroupId))
             {
-                RemoveSubItem(groupIcons[parameters.buffData.buffGroupId]);
-                groupIcons.Remove(parameters.buffData.buffGroupId);
+                RemoveSubItem(groupIcons[parameters.Get<BuffEventData>().buffGroupId]);
+                groupIcons.Remove(parameters.Get<BuffEventData>().buffGroupId);
             }
         }
     }

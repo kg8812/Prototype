@@ -84,4 +84,21 @@ namespace Apis
         public void RemoveSubBuffTypeImmune(SubBuffType type, Guid guid);
 
     }
+    
+    public class BuffEventData : IEventData
+    {
+        public int buffGroupId; // 버프 그룹 ID
+
+        public SubBuff activatedSubBuff; // 적용시킨 버프
+        public SubBuff removedSubBuff; // 제거된 버프
+        public SubBuff takenSubBuff; // 받은 버프
+
+        public void Reset()
+        {
+            buffGroupId = 0;
+            activatedSubBuff = null;
+            removedSubBuff = null;
+            takenSubBuff = null;
+        }
+    }
 }

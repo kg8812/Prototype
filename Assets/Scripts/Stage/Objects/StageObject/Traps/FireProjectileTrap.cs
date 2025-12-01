@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using DG.Tweening;
+using EventData;
 using UnityEngine;
 
 namespace Apis
@@ -52,9 +53,9 @@ namespace Apis
         public EventParameters Attack(EventParameters eventParameters)
         {
             if (eventParameters?.target == null || eventParameters.target.IsInvincible) return null;
-            eventParameters.atkData.dmg = eventParameters.atkData.atkStrategy.Calculate(eventParameters.target);
+            eventParameters.Get<AttackEventData>().dmg = eventParameters.Get<AttackEventData>().atkStrategy.Calculate(eventParameters.target);
 
-            eventParameters.hitData.isCritApplied = false;
+            eventParameters.Get<HitEventData>().isCritApplied = false;
 
 
             // if (eventParameters.knockBackData.knockBackForce > 0)
@@ -62,9 +63,9 @@ namespace Apis
             //     eventParameters.atkData.isHitReaction = true;
             // }
 
-            eventParameters.hitData.dmg = eventParameters.atkData.dmg;
+            eventParameters.Get<HitEventData>().dmg = eventParameters.Get<AttackEventData>().dmg;
 
-            eventParameters.hitData.dmgReceived = eventParameters.target.OnHit(eventParameters);
+            eventParameters.Get<HitEventData>().dmgReceived = eventParameters.target.OnHit(eventParameters);
             return eventParameters;
         }
 

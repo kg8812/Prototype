@@ -117,7 +117,7 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
 
         BonusStat Action()
         {
-            return eventParameters.statData.stat;
+            return eventParameters.Get<StatEventData>().stat;
         }
 
         BonusStatEvent += Action;
@@ -128,24 +128,24 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
         {
             // 타격 성공 판정도 Actor 한정으로만 (다른 IOnHit는 불가)
             ExecuteEvent(EventType.OnAttackSuccess, eventParameters);
-            if (eventParameters.atkData.attackType == Define.AttackType.BasicAttack)
+            if (eventParameters.Get<AttackEventData>().attackType == Define.AttackType.BasicAttack)
                 ExecuteEvent(EventType.OnBasicAttack, eventParameters);
         }
 
-        eventParameters.atkData.dmg = eventParameters.atkData.atkStrategy.Calculate(eventParameters.target);
+        eventParameters.Get<AttackEventData>().dmg = eventParameters.Get<AttackEventData>().atkStrategy.Calculate(eventParameters.target);
         var random = Random.Range(0, 100f);
         var prob = CritProb;
 
-        if (random < prob || eventParameters.atkData.isfixedCrit)
+        if (random < prob || eventParameters.Get<AttackEventData>().isfixedCrit)
         {
-            eventParameters.atkData.dmg *= CritDmg * 0.01f;
+            eventParameters.Get<AttackEventData>().dmg *= CritDmg * 0.01f;
 
             ExecuteEvent(EventType.OnCrit, eventParameters);
-            eventParameters.hitData.isCritApplied = true;
+            eventParameters.Get<HitEventData>().isCritApplied = true;
         }
         else
         {
-            eventParameters.hitData.isCritApplied = false;
+            eventParameters.Get<HitEventData>().isCritApplied = false;
         }
 
         if (eventParameters.target is Actor act)
@@ -153,9 +153,9 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
                     (transform.position - eventParameters.target.gameObject.transform.position).normalized) < 0)
                 ExecuteEvent(EventType.OnBackAttack, eventParameters);
 
-        eventParameters.hitData.dmg = eventParameters.atkData.dmg;
+        eventParameters.Get<HitEventData>().dmg = eventParameters.Get<AttackEventData>().dmg;
 
-        eventParameters.hitData.dmgReceived = eventParameters.target.OnHit(eventParameters);
+        eventParameters.Get<HitEventData>().dmgReceived = eventParameters.target.OnHit(eventParameters);
 
         ExecuteEvent(EventType.OnAfterAtk, eventParameters);
         BonusStatEvent -= Action;
@@ -200,19 +200,19 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
 
         ExecuteEvent(EventType.OnBeforeHit, parameters);
 
-        if (parameters.hitData.hitDisable) return 0;
+        if (parameters.Get<HitEventData>().hitDisable) return 0;
 
         BonusStatEvent += Action;
 
-        if (parameters.hitData.dmg == 0) parameters.hitData.dmg = parameters.atkData.dmg;
+        if (parameters.Get<HitEventData>().dmg == 0) parameters.Get<HitEventData>().dmg = parameters.Get<AttackEventData>().dmg;
 
-        parameters.hitData.dmg *= 1 - (1 - FormulaConfig.defConstant / (FormulaConfig.defConstant + Def));
+        parameters.Get<HitEventData>().dmg *= 1 - (1 - FormulaConfig.defConstant / (FormulaConfig.defConstant + Def));
 
-        parameters.hitData.dmg = Mathf.RoundToInt(parameters.hitData.dmg);
+        parameters.Get<HitEventData>().dmg = Mathf.RoundToInt(parameters.Get<HitEventData>().dmg);
 
         ExecuteEvent(EventType.OnHit, parameters);
-        if (parameters.hitData.isCritApplied) ExecuteEvent(EventType.OnCritHit, parameters);
-        CurHp -= parameters.hitData.dmg;
+        if (parameters.Get<HitEventData>().isCritApplied) ExecuteEvent(EventType.OnCritHit, parameters);
+        CurHp -= parameters.Get<HitEventData>().dmg;
 
         ExecuteEvent(EventType.OnAfterHit, parameters);
         BonusStatEvent -= Action;
@@ -220,12 +220,12 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
         if (!IsDead)
             OnHitReaction(parameters);
 
-        recentHitInfo = parameters.atkData.attackGuid;
-        return parameters.hitData.dmg;
+        recentHitInfo = parameters.Get<AttackEventData>().attackGuid;
+        return parameters.Get<HitEventData>().dmg;
 
         BonusStat Action()
         {
-            return parameters.statData.stat;
+            return parameters.Get<StatEventData>().stat;
         }
     }
 
@@ -247,7 +247,7 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
 
     public virtual KnockBackData GetKnockBackData(EventParameters parameters)
     {
-        return parameters.knockBackData;
+        return parameters.Get<KnockBackData>();
     }
 
     public bool CheckDuplicationAtk(AttackObject atkObj)

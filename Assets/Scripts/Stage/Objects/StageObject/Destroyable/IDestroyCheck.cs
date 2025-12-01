@@ -1,3 +1,5 @@
+using EventData;
+
 public interface IDestroyCheck
 {
     public bool CheckDestroyable(EventParameters parameters);
@@ -14,6 +16,6 @@ public class AttackTypeCheck : IDestroyCheck
 
     public bool CheckDestroyable(EventParameters parameters)
     {
-        return parameters?.atkData != null && parameters.atkData.attackType == _attackType;
+        return parameters?.Get<AttackEventData>() != null && parameters.Get<AttackEventData>().attackType == _attackType;
     }
 }

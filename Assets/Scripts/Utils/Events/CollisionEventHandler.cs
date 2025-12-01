@@ -10,10 +10,8 @@ namespace Apis
 
         private void OnCollisionEnter2D(Collision2D other)
         {
-            EventParameters parameters = new(_user)
-            {
-                collideData = new CollideEventData { collider = other.collider }
-            };
+            EventParameters parameters = new(_user);
+            parameters.Set(new CollideEventData { collider = other.collider });
 
             var target = Utils.GetComponentInParentAndChild<IOnHit>(other.gameObject);
             parameters.target = target;
@@ -25,10 +23,9 @@ namespace Apis
         {
             if (collision != null)
             {
-                EventParameters parameters = new(_user)
-                {
-                    collideData = new CollideEventData { collider = collision }
-                };
+                EventParameters parameters = new(_user);
+                parameters.Set(new CollideEventData { collider = collision });
+                
                 parameters.target = collision.transform.GetComponentInParentAndChild<IOnHit>();
                 _user.EventManager.ExecuteEvent(EventType.OnTriggerEnter, parameters);
             }
@@ -38,10 +35,8 @@ namespace Apis
         {
             if (collision != null)
             {
-                EventParameters parameters = new(_user)
-                {
-                    collideData = new CollideEventData { collider = collision }
-                };
+                EventParameters parameters = new(_user);
+                parameters.Set(new CollideEventData { collider = collision });
 
                 var target = Utils.GetComponentInParentAndChild<IOnHit>(collision.gameObject);
 

@@ -55,20 +55,19 @@ public partial class Actor : IStatUser, IBarrierUser
 
             if (!Mathf.Approximately(dmg, 0)) DmgText?.Show(dmg, Position);
 
-            var parameters = new EventParameters(this)
+            var parameters = new EventParameters(this);
+            parameters.Set(new HitEventData()
             {
-                hitData = new HitEventData
-                {
-                    dmg = dmg, dmgReceived = dmg
-                }
-            };
+                dmg = dmg, dmgReceived = dmg
+            });
+            
 
             ExecuteEvent(EventType.OnBeforeHpDown, parameters);
 
             BarrierCalculator?.Calculate(parameters);
 
             ExecuteEvent(EventType.OnBarrierChange, parameters);
-            curHp -= parameters.hitData.dmg;
+            curHp -= parameters.Get<HitEventData>().dmg;
 
             ExecuteEvent(EventType.OnHpDown, parameters);
             if (curHp <= 0) Die();

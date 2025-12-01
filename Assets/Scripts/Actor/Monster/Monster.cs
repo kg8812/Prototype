@@ -202,7 +202,7 @@ namespace Apis
             Vector2 knockBackSrc = knockBackData.directionType == KnockBackData.DirectionType.AktObjRelative
                 ? eventParameters.user.Position
                 : eventParameters.master.Position;
-            if (eventParameters.atkData.isHitReaction && !HitImmune && knockBackData.knockBackForce != 0 &&
+            if (eventParameters.Get<AttackEventData>().isHitReaction && !HitImmune && knockBackData.knockBackForce != 0 &&
                 canKnockBacked)
                 MoveComponent?.KnockBack(knockBackSrc, knockBackData, null, null);
         }
