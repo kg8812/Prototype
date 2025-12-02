@@ -10,7 +10,9 @@ namespace Apis
         public Player Player => user as Player;
         protected virtual float TagIncrement => 0;
 
-        public override UI_AtkItemIcon Icon => UI_MainHud.Instance.mainSkillIcon;
+        // TODO 아이콘 설정해주기
+        //public override UI_AtkItemIcon Icon => UI_MainHud.Instance.mainSkillIcon;
+        public override UI_AtkItemIcon Icon => null;
 
         // 고유트리 방랑자 적용 함수
         public void Accept(ISkillVisitor visitor, int level)

@@ -87,10 +87,10 @@ public partial class Player : IActiveSkillUser, IPassiveSkillUser
 
     private void SetMainSkillIcon()
     {
-        var icon = UI_MainHud.Instance.mainSkillIcon;
-        if (ActiveSkill == null)
-            icon.WhenItemIsNull();
-        else
-            icon.WhenItemIsSet();
+        //var icon = UI_MainHud.Instance.mainSkillIcon;
+        // if (ActiveSkill == null)
+        //     icon.WhenItemIsNull();
+        // else
+        //     icon.WhenItemIsSet();
     }
 }

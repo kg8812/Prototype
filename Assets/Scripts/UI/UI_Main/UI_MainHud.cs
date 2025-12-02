@@ -11,17 +11,28 @@ namespace UI
 {
     public class UI_MainHud : UI_Main
     {
+        //Enum.GetValues로 사용중, Enum목록 제거하지 말것
+        private enum SubItems
+        {
+        }
+
+        private enum Texts
+        {
+            SkillCdText,
+            WpSkillCdText
+        }
+
+        private enum Images
+        {
+        }
+        
         private static UI_MainHud instance;
 
         private UnityEvent<Player> _setEvent = new();
         private UnityEvent<Player> _afterSet = new();
 
-        private UI_BuffCollector buffs;
-
-        public UI_AtkItemIcon mainSkillIcon;
-
         private SubItems[] subs;
-
+        
         /// <summary>
         ///     UI 오브젝트들 참조 세팅용 이벤트 (플레이어 연결 등)
         /// </summary>
@@ -56,9 +67,7 @@ namespace UI
                 item.Init();
             }
 
-            buffs = Get<UI_Base>((int)SubItems.BuffCollector).GetComponent<UI_BuffCollector>();
             GameManager.instance.afterPlayerStart.AddListener(ResisterPlayer);
-            buffs.SetDescPivot(new Vector2(0, 0));
 
             GameManager.instance.onPlayerChange.AddListener(x =>
             {
@@ -80,29 +89,8 @@ namespace UI
 
         private void ResisterPlayer(Player player)
         {
-            Get<UI_Base>((int)SubItems.HpBar).GetComponent<UI_HpBar>().ResetActors();
-            Get<UI_Base>((int)SubItems.HpBar).GetComponent<UI_HpBar>().Init(player);
-
-            // TODO: 일단 activated에서 init쪽으로 옮겼는데 나중에 문제 생기면 고치기
-            buffs.Init(player.BuffSystem);
         }
 
-        //Enum.GetValues로 사용중, Enum목록 제거하지 말것
-        private enum SubItems
-        {
-            BuffCollector,
-            SkillIcon,
-            HpBar
-        }
-
-        private enum Texts
-        {
-            SkillCdText,
-            WpSkillCdText
-        }
-
-        private enum Images
-        {
-        }
+        
     }
 }
