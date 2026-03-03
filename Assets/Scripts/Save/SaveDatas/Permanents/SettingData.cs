@@ -106,8 +106,6 @@ namespace Save.Schema
 
             foreach (Define.Sound sound in Enum.GetValues(typeof(Define.Sound)))
             {
-                Debug.Log("Volume : " + (int)sound);
-
                 if (sound != Define.Sound.MaxCOUNT) GameManager.Sound.ChangeVolume(Volumes[(int)sound], sound);
             }
         }

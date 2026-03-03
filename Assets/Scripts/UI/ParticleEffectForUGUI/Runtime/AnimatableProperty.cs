@@ -38,23 +38,35 @@ namespace Coffee.UIExtensions
             {
                 case ShaderPropertyType.Color:
                     var color = mpb.GetColor(id);
-                    if (color != default) material.SetColor(id, color);
+                    if (color != default)
+                    {
+                        material.SetColor(id, color);
+                    }
 
                     break;
                 case ShaderPropertyType.Vector:
                     var vector = mpb.GetVector(id);
-                    if (vector != default) material.SetVector(id, vector);
+                    if (vector != default)
+                    {
+                        material.SetVector(id, vector);
+                    }
 
                     break;
                 case ShaderPropertyType.Float:
                 case ShaderPropertyType.Range:
                     var value = mpb.GetFloat(id);
-                    if (!Mathf.Approximately(value, 0)) material.SetFloat(id, value);
+                    if (!Mathf.Approximately(value, 0))
+                    {
+                        material.SetFloat(id, value);
+                    }
 
                     break;
                 case ShaderPropertyType.Texture:
                     var tex = mpb.GetTexture(id);
-                    if (tex != default(Texture)) material.SetTexture(id, tex);
+                    if (tex != default(Texture))
+                    {
+                        material.SetTexture(id, tex);
+                    }
 
                     break;
             }

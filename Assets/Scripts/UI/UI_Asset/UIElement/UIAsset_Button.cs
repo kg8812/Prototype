@@ -1,9 +1,11 @@
-﻿using UnityEngine.Events;
+﻿using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
 namespace Apis.UI
 {
-    public class UIAsset_Button : UIEffector
+    public class UIAsset_Button: UIEffector
     {
         public UnityEvent OnClick;
 
@@ -15,13 +17,19 @@ namespace Apis.UI
 
         public override void KeyControl()
         {
-            if (InputManager.GetKeyDown(KeySettingManager.GetUIKeyCode(Define.UIKey.Select))) OnPointerClick(null);
+            if (InputManager.GetKeyDown(KeySettingManager.GetUIKeyCode(Define.UIKey.Select)))
+            {
+                OnPointerClick(null);
+            }
         }
 
         public override void GamePadControl()
         {
             base.GamePadControl();
-            if (InputManager.GetButtonDown(KeySettingManager.GetUIButton(Define.UIKey.Select))) OnPointerClick(null);
+            if (InputManager.GetButtonDown(KeySettingManager.GetUIButton(Define.UIKey.Select)))
+            {
+                OnPointerClick(null);
+            }
         }
 
         public override void OnPointerClick(PointerEventData eventData)

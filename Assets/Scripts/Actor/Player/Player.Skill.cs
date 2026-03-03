@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Apis;
-using UI;
+using Apis.UI;
 
 public partial class Player : IActiveSkillUser, IPassiveSkillUser
 {
@@ -91,6 +91,9 @@ public partial class Player : IActiveSkillUser, IPassiveSkillUser
         // if (ActiveSkill == null)
         //     icon.WhenItemIsNull();
         // else
-        //     icon.WhenItemIsSet();
+        //{
+            //     icon.WhenItemIsSet();
+            // icon.SetIcon(ActiveSkill.SkillImage);
+        //}
     }
 }

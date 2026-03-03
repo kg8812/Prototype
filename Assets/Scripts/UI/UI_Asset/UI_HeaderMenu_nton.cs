@@ -4,21 +4,47 @@ using UnityEngine.Events;
 
 namespace Apis.UI
 {
-    public class UI_HeaderMenu_nton : MonoBehaviour, IController
+    public class UI_HeaderMenu_nton: MonoBehaviour, IController
     {
+        [Tooltip("UI의 탭 버튼 그룹을 제어하는 FocusParent입니다.")]
         public FocusParent headerController;
 
+        [Tooltip("헤더의 각 탭 버튼에 연결된 실제 컨텐츠 UI들의 배열입니다.")]
         public UI_FocusContent[] contentControllers;
 
-        public int curInd;
-
-        public UnityEvent<int> WillFocusChanged;
-        public UnityEvent<int> FocusChanged;
+        [HideInInspector]public int curInd;
         public IController _curContentController;
 
-        public void Reset()
+        [Tooltip("탭(포커스)이 변경되기 직전에 호출되는 이벤트입니다.")]
+        public UnityEvent<int> WillFocusChanged;
+        [Tooltip("탭(포커스)이 변경된 직후에 호출되는 이벤트입니다.")]
+        public UnityEvent<int> FocusChanged;
+
+        public void Init()
         {
-            headerController.MoveTo(0);
+            foreach (var curCont in contentControllers)
+            {
+                curCont.InitCheck();
+            }
+            headerController.InitCheck();
+            headerController.FocusChanged.AddListener(FocusChange);
+        }
+
+        protected virtual void FocusChange(int id)
+        {
+            WillFocusChanged.Invoke(curInd);
+            
+            if (contentControllers[curInd].gameObject.activeSelf && curInd != id)
+            {
+                contentControllers[curInd].gameObject.SetActive(false);
+                contentControllers[curInd].OnClose();
+            }
+
+            curInd = id;
+            contentControllers[curInd].OnOpen();
+            contentControllers[curInd].gameObject.SetActive(true);
+            _curContentController = contentControllers[curInd];
+            FocusChanged.Invoke(curInd);
         }
 
         public void KeyControl()
@@ -33,23 +59,10 @@ namespace Apis.UI
             headerController.GamePadControl();
         }
 
-        public void Init()
+        public void Reset()
         {
-            foreach (var curCont in contentControllers) curCont.InitCheck();
-            headerController.InitCheck();
-            headerController.FocusChanged.AddListener(FocusChange);
-        }
-
-        protected virtual void FocusChange(int id)
-        {
-            WillFocusChanged.Invoke(curInd);
-            contentControllers[curInd].gameObject.SetActive(false);
-            contentControllers[curInd].OnClose();
-            curInd = id;
-            contentControllers[curInd].OnOpen();
-            contentControllers[curInd].gameObject.SetActive(true);
-            _curContentController = contentControllers[curInd];
-            FocusChanged.Invoke(curInd);
+            FocusChange(0);
+            headerController.MoveTo(0,true);
         }
     }
 }

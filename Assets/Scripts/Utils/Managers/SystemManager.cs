@@ -1,7 +1,7 @@
 ﻿using System;
 using Apis;
 using GameStateSpace;
-using UI;
+using Apis.UI;
 using UnityEngine.Events;
 
 namespace Managers

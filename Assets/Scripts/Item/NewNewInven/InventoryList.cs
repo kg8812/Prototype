@@ -1,24 +1,22 @@
 ﻿using System;
 using Apis;
 
-namespace NewNewInvenSpace
+namespace Apis.InvenSpace
 {
     public class InventoryList
     {
-        public delegate void CountChanged(int cnt);
-
         public delegate void ItemChanged(int ind, Item item);
 
-        private int _cnt;
-
-        public ItemChanged BeforeItemExcepted;
-        public ItemChanged ItemAddedTo;
-        public ItemChanged ItemRemovedFrom;
-        public CountChanged OnCountChanged;
+        public delegate void CountChanged(int cnt);
 
 
         public ItemChanged OnSlotChanged;
-
+        public ItemChanged ItemAddedTo;
+        public ItemChanged ItemRemovedFrom;
+        
+        public ItemChanged BeforeItemExcepted;
+        public CountChanged OnCountChanged;
+        
         public Item[] Slots;
 
         public InventoryList(int maxCnt, int cnt)
@@ -33,21 +31,22 @@ namespace NewNewInvenSpace
             // list에 들어오면 itemStorage 하위로 parent 설정.(inven storage하고는 다름)
             ItemAddedTo += (_, item) => item.SetParent(null);
             ItemRemovedFrom += (_, item) => item.SetParent(null);
+            
+            
         }
 
         public Item this[int index]
         {
             get => Slots[index];
-            private set
+            protected set
             {
                 Slots[index] = value;
                 // Debug.Log($"Inventory changed {index} {value?.Name}");
                 OnSlotChanged?.Invoke(index, value);
             }
         }
-
         public int MaxCnt { get; }
-
+        protected int _cnt;
         public int Count
         {
             get => _cnt;
@@ -55,73 +54,82 @@ namespace NewNewInvenSpace
             {
                 if (value == _cnt || value > MaxCnt) return;
                 if (value < _cnt)
-                    for (var i = value; i < _cnt; i++)
+                {
+                    for (int i = value; i < _cnt; i++)
+                    {
                         if (this[i] != null)
                         {
                             BeforeItemExcepted?.Invoke(i, this[i]);
                             this[i] = null;
                         }
-
+                    }
+                }
                 _cnt = value;
                 Array.Resize(ref Slots, _cnt);
                 OnCountChanged?.Invoke(_cnt);
             }
         }
-
+        
         public int GetEmptySlot()
         {
-            var ind = -1;
-            for (var i = 0; i < _cnt; i++)
+            int ind = -1;
+            for (int i = 0; i < _cnt; i++)
+            {
                 if (this[i] == null)
                 {
                     ind = i;
                     break;
                 }
-
+            }
             return ind;
         }
 
         public bool IsEmpty()
         {
-            var a = 0;
-            foreach (var item in Slots)
+            int a = 0;
+            foreach (Item item in Slots)
             {
                 if (a >= _cnt) break;
-                if (item != null) return false;
+                if (item != null)
+                {
+                    return false;
+                }
                 a++;
             }
-
             return true;
         }
 
         public bool IsFull()
         {
-            var a = 0;
-            foreach (var item in Slots)
+            int a = 0;
+            foreach (Item item in Slots)
             {
                 if (a >= _cnt) break;
-                if (item == null) return false;
+                if (item == null)
+                {
+                    return false;
+                }
                 a++;
             }
-
             return true;
         }
 
-        public bool AddItem(Item item)
+        public virtual bool AddItem(Item item)
         {
             if (item == null) return false;
-            for (var i = 0; i < Count; i++)
+            for (int i = 0; i < Count; i++)
+            {
                 if (this[i] == null)
                 {
                     this[i] = item;
                     ItemAddedTo?.Invoke(i, item);
                     return true;
                 }
+            }
 
             return false;
         }
-
-        public bool AddItem(int index, Item item)
+        public virtual bool AddItem(int index, Item item)
         {
             if (index >= Count) return false;
             if (item == null) return false;
@@ -134,18 +142,20 @@ namespace NewNewInvenSpace
         public Item Remove(int index)
         {
             if (index >= Count) return null;
-            var item = this[index];
+            Item item = this[index];
             if (item == null) return null;
             this[index] = null;
             ItemRemovedFrom?.Invoke(index, item);
             return InvenManager.instance.Storage.Get(item);
         }
-
+        
         public int FindById(int itemId)
         {
-            for (var i = 0; i < Count; i++)
+            for (int i = 0; i < Count; i++)
+            {
                 if (this[i] != null && this[i].ItemId == itemId)
                     return i;
+            }
             return -1;
         }
 
@@ -156,7 +166,10 @@ namespace NewNewInvenSpace
 
         public void Clear()
         {
-            for (var i = 0; i < _cnt; i++) Remove(i)?.Return();
+            for (int i = 0; i < _cnt; i++)
+            {
+                Remove(i)?.Return();
+            }
         }
     }
 }

@@ -5,7 +5,7 @@ using Apis;
 using Apis.Managers;
 using Managers;
 using Sirenix.OdinInspector;
-using UI;
+using Apis.UI;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
@@ -107,6 +107,15 @@ public partial class GameManager
             UI.ToggleMainUI(true);
         }
     }
+    
+    public void SaveSlot()
+    {
+        if (Scene.CurSceneData.isPlayerMustExist && Player != null)
+        {
+            Slot.SaveCurrentSlot();
+        }
+    }
+    
 
     #region 일시정지 관리
 

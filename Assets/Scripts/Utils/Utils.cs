@@ -6,21 +6,18 @@ using Apis;
 using Apis.UI.Focus;
 using Apis.Util;
 using DG.Tweening;
+using DG.Tweening.Core;
+using DG.Tweening.Plugins.Options;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
-using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
 namespace Default
 {
     public static class Utils
     {
-        private static EventType[] _eventTypes;
-
-        private static SubBuffType[] _subBuffTypes;
-
-        private static ActorStatType[] _statTypes;
+        static EventType[] _eventTypes;
 
         public static IEnumerable<EventType> EventTypes
         {
@@ -32,6 +29,8 @@ namespace Default
             }
         }
 
+        static SubBuffType[] _subBuffTypes;
+
         public static IEnumerable<SubBuffType> SubBuffTypes
         {
             get
@@ -41,6 +40,8 @@ namespace Default
                 return _subBuffTypes;
             }
         }
+
+        static ActorStatType[] _statTypes;
 
         public static ActorStatType[] StatTypes
         {
@@ -61,6 +62,8 @@ namespace Default
                 ActorStatType.AtkSpeed => "공격속도",
                 ActorStatType.Def => "방어력",
                 ActorStatType.MaxHp => "체력",
+                ActorStatType.CritProb => "치명타 확률",
+                ActorStatType.CritDmg => "치명타 데미지",
                 _ => ""
             };
         }
@@ -72,10 +75,14 @@ namespace Default
 
         public static int GetFirstLayerIndex(LayerMask mask)
         {
-            var layerValue = mask.value;
-            for (var i = 0; i < 32; i++) // Unity는 32개의 Layer를 지원
+            int layerValue = mask.value;
+            for (int i = 0; i < 32; i++) // Unity는 32개의 Layer를 지원
+            {
                 if ((layerValue & (1 << i)) != 0)
+                {
                     return i; // 첫 번째로 발견된 Layer의 인덱스 반환
+                }
+            }
 
             return -1; // Layer가 없으면 -1 반환
         }
@@ -92,34 +99,42 @@ namespace Default
 
         public static T GetOrAddComponent<T>(GameObject go) where T : Component
         {
-            var component = go.GetComponent<T>() ?? go.AddComponent<T>();
+            T component = go.GetComponent<T>() ?? go.AddComponent<T>();
             return component;
         }
 
         public static GameObject FindChild(GameObject go, string name = null, bool recursive = false)
         {
-            var transform = FindChild<Transform>(go, name, recursive);
+            Transform transform = FindChild<Transform>(go, name, recursive);
             return transform == null ? null : transform.gameObject;
         }
 
         public static T FindChild<T>(GameObject go, string name = null, bool recursive = false)
-            where T : Object
+            where T : UnityEngine.Object
         {
             if (go == null)
                 return null;
 
             if (recursive == false)
-                for (var i = 0; i < go.transform.childCount; i++)
+            {
+                for (int i = 0; i < go.transform.childCount; i++)
                 {
-                    var transform = go.transform.GetChild(i);
+                    Transform transform = go.transform.GetChild(i);
                     if (string.IsNullOrEmpty(name) || transform.name == name)
+                    {
                         if (transform.TryGetComponent<T>(out var component))
                             return component;
+                    }
                 }
+            }
             else
-                foreach (var component in go.GetComponentsInChildren<T>(true))
+            {
+                foreach (T component in go.GetComponentsInChildren<T>(true))
+                {
                     if (string.IsNullOrEmpty(name) || component.name == name)
                         return component;
+                }
+            }
 
             return null;
         }
@@ -127,20 +142,28 @@ namespace Default
 
         public static List<T> GetChanceList<T>(T[] tData) where T : HasChance
         {
-            var tList = new List<T>();
+            List<T> tList = new List<T>();
             foreach (var t in tData)
-                for (var j = 0; j < t.chance; j++)
+            {
+                for (int j = 0; j < t.chance; j++)
+                {
                     tList.Add(t);
+                }
+            }
 
             return tList;
         }
 
         public static List<T> GetChanceList<T>(List<T> tData) where T : HasChance
         {
-            var tList = new List<T>();
+            List<T> tList = new List<T>();
             foreach (var t in tData)
-                for (var j = 0; j < t.chance; j++)
+            {
+                for (int j = 0; j < t.chance; j++)
+                {
                     tList.Add(t);
+                }
+            }
 
             return tList;
         }
@@ -148,10 +171,13 @@ namespace Default
         public static TValue GetOrAddDictionaryValue<TKey, TValue>(TKey key, Dictionary<TKey, TValue> dict)
             where TValue : new()
         {
-            if (dict.TryGetValue(key, out var value))
+            if (dict.TryGetValue(key, out TValue value))
                 return value;
-            dict.Add(key, new TValue());
-            return dict[key];
+            else
+            {
+                dict.Add(key, new TValue());
+                return dict[key];
+            }
         }
 
         public static T GetComponentInParentAndChild<T>(GameObject obj, bool isSearchParent = true) where T : class
@@ -160,14 +186,19 @@ namespace Default
 
             if (obj.TryGetComponent(out T component)) return component;
 
-            if (obj.transform.parent != null && isSearchParent) return obj.transform.parent.GetComponentInChildren<T>();
-
-            return obj.GetComponentInChildren<T>();
+            if (obj.transform.parent != null && isSearchParent)
+            {
+                return obj.transform.parent.GetComponentInChildren<T>();
+            }
+            else
+            {
+                return obj.GetComponentInChildren<T>();
+            }
         }
 
         public static List<T> GetRandomElements<T>(List<T> originalList, int count)
         {
-            var shuffledList = new List<T>(originalList);
+            List<T> shuffledList = new List<T>(originalList);
             shuffledList.Shuffle(); // 확장 메서드로 리스트를 섞음
 
             // 무작위로 섞인 리스트에서 처음 count개의 요소를 반환
@@ -176,11 +207,11 @@ namespace Default
 
         public static void Shuffle<T>(this List<T> list)
         {
-            var n = list.Count;
+            int n = list.Count;
             while (n > 1)
             {
                 n--;
-                var k = Random.Range(0, n + 1);
+                int k = Random.Range(0, n + 1);
                 (list[k], list[n]) = (list[n], list[k]);
             }
         }
@@ -206,13 +237,13 @@ namespace Default
             GameManager.instance.StartCoroutine(TimeCoroutine(action, time));
         }
 
-        private static IEnumerator FrameCoroutine(UnityAction action)
+        static IEnumerator FrameCoroutine(UnityAction action)
         {
             yield return new WaitForEndOfFrame();
             action.Invoke();
         }
 
-        private static IEnumerator TimeCoroutine(UnityAction action, float time)
+        static IEnumerator TimeCoroutine(UnityAction action, float time)
         {
             yield return new WaitForSeconds(time);
             action.Invoke();
@@ -225,7 +256,7 @@ namespace Default
 
         public static Sequence DoInTime(TweenCallback action, float time)
         {
-            var seq = DOTween.Sequence();
+            Sequence seq = DOTween.Sequence();
             seq.SetDelay(time);
             seq.AppendCallback(action);
             return seq;
@@ -233,7 +264,7 @@ namespace Default
 
         public static bool GetLowestPointByRay(Vector2 origin, LayerMask layerMask, out Vector2 pos)
         {
-            var hit = Physics2D.Raycast(origin, Vector2.down, Mathf.Infinity, layerMask);
+            RaycastHit2D hit = Physics2D.Raycast(origin, Vector2.down, Mathf.Infinity, layerMask);
             if (hit.collider != null)
             {
                 pos = hit.point;
@@ -246,10 +277,10 @@ namespace Default
 
         public static void SetProjectilesAngle(List<Projectile> projectiles, float angle)
         {
-            var half = Mathf.FloorToInt(projectiles.Count / 2f);
-            for (var i = 0; i < projectiles.Count; i++)
+            int half = Mathf.FloorToInt(projectiles.Count / 2f);
+            for (int i = 0; i < projectiles.Count; i++)
             {
-                var currAngle = (i - half) * angle;
+                float currAngle = (i - half) * angle;
                 projectiles[i].Rotate(currAngle);
             }
         }
@@ -273,7 +304,7 @@ namespace Default
         }
 
         /// <summary>
-        ///     Dictinoary 깊은 복사 함수
+        /// Dictinoary 깊은 복사 함수
         /// </summary>
         /// <param name="original">base dictionary</param>
         /// <param name="cloneFunc">값이 참조값일 수 있으므로, 참조값이면 복사해서 반환하도록 넣어주세요.</param>
@@ -312,9 +343,14 @@ namespace Default
 
             if (obj.TryGetComponent(out T component)) return component;
 
-            if (obj.parent != null && isSearchParent) return obj.parent.GetComponentInChildren<T>();
-
-            return obj.GetComponentInChildren<T>();
+            if (obj.parent != null && isSearchParent)
+            {
+                return obj.parent.GetComponentInChildren<T>();
+            }
+            else
+            {
+                return obj.GetComponentInChildren<T>();
+            }
         }
 
         public static T[] GetComponentsInParentAndChild<T>(this Transform obj, bool isSearchParent = true)
@@ -322,47 +358,22 @@ namespace Default
         {
             if (ReferenceEquals(obj, null)) return null;
 
-            if (obj.parent != null && isSearchParent) return obj.parent.GetComponentsInChildren<T>();
-
-            return obj.GetComponentsInChildren<T>();
-        }
-
-        // 박스캐스트 충돌시 트윈 종료
-        public static Tween KillWhenBoxCast(this Tween t, IMonoBehaviour obj, float distance, Vector2 dir, Vector2 size,
-            LayerMask layerMask, UnityAction OnEnd = null)
-        {
-            t.onUpdate += () =>
+            if (obj.parent != null && isSearchParent)
             {
-                if (Physics2D.BoxCast(obj.Position, size, 0,
-                        dir, distance,
-                        layerMask))
-                {
-                    t.Kill();
-                    OnEnd?.Invoke();
-                }
-            };
-            return t;
-        }
-
-        public static Tween KillWhenBoxCast(this Tween t, Transform obj, float distance, Vector2 dir, Vector2 size,
-            LayerMask layerMask, UnityAction OnEnd = null)
-        {
-            t.onUpdate += () =>
+                return obj.parent.GetComponentsInChildren<T>();
+            }
+            else
             {
-                if (Physics2D.BoxCast(obj.position, size, 0,
-                        dir, distance,
-                        layerMask))
-                {
-                    t.Kill();
-                    OnEnd?.Invoke();
-                }
-            };
-            return t;
+                return obj.GetComponentsInChildren<T>();
+            }
         }
 
         public static Vector2 GetFloorPos(this IMonoBehaviour obj)
         {
-            if (Utils.GetLowestPointByRay(obj.Position, LayerMasks.GroundAndPlatform, out var value)) return value;
+            if (Utils.GetLowestPointByRay(obj.Position, LayerMasks.GroundAndPlatform, out var value))
+            {
+                return value;
+            }
 
             return obj.transform.position;
         }
@@ -370,10 +381,13 @@ namespace Default
         // 자식들 가져오기
         public static Transform[] GetChildren(this Transform t)
         {
-            var count = t.childCount;
-            var children = new Transform[count];
+            int count = t.childCount;
+            Transform[] children = new Transform[count];
 
-            for (var i = 0; i < count; i++) children[i] = t.GetChild(i);
+            for (int i = 0; i < count; i++)
+            {
+                children[i] = t.GetChild(i);
+            }
 
             return children;
         }
@@ -412,8 +426,8 @@ namespace Default
         {
             var enumerable1 = enumerable as T[] ?? enumerable.ToArray();
 
-            var count = enumerable1.Count();
-            var rand = Random.Range(0, count);
+            int count = enumerable1.Count();
+            int rand = Random.Range(0, count);
             return enumerable1.ElementAt(rand);
         }
 
@@ -422,143 +436,136 @@ namespace Default
             Canvas.ForceUpdateCanvases();
             Vector2 viewportLocalPosition = instance.viewport.localPosition;
             Vector2 childLocalPosition = child.localPosition;
-            var result = new Vector2(
+            Vector2 result = new Vector2(
                 0 - (viewportLocalPosition.x + childLocalPosition.x),
                 0 - (viewportLocalPosition.y + childLocalPosition.y)
             );
             return result;
         }
 
-        public static void UpdateSelectedChildToScrollView(this ScrollRect instance, RectTransform child,
-            float margin = 30, float duration = 0.5f)
+        public static void UpdateSelectedChildToScrollView(this ScrollRect instance, RectTransform child, float margin = 30, float duration = 0.5f)
         {
             if (instance == null || instance.content == null || child == null)
             {
                 Debug.LogError("ScrollRect, ContentPanel, 또는 TargetItem이 할당되지 않았습니다!");
                 return;
             }
-
+            
             // 해당 ScrollRect 인스턴스를 ID로 사용하여 기존 트윈을 중지시킵니다.
             DOTween.Kill(instance); // 이 ScrollRect 인스턴스와 연결된 모든 트윈을 중지
-
+    
             Canvas.ForceUpdateCanvases(); // UI 요소들의 현재 상태를 정확히 반영
+    
+            RectTransform content = instance.content;
+            RectTransform viewport = instance.viewport; // viewport RectTransform 가져오기
+    
+            if (viewport == null) viewport = instance.GetComponent<RectTransform>(); // viewport가 명시적으로 설정 안된 경우 ScrollRect 자신의 RectTransform 사용
+            
+            // 1. Target의 월드 좌표 상의 4개 코너를 가져옵니다.
+            Vector3[] targetCorners = new Vector3[4];
+            child.GetWorldCorners(targetCorners);
+            
+            // 2. Viewport 입장에서 Target의 상대적인 위치(y값)를 계산합니다.
+            float minY = float.MaxValue;
+            float maxY = float.MinValue;
 
-            var contentPanel = instance.content;
-            var viewport = instance.viewport; // viewport RectTransform 가져오기
+            foreach (Vector3 worldCorner in targetCorners)
+            {
+                // 월드 좌표를 Viewport의 로컬 좌표로 변환
+                float localY = viewport.InverseTransformPoint(worldCorner).y;
+                if (localY < minY) minY = localY;
+                if (localY > maxY) maxY = localY;
+            }
+            
+            // 3. Viewport의 경계선 정의 (로컬 좌표계 기준)
+            // Viewport의 Pivot이 중앙(0.5, 0.5)인 경우와 상단(0.5, 1)인 경우를 모두 대응
+            float viewTop = viewport.rect.yMax;     // 뷰포트의 상단 끝 y
+            float viewBottom = viewport.rect.yMin;  // 뷰포트의 하단 끝 y
 
-            if (viewport == null)
-                viewport = instance
-                    .GetComponent<RectTransform>(); // viewport가 명시적으로 설정 안된 경우 ScrollRect 자신의 RectTransform 사용
+            // 4. 스크롤 이동량 계산 (픽셀 단위)
+            float scrollOffset = 0;
 
-            var contentHeight = contentPanel.rect.height;
-            var viewportHeight = viewport.rect.height;
-
-            // 스크롤이 불가능한 경우 (content가 viewport보다 작거나 같은 경우)
-            if (contentHeight <= viewportHeight)
-                // 선택 사항: 이 경우에도 특정 위치로 부드럽게 이동 가능 (예: 맨 위)
-                // DOTween.To(() => instance.verticalNormalizedPosition, y => instance.verticalNormalizedPosition = y, 1f, duration)
-                //        .SetId(instance)
-                //        .SetEase(Ease.OutQuad);
+            if (maxY > viewTop)
+            {
+                // Target이 뷰포트 상단 위로 벗어남 -> 아래로 밀어내기
+                scrollOffset = maxY - viewTop;
+            }
+            else if (minY < viewBottom)
+            {
+                // Target이 뷰포트 하단 아래로 벗어남 -> 위로 끌어올리기
+                scrollOffset = minY - viewBottom;
+            }
+            else
+            {
+                // 이미 뷰포트 안에 다 들어와 있음 -> 아무것도 안 함
                 return;
-
-            // 아이템의 높이
-            var itemHeight = child.rect.height;
-
-            // Content 내에서 아이템의 최상단 Y 위치 (Content 최상단 Y=0, 아래로 갈수록 증가)
-            // anchoredPosition.y는 부모(Content)의 앵커를 기준으로 한 피벗의 Y위치.
-            // Content의 상단에 앵커가 맞춰져 있고 아이템이 아래로 배치되면 anchoredPosition.y는 음수.
-            // itemTopYInContent = (Content 상단에서 아이템 피벗까지의 Y거리) - (아이템 피벗에서 아이템 최상단까지의 Y거리)
-            var itemTopYInContent = -child.anchoredPosition.y - itemHeight * (1 - child.pivot.y);
-
-            // Content 내에서 아이템의 최하단 Y 위치
-            var itemBottomYInContent = itemTopYInContent + itemHeight;
-
-            // margin 추가
-            itemTopYInContent = Mathf.Max(0, itemTopYInContent - margin);
-            itemBottomYInContent = Mathf.Min(contentHeight, itemBottomYInContent + margin);
-
-            // Content 내에서 현재 보이는 뷰포트의 최상단 Y 위치
-            var viewportTopYInContent = (1 - instance.verticalNormalizedPosition) * (contentHeight - viewportHeight);
-            // Content 내에서 현재 보이는 뷰포트의 최하단 Y 위치
-            var viewportBottomYInContent = viewportTopYInContent + viewportHeight;
-
-            var targetNormalizedY = instance.verticalNormalizedPosition; // 기본값은 현재 위치
-
-            // 아이템의 하단이 뷰포트 하단보다 아래에 있는 경우 (아이템 일부가 아래로 잘림 -> 위로 스크롤 필요)
-            if (itemBottomYInContent > viewportBottomYInContent)
-            {
-                // 아이템의 하단이 뷰포트 하단에 오도록 스크롤 위치 계산
-                if (contentHeight - viewportHeight > Mathf.Epsilon) // 스크롤 가능 범위가 충분한지 확인
-                    // 목표: viewportTopYInContent_new = itemBottomYInContent - viewportHeight
-                    // targetNormalizedY = 1 - (viewportTopYInContent_new / (contentHeight - viewportHeight))
-                    targetNormalizedY = 1 - (itemBottomYInContent - viewportHeight) / (contentHeight - viewportHeight);
-                else
-                    targetNormalizedY = 0f; // 스크롤 범위가 거의 없으면 맨 아래로 (모든 아이템이 다 보이도록)
             }
-            // 아이템의 상단이 뷰포트 상단보다 위에 있는 경우 (아이템 일부가 위로 잘림 -> 아래로 스크롤 필요)
-            else if (itemTopYInContent < viewportTopYInContent)
+            
+            // 5. 픽셀 단위를 Normalized Position(0~1)으로 변환하여 적용
+            float contentHeight = content.rect.height;
+            float viewportHeight = viewport.rect.height;
+            float scrollableHeight = contentHeight - viewportHeight;
+
+            float endValue = instance.verticalNormalizedPosition;
+            
+            if (scrollableHeight > 0)
             {
-                // 아이템의 상단이 뷰포트 상단에 오도록 스크롤 위치 계산
-                if (contentHeight - viewportHeight > Mathf.Epsilon) // 스크롤 가능 범위가 충분한지 확인
-                    // 목표: viewportTopYInContent_new = itemTopYInContent
-                    // targetNormalizedY = 1 - (viewportTopYInContent_new / (contentHeight - viewportHeight))
-                    targetNormalizedY = 1 - itemTopYInContent / (contentHeight - viewportHeight);
-                else
-                    targetNormalizedY = 1f; // 스크롤 범위가 거의 없으면 맨 위로
+                // VerticalNormalizedPosition은 1(상단) ~ 0(하단)
+                // scrollOffset이 양수면 위로 초과된 것이므로 값을 더해서 컨텐츠를 내림
+                float normalizedDelta = scrollOffset / scrollableHeight;
+                endValue = instance.verticalNormalizedPosition + normalizedDelta;
+                endValue = Mathf.Clamp01(endValue);
             }
+            
 
-            targetNormalizedY = Mathf.Clamp01(targetNormalizedY); // 계산된 값이 0~1 범위를 벗어나지 않도록 함
-
-            // DOTween을 사용하여 verticalNormalizedPosition 값을 부드럽게 변경
-            DOTween.To(
-                    () => instance.verticalNormalizedPosition, // 현재 값을 가져오는 람다
-                    yPos => instance.verticalNormalizedPosition = yPos, // 값을 설정하는 람다
-                    targetNormalizedY, // 목표 값
-                    duration // 애니메이션 시간
-                )
+            DOTween.To(() => instance.verticalNormalizedPosition, v => instance.verticalNormalizedPosition = v, endValue, duration)
                 .SetUpdate(true)
-                .SetEase(Ease.OutQuad) // 애니메이션의 Ease 타입 설정 (선택 사항)
-                .SetId(instance); // 생성된 트윈에 ScrollRect 인스턴스를 ID로 할당
+                .SetEase(Ease.OutQuad)
+                .SetId(instance);
         }
 
-        public static void UpdateFocusParentToScrollView(this ScrollRect instance, FocusParent focusParent,
-            float margin = 30, float duration = 0.5f)
+        public static void UpdateFocusParentToScrollView(this ScrollRect instance, FocusParent focusParent, float margin = 30, float duration = 0.5f)
         {
             focusParent.FocusChanged.AddListener(ind =>
             {
-                instance.UpdateSelectedChildToScrollView(focusParent.focusList[ind].rectTransform, margin,
-                    duration);
+                instance.UpdateSelectedChildToScrollView(focusParent.focusList[ind].rectTransform, margin, duration);
             });
         }
 
         // 컴포넌트를 추가하고 가져옴
         public static T GetOrAddComponent<T>(this GameObject go) where T : Component
         {
-            var component = go.GetComponent<T>() ?? go.AddComponent<T>();
+            T component = go.GetComponent<T>() ?? go.AddComponent<T>();
             return component;
         }
 
         public static T GetOrAddComponent<T>(this Component go) where T : Component
         {
-            var component = go.GetComponent<T>() ?? go.gameObject.AddComponent<T>();
+            T component = go.GetComponent<T>() ?? go.gameObject.AddComponent<T>();
             return component;
         }
 
         public static T GetOrAddComponent<T>(this GameObject go, bool allowDuplication) where T : Component
         {
-            if (!allowDuplication && go.TryGetComponent(out T value)) return value;
+            if (!allowDuplication && go.TryGetComponent(out T value))
+            {
+                return value;
+            }
 
-            var component = go.GetComponent<T>() ?? go.AddComponent<T>();
+            T component = go.GetComponent<T>() ?? go.AddComponent<T>();
             return component;
         }
 
         /// <summary>
-        ///     컴포넌트 추가 함수
+        /// 컴포넌트 추가 함수
         /// </summary>
         /// <param name="allowDuplication">중복 허용 여부</param>
         public static void AddComponent<T>(this GameObject go, bool allowDuplication = true) where T : Component
         {
-            if (!allowDuplication && go.TryGetComponent(out T value)) return;
+            if (!allowDuplication && go.TryGetComponent(out T value))
+            {
+                return;
+            }
 
             go.AddComponent<T>();
         }
@@ -578,99 +585,141 @@ namespace Default
             go.transform.localScale = new Vector3((int)dir * radius * 2, radius * 2, 1);
         }
 
-        public static (Tween, Tween) DoJumpTween(this Rigidbody2D target, Vector2 endValue, float jumpPower,
-            float duration)
+        public static TweenerCore<Vector2, Vector2, VectorOptions> KillWhenBoxCast(this TweenerCore<Vector2, Vector2, VectorOptions> t2,
+            Rigidbody2D rb,
+            Vector2 boxSize,
+            LayerMask mask)
         {
-            float startPosY = 0;
-            float offsetY = -1;
-            var offsetYSet = false;
-            Tween xTween = DOTween.To(() => target.position, x => target.position = x, new Vector2(endValue.x, 0),
-                    duration)
-                .SetOptions(AxisConstraint.X).SetEase(Ease.Linear).SetUpdate(UpdateType.Fixed);
+            bool killRequested = false;
 
-            Tween yTween = DOTween.To(() => target.position, x => target.position = x, new Vector2(0, jumpPower),
-                    duration / 2)
-                .SetOptions(AxisConstraint.Y).SetEase(Ease.OutSine).SetRelative()
-                .SetLoops(2, LoopType.Yoyo)
-                .OnStart(() => startPosY = target.position.y).SetUpdate(UpdateType.Fixed);
+            
+            var originalSetter = t2.setter;   // 기존 setter 저장
 
-            yTween.OnUpdate(() =>
+            t2.setter = newPos =>
             {
-                if (!offsetYSet)
+                if (killRequested)
+                    return;
+
+                Vector2 current = rb.position;
+                Vector2 delta = newPos - current;
+                float dist = delta.magnitude;
+
+                if (dist > 0)
                 {
-                    offsetYSet = true;
-                    offsetY = endValue.y - startPosY;
+                    var hit = Physics2D.BoxCast(current, boxSize, 0, delta.normalized, dist, mask);
+                    if (hit)
+                    {
+                        killRequested = true;
+                        return;
+                    }
                 }
 
-                Vector3 pos = target.position;
-                pos.y += DOVirtual.EasedValue(0, offsetY, yTween.ElapsedPercentage(), Ease.OutQuad);
-                target.MovePosition(pos);
+                // 안전할 때만 기존 setter 호출
+                originalSetter(newPos);
+            };
+
+            t2.OnUpdate(() =>
+            {
+                if (killRequested)
+                    t2.Kill();
             });
+
+            return t2;
+        }
+        
+        static float CalcApexJumpY(float t, float startY, float endY, float jumpHeight)
+        {
+            float apexY = Mathf.Max(startY, endY) + jumpHeight;
+
+            if (t < 0.5f)
+            {
+                float upT = t / 0.5f;
+                return Mathf.Lerp(startY, apexY, DOVirtual.EasedValue(0, 1, upT, Ease.OutQuad));
+            }
+            else
+            {
+                float downT = (t - 0.5f) / 0.5f;
+                return Mathf.Lerp(apexY, endY, DOVirtual.EasedValue(0, 1, downT, Ease.InQuad));
+            }
+        }
+        
+        public static (Tween xTween, Tween yTween) DoJumpApex(
+            this Rigidbody2D rb,
+            Vector2 endPos,
+            float jumpHeight,
+            float duration,
+            Vector2 boxSize,
+            LayerMask wallMask,Ease xEase = Ease.Linear)
+        {
+            Vector2 startPos = rb.position;
+
+            float xT = 0f;
+            float yT = 0f;
+
+            bool blockX = false;
+
+            // X 진행도 Tween
+            Tween xTween = DOTween.To(() => xT, v => xT = v, 1f, duration)
+                .SetEase(xEase)
+                .SetUpdate(UpdateType.Fixed);
+
+            // Y 진행도 Tween
+            Tween yTween = DOTween.To(() => yT, v => yT = v, 1f, duration)
+                .SetEase(Ease.Linear)
+                .SetUpdate(UpdateType.Fixed);
+
+            // === 최종 이동 Setter (KillWhenBoxCast 철학 유지) ===
+            xTween.OnUpdate(() =>
+            {
+                float easedX = DOVirtual.EasedValue(0, 1, xT, xEase);
+
+                float targetX = Mathf.Lerp(startPos.x, endPos.x, easedX);
+                float targetY = CalcApexJumpY(yT, startPos.y, endPos.y, jumpHeight);
+
+                Vector2 current = rb.position;
+
+                // X만 벽 체크
+                if (!blockX)
+                {
+                    Vector2 xOnlyTarget = new Vector2(targetX, current.y);
+                    Vector2 delta = xOnlyTarget - current;
+
+                    if (delta.sqrMagnitude > 0.0002f)
+                    {
+                        if (Physics2D.BoxCast(
+                                current,
+                                boxSize,
+                                0,
+                                delta.normalized,
+                                delta.magnitude,
+                                wallMask))
+                        {
+                            blockX = true;
+                            targetX = current.x;
+                        }
+                    }
+                }
+                else
+                {
+                    targetX = current.x;
+                }
+
+                Vector2 nextPos = new Vector2(targetX, targetY);
+                rb.MovePosition(nextPos);
+            });
+
             return (xTween, yTween);
-        }
-
-        public static (Tween, Tween) DOJumpUp(this Rigidbody2D target, Vector2 endValue, float jumpPower,
-            float duration, bool snapping = false)
-        {
-            var s = DOTween.Sequence();
-
-            var totalY = endValue.y + jumpPower - target.transform.position.y + jumpPower;
-
-            var d2 = Mathf.Approximately(totalY, 0) || totalY < 0 ? 0.5f : Mathf.Abs(jumpPower / totalY);
-            var d1 = 1 - d2;
-
-            Tween yTween1 = DOTween.To(() => target.position, x => target.position = x,
-                    new Vector2(0, endValue.y + jumpPower), duration * d1)
-                .SetOptions(AxisConstraint.Y, snapping).SetEase(Ease.OutQuad);
-            Tween yTween2 = DOTween
-                .To(() => target.position, x => target.position = x, new Vector2(0, endValue.y), duration * d2)
-                .SetOptions(AxisConstraint.Y, snapping).SetEase(Ease.InQuad);
-
-            var s2 = DOTween.Sequence();
-            s2.Append(yTween1).Append(yTween2);
-
-            s.Append(DOTween.To(() => target.position, x => target.position = x, new Vector2(endValue.x, 0), duration)
-                .SetOptions(AxisConstraint.X, snapping).SetEase(Ease.Linear)
-            ).SetTarget(target).SetEase(DOTween.defaultEaseType);
-
-            return (s, s2);
-        }
-
-        public static (Tween, Tween) DOJumpDown(this Rigidbody2D target, Vector2 endValue, float jumpPower,
-            float duration, bool snapping = false)
-        {
-            var s = DOTween.Sequence();
-
-            var totalY = jumpPower + target.position.y + jumpPower - endValue.y;
-            var d1 = Mathf.Approximately(totalY, 0) || totalY < 0 ? 0.5f : Mathf.Abs(jumpPower / totalY);
-            var d2 = 1 - d1;
-
-            Tween yTween1 = DOTween.To(() => target.position, x => target.position = x, new Vector2(0, jumpPower),
-                    duration * d1)
-                .SetOptions(AxisConstraint.Y, snapping).SetEase(Ease.OutQuad).SetRelative();
-            Tween yTween2 = DOTween
-                .To(() => target.position, x => target.position = x, new Vector2(0, endValue.y), duration * d2)
-                .SetOptions(AxisConstraint.Y, snapping).SetEase(Ease.InQuad);
-
-            var s2 = DOTween.Sequence();
-            s2.Append(yTween1).Append(yTween2);
-
-            s.Append(DOTween.To(() => target.position, x => target.position = x, new Vector2(endValue.x, 0), duration)
-                .SetOptions(AxisConstraint.X, snapping).SetEase(Ease.Linear)
-            ).SetTarget(target).SetEase(DOTween.defaultEaseType);
-
-            return (s, s2);
         }
 
         public static Tween LaunchTileSprite(this SpriteRenderer render, Vector2 endPos, float fireTime,
             Ease ease)
         {
-            var dir = endPos - (Vector2)render.transform.position;
+            Vector2 dir = endPos - (Vector2)render.transform.position;
             dir.Normalize();
 
             render.transform.right = -dir;
 
-            var distance = Vector2.Distance(render.transform.position, endPos);
+            float distance = Vector2.Distance(render.transform.position, endPos);
 
             Tween tweener = DOTween.To(() => render.size, x => render.size = x,
                 new Vector2(distance / render.transform.localScale.x, render.size.y),
@@ -705,7 +754,7 @@ namespace Default
             Action<T> handler)
         {
             Action<T> wrapper = null;
-            wrapper = arg =>
+            wrapper = (arg) =>
             {
                 handler?.Invoke(arg);
                 unsubscribe(wrapper);
@@ -727,7 +776,7 @@ namespace Default
         public static void RegisterOneTime<T>(UnityEvent<T> unityEvent, UnityAction<T> handler)
         {
             UnityAction<T> wrapper = null;
-            wrapper = arg =>
+            wrapper = (arg) =>
             {
                 handler?.Invoke(arg);
                 unityEvent.RemoveListener(wrapper);
@@ -742,26 +791,31 @@ namespace Default
     {
         public static long CurrentTimeToId(string formatter = "yyMMddHHmmss")
         {
-            var currentTime = DateTime.Now;
+            DateTime currentTime = DateTime.Now;
             Debug.Log(currentTime.ToString(formatter));
             return long.Parse(currentTime.ToString(formatter));
         }
 
         public static string TimeDisplay(float second)
         {
-            var days = (int)(second / (24 * 3600)); // 일 수 계산
-            var hours = (int)(second % (24 * 3600) / 3600); // 시간 계산
-            var minutes = (int)(second % 3600 / 60); // 분 계산
-            var seconds = (int)(second % 60); // 초 계산
+            int days = (int)(second / (24 * 3600)); // 일 수 계산
+            int hours = (int)((second % (24 * 3600)) / 3600); // 시간 계산
+            int minutes = (int)((second % 3600) / 60); // 분 계산
+            int seconds = (int)(second % 60); // 초 계산
 
-            if (days > 0) return $"{days}{(days == 1 ? "day" : "days")} {hours:D2}:{minutes:D2}:{seconds:D2}";
-
-            return $"{hours:D2}:{minutes:D2}:{seconds:D2}";
+            if (days > 0)
+            {
+                return $"{days}{(days == 1 ? "day" : "days")} {hours:D2}:{minutes:D2}:{seconds:D2}";
+            }
+            else
+            {
+                return $"{hours:D2}:{minutes:D2}:{seconds:D2}";
+            }
         }
 
         public static int GetRatioIntByInt(int value, int from, int to)
         {
-            var realInt = Mathf.RoundToInt(value / (float)(from - 1) * (to - 1));
+            int realInt = Mathf.RoundToInt((float)value / (from - 1) * (to - 1));
             return Mathf.Clamp(realInt, 0, to - 1);
         }
     }

@@ -1,32 +1,57 @@
-﻿using Apis.UI.Focus;
+﻿using System;
+using System.Collections.Generic;
+using Apis.UI.Focus;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Apis.UI
 {
-    public class UIAsset_Slider : UIEffector
+    public class UIAsset_Slider: UIEffector
     {
         public Slider slider;
         public NavigationMode mode;
-        public float moveDir = 0.1f;
+        [Range(0,1)] public float movePower = 0.01f;
 
         private float curValue;
-
+        [SerializeField] private UI_KeyController _keyController;
+        
         public override void Init()
         {
             base.Init();
             curValue = slider.value;
+            if (_keyController == null)
+            {
+                _keyController = new();
+            }
+
+            if (mode == NavigationMode.Horizontal)
+            {
+                _keyController.Init(new List<(Define.UIKey key, Action onKeyPressed)>
+                {
+                    (Define.UIKey.Left,MovePre),
+                    (Define.UIKey.Right,MoveNext),
+                });
+            }
+            else
+            {
+                _keyController.Init(new List<(Define.UIKey key, Action onKeyPressed)>
+                {
+                    (Define.UIKey.Down, MovePre),
+                    (Define.UIKey.Up, MoveNext),
+                });
+            }
         }
 
         public void MovePre()
         {
-            curValue = Mathf.Max(0, curValue - moveDir);
+            curValue = Mathf.Clamp01(curValue - movePower);
             UpdateValue();
         }
 
         public void MoveNext()
         {
-            curValue = Mathf.Min(1, curValue + moveDir);
+            curValue = Mathf.Clamp01(curValue + movePower);
             UpdateValue();
         }
 
@@ -34,38 +59,19 @@ namespace Apis.UI
         {
             slider.value = curValue;
         }
-
-
+        
+        
         public override void KeyControl()
         {
-            if (mode == NavigationMode.Horizontal)
-            {
-                if (InputManager.GetKeyDown(KeySettingManager.GetUIKeyCode(Define.UIKey.Left))) MovePre();
-                if (InputManager.GetKeyDown(KeySettingManager.GetUIKeyCode(Define.UIKey.Right))) MoveNext();
-            }
-            else
-            {
-                // 반대로 위쪽이 증가하는 방향
-                if (InputManager.GetKeyDown(KeySettingManager.GetUIKeyCode(Define.UIKey.Up))) MoveNext();
-                if (InputManager.GetKeyDown(KeySettingManager.GetUIKeyCode(Define.UIKey.Down))) MovePre();
-            }
+            base.KeyControl();
+            _keyController.KeyUpdate();
         }
 
         public override void GamePadControl()
         {
             base.GamePadControl();
-
-            if (mode == NavigationMode.Horizontal)
-            {
-                if (InputManager.GetButtonDown(KeySettingManager.GetUIButton(Define.UIKey.Left))) MovePre();
-                if (InputManager.GetButtonDown(KeySettingManager.GetUIButton(Define.UIKey.Right))) MoveNext();
-            }
-            else
-            {
-                // 반대로 위쪽이 증가하는 방향
-                if (InputManager.GetButtonDown(KeySettingManager.GetUIButton(Define.UIKey.Up))) MoveNext();
-                if (InputManager.GetButtonDown(KeySettingManager.GetUIButton(Define.UIKey.Down))) MovePre();
-            }
+            
+            _keyController.ButtonUpdate();
         }
     }
 }

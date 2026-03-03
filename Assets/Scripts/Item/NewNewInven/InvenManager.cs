@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
-using NewNewInvenSpace;
 using UnityEngine;
-using InvenType = NewNewInvenSpace.InvenType;
 
 namespace Apis
 {

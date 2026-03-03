@@ -1,6 +1,6 @@
 using Apis.SkillTrees;
 using EventData;
-using UI;
+using Apis.UI;
 
 namespace Apis
 {
@@ -56,6 +56,7 @@ namespace Apis
             base.OnEquip(owner);
             Icon.WhenItemIsSet();
             Icon.Skill = this;
+            Icon.SetIcon(SkillImage);
         }
 
         public override void AfterDuration()

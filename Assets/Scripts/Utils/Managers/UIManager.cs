@@ -4,7 +4,7 @@ using System.Linq;
 using Default;
 using GameStateSpace;
 using Managers;
-using UI;
+using Apis.UI;
 using UISpaces;
 using UnityEngine;
 using GUtil = Default.Utils;
@@ -213,7 +213,6 @@ namespace Apis
             var go = Pool.Get($"Prefabs/UI/SubItem/{prefabName}");
 
             var subItem = GUtil.GetOrAddComponent<UI_Base>(go);
-            subItem.isChild = true;
 
             if (!ReferenceEquals(parent, null))
             {

@@ -9,7 +9,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 
-namespace UI
+namespace Apis.UI
 {
     public class UI_BuffIcon : UI_Base, ISubject<UI_BuffIcon>
     {

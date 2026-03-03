@@ -3,7 +3,7 @@ using Save.Schema;
 
 namespace Apis
 {
-    public class UISetting_Content : UI_FocusContent
+    public class UISetting_Content: UI_FocusContent
     {
         public FocusParent focusParent;
 
@@ -14,8 +14,9 @@ namespace Apis
             focusParent?.InitCheck();
         }
 
-        public virtual void ResetBySaveData(SettingData data)
+        public virtual void ResetBySaveData()
         {
+            
         }
 
         public override void KeyControl()

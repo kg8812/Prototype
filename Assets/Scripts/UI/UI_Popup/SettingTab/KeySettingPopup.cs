@@ -1,5 +1,8 @@
+using System.Collections;
+using System.Collections.Generic;
 using Default;
 using Save.Schema;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class KeySettingPopup : UI_Scene
@@ -22,16 +25,17 @@ public class KeySettingPopup : UI_Scene
     {
         keyImage.sprite = DataAccess.Settings.Data.GetGameKeyImage(_gameKey.gameKey);
     }
-
     public override void KeyControl()
     {
         base.KeyControl();
 
-        foreach (var key in DataAccess.Settings.Data.KeycodeImages.Keys)
+        foreach (KeyCode key in DataAccess.Settings.Data.KeycodeImages.Keys)
+        {
             if (InputManager.GetKeyDown(key))
             {
-                DataAccess.Settings.Data.SetGameKey(_gameKey.gameKey, key);
+                DataAccess.Settings.Data.SetGameKey(_gameKey.gameKey,key);
                 GameManager.UI.CloseUI(this);
             }
+        }
     }
 }

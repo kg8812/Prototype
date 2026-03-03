@@ -5,13 +5,15 @@ namespace Save.Schema
 {
     public class SlotInfoSaveData : SlotSaveData
     {
-        public DateTime LastPlayTime;
+        public PlayerType PlayerType;
         public int Lv;
-        public float PlayTime;
-
+        public DateTime LastPlayTime;
+        public float PlayTime = 0;
+        
 
         protected override void OnBeforeSave()
         {
+            PlayerType = GameManager.instance.Player.playerType;
             Lv = GameManager.instance.Level;
             LastPlayTime = DateTime.Now;
             PlayTime = Mathf.RoundToInt(GameManager.instance.playTime);
@@ -28,7 +30,7 @@ namespace Save.Schema
             LastPlayTime = DateTime.Now;
             // 70001 맵박스 이름.
             PlayTime = 0;
-
+            
             GameManager.instance.playTime = PlayTime;
         }
     }

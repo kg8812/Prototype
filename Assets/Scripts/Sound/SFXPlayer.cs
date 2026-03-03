@@ -33,7 +33,7 @@ public class SFXPlayer : MonoBehaviour, IPoolObject
     public void OnReturn()
     {
         if (isDestroy)
-            _audioUtil?.Destroy();
+            _audioUtil?.Release();
         else
             _audioUtil?.Stop();
     }

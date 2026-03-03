@@ -1,3 +1,4 @@
+using Apis.Managers;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -5,36 +6,18 @@ namespace Apis.SkillTrees
 {
     public abstract class SkillTree : SerializedScriptableObject, ISkillVisitor
     {
-        public enum SlotTypeEnum
-        {
-            Low,
-            Medium,
-            High
-        }
-
-        public enum TreeTypeEnum
-        {
-            Active,
-            Passive,
-            Support
-        }
-
         [SerializeField] [LabelText("인덱스")] private int index;
 
         protected int level;
         public int Level => level;
-        public SlotTypeEnum SlotType { get; private set; }
 
-        public string Name { get; }
+        public string Name { get; private set; }
 
-        public string Description { get; }
+        public string Description { get; private set; }
 
         public int Index => index;
         public PlayerType PlayerType { get; private set; }
 
-        public TreeTypeEnum TreeType { get; private set; }
-
-        public int[] TagNames { get; private set; }
 
         // 호출은 액티브 -> 패시브 순으로 호출됨.
 
@@ -57,12 +40,9 @@ namespace Apis.SkillTrees
         {
             if (SkillTreeDatas.TryGetSkillTreeData(index, out var data))
             {
-                // _name = LanguageManager.Str(data.name);
-                // description = LanguageManager.Str(data.description);
+                Name = LanguageManager.Str(data.name);
+                Description = LanguageManager.Str(data.description);
                 PlayerType = data.playerType;
-                TreeType = data.treeType;
-                TagNames = data.tagNames;
-                SlotType = data.slotType;
 
                 level = 0;
             }

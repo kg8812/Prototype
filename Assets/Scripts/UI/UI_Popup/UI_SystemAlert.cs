@@ -1,9 +1,9 @@
-using Apis.UI;
 using Default;
+using Apis.UI;
 using Managers;
 using TMPro;
 
-namespace UI
+namespace Apis.UI
 {
     public class UI_SystemAlert : UI_Popup
     {
@@ -16,10 +16,8 @@ namespace UI
         {
             Text
         }
-
         private UIAsset_Button btn;
         private bool isAccepted;
-
         public override void Init()
         {
             base.Init();
@@ -28,6 +26,7 @@ namespace UI
             Bind<TextMeshProUGUI>(typeof(Texts));
             btn = Get<UIAsset_Button>((int)Buttons.AcceptButton);
             btn.OnClick.AddListener(Accept);
+
         }
 
         public override void TryActivated(bool force = false)

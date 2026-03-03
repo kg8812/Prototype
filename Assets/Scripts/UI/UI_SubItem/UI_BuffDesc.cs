@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace UI
+namespace Apis.UI
 {
     public class UI_BuffDesc : UI_Base
     {

@@ -322,5 +322,6 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
         effect.transform.localPosition = Vector3.zero;
         effect.transform.localRotation = Quaternion.identity;
         effect.transform.localScale = Vector3.one;
+        effect.transform.SetParent(transform);
     }
 }

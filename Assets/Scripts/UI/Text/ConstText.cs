@@ -1,11 +1,12 @@
-﻿using Apis.Managers;
+﻿using System;
+using Apis.Managers;
 using TMPro;
 using UnityEngine;
 
 namespace Apis
 {
     [RequireComponent(typeof(TextMeshProUGUI))]
-    public class ConstText : MonoBehaviour
+    public class ConstText: MonoBehaviour
     {
         public int textId;
 
@@ -14,7 +15,10 @@ namespace Apis
         private void OnEnable()
         {
             _text ??= GetComponent<TextMeshProUGUI>();
-            if (textId != 0) LanguageManager.RegisterText(_text, textId);
+            if (textId != 0)
+            {
+                LanguageManager.RegisterText(_text, textId);
+            }
         }
 
         private void OnDisable()

@@ -3,11 +3,11 @@ using Default;
 using Managers;
 using UnityEngine;
 
-namespace UI
+namespace Apis.UI
 {
-    public class UI_Ingame : UI_Base
+    public class UI_Ingame: UI_Base
     {
-        protected Transform targetTrans;
+        protected Transform targetTrans = null;
         protected Vector2 targetPos = Vector2.zero;
 
 
@@ -19,16 +19,6 @@ namespace UI
         private Vector2 camPixel;
 
         protected Vector2 calcPos;
-
-
-        protected virtual void Update()
-        {
-            if (_activated && optimizationActivate)
-            {
-                CalCulateTargetPos();
-                PositioningFollower();
-            }
-        }
 
 
         public override void TryActivated(bool force = false)
@@ -50,6 +40,16 @@ namespace UI
             camPixel = new Vector2(uiCam.pixelWidth, uiCam.pixelHeight) * 0.5f;
         }
 
+
+        protected virtual void Update()
+        {
+            if (_activated && optimizationActivate)
+            {
+                CalCulateTargetPos();
+                PositioningFollower();
+            }
+        }
+
         protected virtual void CalCulateTargetPos()
         {
             if (!ReferenceEquals(null, targetTrans))
@@ -60,20 +60,26 @@ namespace UI
                     return;
                 }
 
-                targetPos = targetTrans.position;
+                targetPos = (Vector2)targetTrans.position;
             }
 
             calcPos = (Vector2)mainCam.WorldToScreenPoint(targetPos) - camPixel;
+            
         }
 
         protected virtual void PositioningFollower()
         {
+            
         }
+
 
 
         public void ChangeOptimizationActivate(bool value)
         {
-            if (_activated) optimizationActivate = value;
+            if (_activated)
+            {
+                optimizationActivate = value;
+            }
         }
     }
 }

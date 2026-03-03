@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Default;
-using NewNewInvenSpace;
+using Apis.InvenSpace;
 
 namespace Apis
 {
@@ -22,7 +22,17 @@ namespace Apis
         {
             if (isInit) return;
             isInit = true;
-            // 팩토리 초기화
+            // TODO : 팩토리 초기화
+        }
+
+        public Item GetItem(int itemId)
+        {
+            Item item = null;
+            
+            //TODO : 아이템 팩토리에서 생성해서 넣어줄것
+            // item = ....
+            
+            return item;
         }
     }
 }

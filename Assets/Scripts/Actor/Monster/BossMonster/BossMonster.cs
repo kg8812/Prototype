@@ -288,18 +288,17 @@ namespace Apis
             StartAtkPattern(idx);
         }
 
-        public Tween MoveToPlayer(float meleeDistance, float minDistance, float maxDistance, float duration, Ease ease)
+        public Tween MoveToPlayer(float meleeDistance,float minDistance,float maxDistance,float duration,Ease ease)
         {
-            Rb.DOKill();
-
-            var playerX = GameManager.instance.ControllingEntity.Position.x;
-            var x = Position.x;
+            ActorMovement.Stop();
+            
+            float playerX = GameManager.instance.ControllingEntity.Position.x;
+            float x = Position.x;
 
             float moveDist;
-            if ((x < playerX && Direction == EActorDirection.Right) ||
-                (x > playerX && Direction == EActorDirection.Left))
+            if (x < playerX && Direction == EActorDirection.Right || x > playerX && Direction == EActorDirection.Left)
             {
-                var endX = x > playerX ? playerX + meleeDistance : playerX - meleeDistance;
+                float endX = x > playerX ? playerX + meleeDistance : playerX - meleeDistance;
                 moveDist = Mathf.Clamp(Mathf.Abs(endX - x), minDistance, maxDistance);
                 moveDist *= DirectionScale;
             }
@@ -308,25 +307,24 @@ namespace Apis
                 moveDist = minDistance * DirectionScale;
             }
 
-            Tween tween = Rb.DOMoveX(moveDist, duration).SetRelative().SetEase(ease);
-            tween.KillWhenBoxCast(this, 0.5f, Vector2.right * DirectionScale, new Vector2(0.2f, 1), LayerMasks.Wall);
-
+            var tween = Rb.DOMoveX(Rb.position.x + moveDist,duration)
+            .SetEase(ease).SetUpdate(UpdateType.Fixed);
+            tween.KillWhenBoxCast(Rb, new Vector2(0.2f, 1), LayerMasks.Wall);
+           
             return tween;
         }
 
-        public (Tween, Tween) JumpToPlayer(float meleeDistance, float minDistance, float maxDistance, float jumpHeight,
-            float duration)
+        public (Tween,Tween) JumpToPlayer(float meleeDistance, float minDistance, float maxDistance, float jumpHeight, float duration)
         {
             Rb.DOKill();
 
-            var playerX = GameManager.instance.ControllingEntity.Position.x;
-            var x = Position.x;
+            float playerX = GameManager.instance.ControllingEntity.Position.x;
+            float x = Position.x;
 
             float moveDist;
-            if ((x < playerX && Direction == EActorDirection.Right) ||
-                (x > playerX && Direction == EActorDirection.Left))
+            if (x < playerX && Direction == EActorDirection.Right || x > playerX && Direction == EActorDirection.Left)
             {
-                var endX = x > playerX ? playerX + meleeDistance : playerX - meleeDistance;
+                float endX = x > playerX ? playerX + meleeDistance : playerX - meleeDistance;
                 moveDist = Mathf.Clamp(Mathf.Abs(endX - x), minDistance, maxDistance);
             }
             else
@@ -334,27 +332,27 @@ namespace Apis
                 moveDist = minDistance;
             }
 
-            (Tween x, Tween y) tween = ActorMovement.DoJumpTween(duration, jumpHeight, moveDist, false);
-            tween.x.KillWhenBoxCast(this, 0.5f, Vector2.right * DirectionScale, new Vector2(0.2f, 1), LayerMasks.Wall);
+            Vector2 endPos = (Vector2)transform.position + Vector2.right * (moveDist * DirectionScale);
+            (Tween x,Tween y) tween = ActorMovement.DoJumpTween(duration, jumpHeight, 
+                endPos, LayerMasks.Wall);
 
             return tween;
         }
 
-        public (Tween, Tween) JumpToPlayer(float meleeDistance, float minDistance, float maxDistance, float jumpHeight,
+        public (Tween,Tween) JumpToPlayer(float meleeDistance, float minDistance, float maxDistance, float jumpHeight,
             float endHeight, float duration)
         {
             Rb.DOKill();
 
-            var playerX = GameManager.instance.ControllingEntity.Position.x;
-            var x = Position.x;
+            float playerX = GameManager.instance.ControllingEntity.Position.x;
+            float x = Position.x;
 
-            var y = endHeight;
-
+            float y = endHeight;
+            
             float moveDist;
-            if (((x < playerX && Direction == EActorDirection.Right) ||
-                 (x > playerX && Direction == EActorDirection.Left)) && Mathf.Abs(x - playerX) > meleeDistance)
+            if ((x < playerX && Direction == EActorDirection.Right || x > playerX && Direction == EActorDirection.Left) && Mathf.Abs(x - playerX) > meleeDistance)
             {
-                var endX = x > playerX ? playerX + meleeDistance : playerX - meleeDistance;
+                float endX = x > playerX ? playerX + meleeDistance : playerX - meleeDistance;
                 moveDist = Mathf.Clamp(Mathf.Abs(endX - x), minDistance, maxDistance);
             }
             else
@@ -362,17 +360,15 @@ namespace Apis
                 moveDist = minDistance;
             }
 
-            (Tween x, Tween y) tween = ActorMovement.DoJumpTween(duration, jumpHeight, moveDist, y, false);
-
-            if (moveDist > 0)
-                tween.x.KillWhenBoxCast(this, 0.5f, Vector2.right * DirectionScale, new Vector2(0.2f, 1),
-                    LayerMasks.Wall);
-            else
-                tween.x.KillWhenBoxCast(this, 0.5f, Vector2.left * DirectionScale, new Vector2(0.2f, 1),
-                    LayerMasks.Wall);
+            Vector2 endPos = (Vector2)transform.position + Vector2.right * (moveDist * DirectionScale);
+            
+            (Tween x, Tween y) tween = ActorMovement.DoJumpTween(duration, jumpHeight,
+                endPos, LayerMasks.Wall);
+            
+            
             return tween;
         }
-
+        
         public override void Die()
         {
             base.Die();

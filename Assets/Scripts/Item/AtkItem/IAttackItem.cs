@@ -1,4 +1,5 @@
 using Apis;
+using UnityEngine;
 
 public enum AttackCategory
 {
@@ -31,6 +32,7 @@ public interface IAttackItem
         Icon = icon;
         WhenIconIsSet(icon);
     }
+    public Sprite Image { get; }
 }
 
 public interface IAttackItemStat

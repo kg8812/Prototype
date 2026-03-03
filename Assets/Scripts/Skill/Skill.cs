@@ -489,6 +489,9 @@ namespace Apis
 
         public bool IsToggleOn => this is ActiveSkill { ActiveStrategy: ToggleSkill { isToggleOn: true } };
 
+        [SerializeField] private Sprite _skillImage;
+        public Sprite SkillImage => _skillImage;
+        
         #endregion
 
         #region Enums

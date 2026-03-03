@@ -5,7 +5,7 @@ using Default;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace UI
+namespace Apis.UI
 {
     public class UI_BuffCollector : UI_Base, IObserver<UI_BuffIcon>
     {

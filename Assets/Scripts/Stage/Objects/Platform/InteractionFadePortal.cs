@@ -1,6 +1,6 @@
 using System;
 using Managers;
-using UI;
+using Apis.UI;
 using UnityEngine;
 
 public class InteractionFadePortal : MonoBehaviour, IOnInteract

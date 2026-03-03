@@ -9,24 +9,6 @@ public partial class GameManager : Singleton<GameManager>
 {
     private static DatabaseManager _data;
 
-    private static SceneLoadManager _scene;
-
-    private static UIManager _ui;
-
-    private static SoundManager _sound;
-
-
-    private static TriggerManager _trigger;
-
-
-    private static SaveManager _save;
-
-    private static FactoryManager _factory;
-
-    private static ItemFactoryManager _item;
-
-    private static AttackObject _atkObj;
-
     public static DatabaseManager Data
     {
         get
@@ -40,6 +22,8 @@ public partial class GameManager : Singleton<GameManager>
             return _data;
         }
     }
+
+    private static SceneLoadManager _scene;
 
     public static SceneLoadManager Scene
     {
@@ -55,6 +39,8 @@ public partial class GameManager : Singleton<GameManager>
         }
     }
 
+    private static UIManager _ui;
+
     public static UIManager UI
     {
         get
@@ -68,6 +54,8 @@ public partial class GameManager : Singleton<GameManager>
             return _ui;
         }
     }
+
+    private static SoundManager _sound;
 
     public static SoundManager Sound
     {
@@ -83,6 +71,9 @@ public partial class GameManager : Singleton<GameManager>
         }
     }
 
+
+    private static TriggerManager _trigger;
+
     public static TriggerManager Trigger
     {
         get
@@ -97,6 +88,8 @@ public partial class GameManager : Singleton<GameManager>
         }
     }
 
+    static SaveManager _save;
+
     public static SaveManager Save
     {
         get
@@ -106,6 +99,24 @@ public partial class GameManager : Singleton<GameManager>
         }
     }
 
+    
+    private static SlotManager _slot;
+
+    public static SlotManager Slot
+    {
+        get
+        {
+            if (_slot == null)
+            {
+                _slot = new SlotManager();
+                // _slot.Init();
+            }
+            return _slot;
+        }
+    }
+
+    private static FactoryManager _factory;
+
     public static FactoryManager Factory
     {
         get
@@ -113,10 +124,15 @@ public partial class GameManager : Singleton<GameManager>
             _factory ??= new FactoryManager();
 
             return _factory;
+
         }
     }
 
+    private static ItemFactoryManager _item;
+
     public static ItemFactoryManager Item => _item ??= new ItemFactoryManager();
+
+    private static AttackObject _atkObj;
 
     public static AttackObject AtkObj
     {

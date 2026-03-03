@@ -1,3 +1,4 @@
+using Managers;
 using Save.Schema;
 
 public enum LanguageType
@@ -19,6 +20,6 @@ public class Settings
 
     public void Save()
     {
-        GameManager.Save.SaveData(PersistentDataKeys.GetKey(PersistentDataKeys.DataTypes.Setting), Data);
+        GameManager.Save.SaveData(SaveManager.SaveType.Persistent,PersistentDataKeys.GetKey(PersistentDataKeys.DataTypes.Setting));
     }
 }

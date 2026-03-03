@@ -14,6 +14,7 @@ public class Define
         Attack,
         ActiveSkill,
         Dash,
+        Tab
     }
 
     public enum UIKey
@@ -60,6 +61,10 @@ public class Define
         BasicAttack
     }
 
+    public enum ItemType // 아이템 타입
+    {
+    }
+    
     #endregion
 
     #region Address 모음

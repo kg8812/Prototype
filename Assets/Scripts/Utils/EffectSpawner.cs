@@ -24,14 +24,16 @@ namespace Apis
             user?.AddEvent(EventType.OnDestroy, _ => ReturnAllEffects());
         }
 
-        private ParticleDestroyer SpawnObject(string address, Vector2 position, bool setEffectParent,
-            bool disappearWhenHide)
+        ParticleDestroyer SpawnObject(string address, Vector2 position,bool setEffectParent,bool disappearWhenHide)
         {
             if (_user == null) return null;
             var vfx = GameManager.Factory.Get(FactoryManager.FactoryType.Effect, address, position);
-
-            if (!spawnedEffects.ContainsKey(address)) spawnedEffects.Add(address, new List<ParticleDestroyer>());
-
+            
+            if (!spawnedEffects.ContainsKey(address))
+            {
+                spawnedEffects.Add(address,new());
+            }
+            
             var destroyer = vfx.GetOrAddComponent<ParticleDestroyer>();
             spawnedEffects[address].Add(destroyer);
             allEffects.Add(destroyer);
@@ -41,7 +43,10 @@ namespace Apis
                 allEffects.Remove(destroyer);
             });
             destroyer.disappearWhenHide = disappearWhenHide;
-            if (setEffectParent) _user?.SetEffectParent(vfx);
+            if (setEffectParent)
+            {
+                _user?.SetEffectParent(vfx);
+            }
             return destroyer;
         }
 

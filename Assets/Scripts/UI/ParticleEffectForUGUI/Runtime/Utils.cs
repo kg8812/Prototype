@@ -15,7 +15,10 @@ namespace Coffee.UIParticleExtensions
             if (s_LinearToGammaLut == null)
             {
                 s_LinearToGammaLut = new byte[256];
-                for (var i = 0; i < 256; i++) s_LinearToGammaLut[i] = (byte)(Mathf.LinearToGammaSpace(i / 255f) * 255f);
+                for (var i = 0; i < 256; i++)
+                {
+                    s_LinearToGammaLut[i] = (byte)(Mathf.LinearToGammaSpace(i / 255f) * 255f);
+                }
             }
 
             return s_LinearToGammaLut[self];
@@ -95,7 +98,10 @@ namespace Coffee.UIParticleExtensions
         {
             if (s_TmpParticles.Length < size)
             {
-                while (s_TmpParticles.Length < size) size = Mathf.NextPowerOfTwo(size);
+                while (s_TmpParticles.Length < size)
+                {
+                    size = Mathf.NextPowerOfTwo(size);
+                }
 
                 s_TmpParticles = new ParticleSystem.Particle[size];
             }
@@ -107,15 +113,23 @@ namespace Coffee.UIParticleExtensions
         {
             var shape = self.shape;
             if (shape.enabled && shape.alignToDirection)
+            {
                 if (Mathf.Approximately(shape.scale.x * shape.scale.y * shape.scale.z, 0))
                 {
                     if (Mathf.Approximately(shape.scale.x, 0))
+                    {
                         shape.scale.Set(0.0001f, shape.scale.y, shape.scale.z);
+                    }
                     else if (Mathf.Approximately(shape.scale.y, 0))
+                    {
                         shape.scale.Set(shape.scale.x, 0.0001f, shape.scale.z);
+                    }
                     else if (Mathf.Approximately(shape.scale.z, 0))
+                    {
                         shape.scale.Set(shape.scale.x, shape.scale.y, 0.0001f);
+                    }
                 }
+            }
         }
 
         public static bool CanBakeMesh(this ParticleSystemRenderer self)
@@ -134,7 +148,9 @@ namespace Coffee.UIParticleExtensions
             var main = self.main;
             var space = main.simulationSpace;
             if (space == ParticleSystemSimulationSpace.Custom && !main.customSimulationSpace)
+            {
                 space = ParticleSystemSimulationSpace.Local;
+            }
 
             return space;
         }
@@ -163,25 +179,38 @@ namespace Coffee.UIParticleExtensions
                 if (!aMat) return -1;
                 if (!bMat) return 1;
 
-                if (sortByMaterial) return aMat.GetInstanceID() - bMat.GetInstanceID();
+                if (sortByMaterial)
+                {
+                    return aMat.GetInstanceID() - bMat.GetInstanceID();
+                }
 
-                if (aMat.renderQueue != bMat.renderQueue) return aMat.renderQueue - bMat.renderQueue;
+                if (aMat.renderQueue != bMat.renderQueue)
+                {
+                    return aMat.renderQueue - bMat.renderQueue;
+                }
 
                 // Sorting layer: ascending
                 if (aRenderer.sortingLayerID != bRenderer.sortingLayerID)
+                {
                     return SortingLayer.GetLayerValueFromID(aRenderer.sortingLayerID) -
                            SortingLayer.GetLayerValueFromID(bRenderer.sortingLayerID);
+                }
 
                 // Sorting order: ascending
                 if (aRenderer.sortingOrder != bRenderer.sortingOrder)
+                {
                     return aRenderer.sortingOrder - bRenderer.sortingOrder;
+                }
 
                 // Z position & sortingFudge: descending
                 var aTransform = a.transform;
                 var bTransform = b.transform;
                 var aPos = transform.InverseTransformPoint(aTransform.position).z + aRenderer.sortingFudge;
                 var bPos = transform.InverseTransformPoint(bTransform.position).z + bRenderer.sortingFudge;
-                if (!Mathf.Approximately(aPos, bPos)) return (int)Mathf.Sign(bPos - aPos);
+                if (!Mathf.Approximately(aPos, bPos))
+                {
+                    return (int)Mathf.Sign(bPos - aPos);
+                }
 
                 return (int)Mathf.Sign(GetIndex(self, a) - GetIndex(self, b));
             });
@@ -190,8 +219,12 @@ namespace Coffee.UIParticleExtensions
         private static int GetIndex(IList<ParticleSystem> list, Object ps)
         {
             for (var i = 0; i < list.Count; i++)
+            {
                 if (list[i].GetInstanceID() == ps.GetInstanceID())
+                {
                     return i;
+                }
+            }
 
             return 0;
         }
@@ -229,10 +262,14 @@ namespace Coffee.UIParticleExtensions
             if (!obj) return;
 #if UNITY_EDITOR
             if (!Application.isPlaying)
+            {
                 Object.DestroyImmediate(obj);
+            }
             else
 #endif
+            {
                 Object.Destroy(obj);
+            }
         }
 
         public static void DestroyImmediate(Object obj)
@@ -240,10 +277,14 @@ namespace Coffee.UIParticleExtensions
             if (!obj) return;
 #if UNITY_EDITOR
             if (Application.isEditor)
+            {
                 Object.DestroyImmediate(obj);
+            }
             else
 #endif
+            {
                 Object.Destroy(obj);
+            }
         }
 
 #if !UNITY_2021_2_OR_NEWER && !UNITY_2020_3_45 && !UNITY_2020_3_46 && !UNITY_2020_3_47 && !UNITY_2020_3_48

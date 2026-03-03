@@ -3,7 +3,7 @@ using Apis;
 using Managers;
 using UnityEngine;
 
-namespace chamwhy.Components
+namespace Components
 {
     public class SpawnPoint : MonoBehaviour
     {

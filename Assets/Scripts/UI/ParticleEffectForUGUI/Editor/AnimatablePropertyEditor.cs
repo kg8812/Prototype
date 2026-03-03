@@ -8,10 +8,10 @@ namespace Coffee.UIExtensions
 {
     internal static class AnimatablePropertyEditor
     {
-        private static readonly GUIContent s_ContentNothing = new("Nothing");
-        private static readonly List<string> s_ActiveNames = new();
-        private static readonly StringBuilder s_Sb = new();
-        private static readonly HashSet<string> s_Names = new();
+        private static readonly GUIContent s_ContentNothing = new GUIContent("Nothing");
+        private static readonly List<string> s_ActiveNames = new List<string>();
+        private static readonly StringBuilder s_Sb = new StringBuilder();
+        private static readonly HashSet<string> s_Names = new HashSet<string>();
 
         private static string CollectActiveNames(SerializedProperty sp, List<string> result)
         {
@@ -62,6 +62,7 @@ namespace Coffee.UIExtensions
             });
 
             if (!sp.hasMultipleDifferentValues)
+            {
                 for (var i = 0; i < sp.arraySize; i++)
                 {
                     var p = sp.GetArrayElementAtIndex(i);
@@ -69,6 +70,7 @@ namespace Coffee.UIExtensions
                     var type = (AnimatableProperty.ShaderPropertyType)p.FindPropertyRelative("m_Type").intValue;
                     AddMenu(gm, sp, new ShaderProperty(name, type), false);
                 }
+            }
 
             s_Names.Clear();
             for (var j = 0; j < mats.Length; j++)

@@ -6,16 +6,15 @@ using UnityEngine.Events;
 
 namespace Apis.UI
 {
-    public class UIAsset_Carousel : UIEffector
+    public class UIAsset_Carousel: UIEffector
     {
         public ConstText value;
-
-        [ShowInInspector] public List<int> CarList = new();
-
+        [ShowInInspector]
+        public List<int> CarList = new();
         [SerializeField] private NavigationMode mode;
         [SerializeField] private int defaultInd;
-        private int curInd;
-
+        private int curInd = 0;
+        
         public UnityEvent<int> ValueChanged = new();
 
 
@@ -31,18 +30,26 @@ namespace Apis.UI
         public void MovePre()
         {
             if (curInd <= 0)
+            {
                 curInd = CarList.Count - 1;
+            }
             else
+            {
                 curInd--;
+            }
             UpdateValue();
         }
 
         public void MoveNext()
         {
             if (curInd >= CarList.Count - 1)
+            {
                 curInd = 0;
+            }
             else
+            {
                 curInd++;
+            }
             UpdateValue();
         }
 
@@ -51,35 +58,59 @@ namespace Apis.UI
             value.ChangeId(CarList[curInd]);
             ValueChanged.Invoke(curInd);
         }
-
-
+        
+        
         public override void KeyControl()
         {
             if (mode == NavigationMode.Horizontal)
             {
-                if (InputManager.GetKeyDown(KeySettingManager.GetUIKeyCode(Define.UIKey.Left))) MovePre();
-                if (InputManager.GetKeyDown(KeySettingManager.GetUIKeyCode(Define.UIKey.Right))) MoveNext();
+                if (InputManager.GetKeyDown(KeySettingManager.GetUIKeyCode(Define.UIKey.Left)))
+                {
+                    MovePre();
+                } 
+                if (InputManager.GetKeyDown(KeySettingManager.GetUIKeyCode(Define.UIKey.Right)))
+                {
+                    MoveNext();
+                } 
             }
             else
             {
-                if (InputManager.GetKeyDown(KeySettingManager.GetUIKeyCode(Define.UIKey.Up))) MovePre();
-                if (InputManager.GetKeyDown(KeySettingManager.GetUIKeyCode(Define.UIKey.Down))) MoveNext();
+                if (InputManager.GetKeyDown(KeySettingManager.GetUIKeyCode(Define.UIKey.Up)))
+                {
+                    MovePre();
+                } 
+                if (InputManager.GetKeyDown(KeySettingManager.GetUIKeyCode(Define.UIKey.Down)))
+                {
+                    MoveNext();
+                } 
             }
         }
 
         public override void GamePadControl()
         {
             base.GamePadControl();
-
+            
             if (mode == NavigationMode.Horizontal)
             {
-                if (InputManager.GetButtonDown(KeySettingManager.GetUIButton(Define.UIKey.Left))) MovePre();
-                if (InputManager.GetButtonDown(KeySettingManager.GetUIButton(Define.UIKey.Right))) MoveNext();
+                if (InputManager.GetButtonDown(KeySettingManager.GetUIButton(Define.UIKey.Left)))
+                {
+                    MovePre();
+                } 
+                if (InputManager.GetButtonDown(KeySettingManager.GetUIButton(Define.UIKey.Right)))
+                {
+                    MoveNext();
+                } 
             }
             else
             {
-                if (InputManager.GetButtonDown(KeySettingManager.GetUIButton(Define.UIKey.Up))) MovePre();
-                if (InputManager.GetButtonDown(KeySettingManager.GetUIButton(Define.UIKey.Down))) MoveNext();
+                if (InputManager.GetButtonDown(KeySettingManager.GetUIButton(Define.UIKey.Up)))
+                {
+                    MovePre();
+                } 
+                if (InputManager.GetButtonDown(KeySettingManager.GetUIButton(Define.UIKey.Down)))
+                {
+                    MoveNext();
+                } 
             }
         }
     }

@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using Sirenix.Utilities;
 using UnityEngine;
 using UnityEngine.Events;
 using Random = UnityEngine.Random;
@@ -8,32 +10,58 @@ public class AudioSourceUtil : MonoBehaviour
 {
     public enum PlayingType
     {
-        Random,
-        InOrder,
-        IntroThenLoop
+        Random, InOrder, IntroThenLoop
     }
+    
+    AudioSource _audioSource;
+    public AudioSource AudioSource => _audioSource ??= GetComponent<AudioSource>();
 
-    private AudioSource _audioSource;
-    private UnityEvent _onEnd;
-    private UnityEvent _onLoop;
+    UnityEvent _onLoop;
+    UnityEvent _onEnd;
+    public UnityEvent OnLoop => _onLoop ??= new();
+    public UnityEvent OnEnd => _onEnd ??= new();
 
-    private UnityEvent _onPlay;
-
-    private bool isLoop;
-
-    private Coroutine playCoroutine;
+    Coroutine playCoroutine;
 
     private bool stopPlaying;
-    public AudioSource AudioSource => _audioSource ??= GetComponent<AudioSource>();
-    public UnityEvent OnPlay => _onPlay ??= new UnityEvent();
-    public UnityEvent OnLoop => _onLoop ??= new UnityEvent();
-    public UnityEvent OnEnd => _onEnd ??= new UnityEvent();
 
-    public void Play(PlayingType playingType, CustomQueue<AudioClip> clips, bool isLoop)
+    private bool _isLoop;
+    
+    public void PlaySingle(AudioClip clip, bool isLoop = false)
     {
-        if (playCoroutine != null) StopCoroutine(playCoroutine);
+        if (playCoroutine != null)
+        {
+            StopCoroutine(playCoroutine);
+            playCoroutine = null;
+        }
 
-        this.isLoop = isLoop;
+        stopPlaying = false;
+        _isLoop = isLoop;
+        playCoroutine = StartCoroutine(PlaySingleCoroutine(clip));
+    }
+
+    IEnumerator PlaySingleCoroutine(AudioClip clip)
+    {
+        AudioSource.loop = _isLoop;
+
+        yield return Play(clip);
+
+        if (!_isLoop)
+            OnEnd.Invoke();
+    }
+    
+    public void Play(PlayingType playingType,CustomQueue<AudioClip> clips,bool isLoop)
+    {
+        if (playCoroutine != null)
+        {
+            StopCoroutine(playCoroutine);
+            playCoroutine = null;
+        }
+
+        AudioSource.Stop();
+        AudioSource.loop = false;
+
+        this._isLoop = isLoop;
         stopPlaying = false;
         switch (playingType)
         {
@@ -48,33 +76,38 @@ public class AudioSourceUtil : MonoBehaviour
                 break;
         }
     }
-
-    private IEnumerator Play(AudioClip clip)
+    
+    IEnumerator Play(AudioClip clip)
     {
         AudioSource.Stop();
-        AudioSource.clip = clip;
+        if (AudioSource.clip != clip)
+        {
+            AudioSource.clip = clip;
+        }
+
         AudioSource.Play();
-        yield return new WaitForSecondsRealtime(clip.length);
+        while (AudioSource.isPlaying)
+        {
+            yield return null;
+        }
     }
 
-    private IEnumerator PlayRandom(CustomQueue<AudioClip> clips)
+    IEnumerator PlayRandom(CustomQueue<AudioClip> clips)
     {
         if (clips.Count == 0)
         {
             Debug.LogError("클립 개수 오류");
             yield break;
         }
-
-        var rand = Random.Range(0, clips.Count);
+        int rand = Random.Range(0, clips.Count);
         var clip = clips[rand];
         yield return Play(clip);
     }
-
-    private IEnumerator PlayInOrder(CustomQueue<AudioClip> clips)
+    IEnumerator PlayInOrder(CustomQueue<AudioClip> clips)
     {
         AudioSource.loop = false;
-
-        if (isLoop)
+        
+        if (_isLoop)
         {
             while (!stopPlaying)
             {
@@ -89,62 +122,82 @@ public class AudioSourceUtil : MonoBehaviour
             var clip = clips.Dequeue();
             yield return Play(clip);
         }
-
+        
         OnEnd.Invoke();
     }
 
-    private IEnumerator PlayInRandom(CustomQueue<AudioClip> clips)
+    IEnumerator PlayInRandom(CustomQueue<AudioClip> clips)
     {
         AudioSource.loop = false;
-
-        if (isLoop)
+        
+        if (_isLoop)
+        {
             while (!stopPlaying)
             {
                 yield return StartCoroutine(PlayRandom(clips));
                 OnLoop.Invoke();
             }
+        }
         else
+        {
             yield return StartCoroutine(PlayRandom(clips));
-
+        }
         OnEnd.Invoke();
     }
 
-    private IEnumerator PlayIntroThenLoop(CustomQueue<AudioClip> clips)
+    IEnumerator PlayIntroThenLoop(CustomQueue<AudioClip> clips)
     {
         AudioSource.loop = false;
-        for (var i = 0; i < clips.Count - 1; i++) yield return StartCoroutine(Play(clips[i]));
+        for (int i = 0; i < clips.Count - 1; i++)
+        {
+            yield return StartCoroutine(Play(clips[i]));
+        }
+        
+        // loop clip
+        var loopClip = clips[^1];
 
+        AudioSource.clip = loopClip;
         AudioSource.loop = true;
-        AudioSource.clip = clips[^1];
-        Play();
-    }
+        AudioSource.Play();
 
-    public void Play()
+        while (!stopPlaying)
+        {
+            yield return null;
+        }
+
+        AudioSource.loop = false;
+        AudioSource.Stop();
+
+        OnEnd.Invoke();
+    }
+    void Play()
     {
         AudioSource.Play();
-        OnPlay.Invoke();
     }
-
     public void Stop(bool isImmediate = false)
     {
         stopPlaying = true;
-        if (isImmediate) AudioSource.Stop();
+        if (isImmediate)
+        {
+            AudioSource.Stop();
+        }
     }
-
-    public void Destroy()
+    public void Release()
     {
         if (playCoroutine != null)
         {
             StopCoroutine(playCoroutine);
             playCoroutine = null;
         }
-
         if (AudioSource.isPlaying)
         {
             AudioSource.clip = null;
             AudioSource.Stop();
         }
 
-        if (gameObject.activeSelf) GameManager.Factory.Return(gameObject);
+        if (gameObject.activeSelf)
+        {
+            GameManager.Factory.Return(gameObject);
+        }
     }
 }

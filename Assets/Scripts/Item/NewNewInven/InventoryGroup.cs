@@ -1,35 +1,44 @@
 ﻿using System.Collections.Generic;
 
-namespace NewNewInvenSpace
+namespace Apis.InvenSpace
 {
     public enum InvenType
     {
         Equipment,
         Storage,
-        Hidden
     }
 
     public class InventoryGroup
     {
+        
         public Dictionary<InvenType, InventoryList> Invens;
 
-        public InventoryGroup(int eqMaxCnt, int eqCnt, int stMaxCnt, int stCnt)
+        public virtual void Init(int eqMaxCnt, int eqCnt, int stMaxCnt, int stCnt)
         {
-            Invens = new Dictionary<InvenType, InventoryList>();
+            SetInventories(eqMaxCnt, eqCnt, stMaxCnt, stCnt);
+
+            Invens[InvenType.Equipment].BeforeItemExcepted = (int ind, Item item) =>
+            {
+                if (!MoveInvenType(ind, InvenType.Equipment, InvenType.Storage))
+                {
+                    Abandon(ind, InvenType.Equipment);
+                }
+            };
+            Invens[InvenType.Storage].BeforeItemExcepted = (int ind, Item item) => Abandon(ind, InvenType.Storage);
+        }
+
+        protected virtual void SetInventories(int eqMaxCnt, int eqCnt, int stMaxCnt, int stCnt)
+        {
+            Invens = new();
+
             Invens.Add(InvenType.Equipment, new InventoryList(eqMaxCnt, eqCnt));
             Invens.Add(InvenType.Storage, new InventoryList(stMaxCnt, stCnt));
-
-            Invens[InvenType.Equipment].BeforeItemExcepted = (ind, item) =>
-            {
-                if (!MoveInvenType(ind, InvenType.Equipment, InvenType.Storage)) Abandon(ind, InvenType.Equipment);
-            };
-            Invens[InvenType.Storage].BeforeItemExcepted = (ind, item) => Abandon(ind, InvenType.Storage);
         }
 
         public virtual bool Add(Item item, InvenType type)
         {
             if (!Invens.TryGetValue(type, out var inven)) return false;
-            var ind = inven.GetEmptySlot();
+            int ind = inven.GetEmptySlot();
             if (ind < 0) return false;
             return inven.AddItem(ind, item);
         }
@@ -47,7 +56,7 @@ namespace NewNewInvenSpace
         public bool MoveInvenType(int fromInd, InvenType fromType, InvenType toType)
         {
             if (!Invens.TryGetValue(toType, out var toInven)) return false;
-            var toInd = toInven.GetEmptySlot();
+            int toInd = toInven.GetEmptySlot();
             // empty slot이 없는 경우
             if (toInd < 0) return false;
 
@@ -57,9 +66,11 @@ namespace NewNewInvenSpace
         public bool MoveInvenTypeAll(InvenType fromType, InvenType toType)
         {
             if (!Invens.TryGetValue(fromType, out var fromInven)) return false;
-            for (var i = 0; i < fromInven.Count; i++)
-                if (!MoveInvenType(i, fromType, toType))
-                    return false;
+            for (int i = 0; i < fromInven.Count; i++)
+            {
+                if (!MoveInvenType(i, fromType, toType)) return false;
+            }
+
             return true;
         }
 
@@ -86,16 +97,18 @@ namespace NewNewInvenSpace
                 inventory1.Change(index1, index2);
                 return true;
             }
+            else
+            {
+                // Debug.Log($"chagne try diff");
+                if (!CheckInvenAndIndex(index2, type2, out var inventory2)) return false;
 
-            // Debug.Log($"chagne try diff");
-            if (!CheckInvenAndIndex(index2, type2, out var inventory2)) return false;
+                Item itemFrom1 = inventory1.Remove(index1);
+                Item itemFrom2 = inventory2.Remove(index2);
 
-            var itemFrom1 = inventory1.Remove(index1);
-            var itemFrom2 = inventory2.Remove(index2);
-
-            inventory1.AddItem(index1, itemFrom2);
-            inventory2.AddItem(index2, itemFrom1);
-            return true;
+                inventory1.AddItem(index1, itemFrom2);
+                inventory2.AddItem(index2, itemFrom1);
+                return true;
+            }
         }
 
         public virtual Item Abandon(int index, InvenType type)

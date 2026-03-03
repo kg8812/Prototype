@@ -21,12 +21,12 @@ namespace Coffee.UIExtensions
     [AddComponentMenu("")]
     internal class UIParticleRenderer : MaskableGraphic
     {
-        private static readonly List<Component> s_Components = new();
-        private static readonly CombineInstance[] s_CombineInstances = { new() };
-        private static readonly List<Material> s_Materials = new(2);
+        private static readonly List<Component> s_Components = new List<Component>();
+        private static readonly CombineInstance[] s_CombineInstances = { new CombineInstance() };
+        private static readonly List<Material> s_Materials = new List<Material>(2);
         private static MaterialPropertyBlock s_Mpb;
-        private static readonly List<UIParticleRenderer> s_Renderers = new();
-        private static readonly List<Color32> s_Colors = new();
+        private static readonly List<UIParticleRenderer> s_Renderers = new List<UIParticleRenderer>();
+        private static readonly List<Color32> s_Colors = new List<Color32>();
         private static readonly Vector3[] s_Corners = new Vector3[4];
         private Material _currentMaterialForRendering;
         private bool _delay;
@@ -58,7 +58,10 @@ namespace Coffee.UIExtensions
                 if (canvas)
                 {
                     var worldToLocalMatrix = canvas.rootCanvas.transform.worldToLocalMatrix;
-                    for (var i = 0; i < 4; ++i) s_Corners[i] = worldToLocalMatrix.MultiplyPoint(s_Corners[i]);
+                    for (var i = 0; i < 4; ++i)
+                    {
+                        s_Corners[i] = worldToLocalMatrix.MultiplyPoint(s_Corners[i]);
+                    }
                 }
 
                 var corner1 = (Vector2)s_Corners[0];
@@ -66,12 +69,22 @@ namespace Coffee.UIExtensions
                 for (var i = 1; i < 4; ++i)
                 {
                     if (s_Corners[i].x < corner1.x)
+                    {
                         corner1.x = s_Corners[i].x;
-                    else if (s_Corners[i].x > corner2.x) corner2.x = s_Corners[i].x;
+                    }
+                    else if (s_Corners[i].x > corner2.x)
+                    {
+                        corner2.x = s_Corners[i].x;
+                    }
 
                     if (s_Corners[i].y < corner1.y)
+                    {
                         corner1.y = s_Corners[i].y;
-                    else if (s_Corners[i].y > corner2.y) corner2.y = s_Corners[i].y;
+                    }
+                    else if (s_Corners[i].y > corner2.y)
+                    {
+                        corner2.y = s_Corners[i].y;
+                    }
                 }
 
                 return new Rect(corner1, corner2 - corner1);
@@ -80,12 +93,18 @@ namespace Coffee.UIExtensions
 
         public void Reset(int index = -1)
         {
-            if (_renderer) _renderer.enabled = true;
+            if (_renderer)
+            {
+                _renderer.enabled = true;
+            }
 
             _parent = null;
             _particleSystem = null;
             _renderer = null;
-            if (0 <= index) _index = index;
+            if (0 <= index)
+            {
+                _index = index;
+            }
 
             //_emitter = null;
             if (this && isActiveAndEnabled)
@@ -109,11 +128,13 @@ namespace Coffee.UIExtensions
             base.OnEnable();
 
             if (!s_CombineInstances[0].mesh)
+            {
                 s_CombineInstances[0].mesh = new Mesh
                 {
                     name = "[UIParticleRenderer] Combine Instance Mesh",
                     hideFlags = HideFlags.HideAndDontSave
                 };
+            }
 
             _currentMaterialForRendering = null;
         }
@@ -152,7 +173,7 @@ namespace Coffee.UIExtensions
         }
 
         /// <summary>
-        ///     Perform material modification in this function.
+        /// Perform material modification in this function.
         /// </summary>
         public override Material GetModifiedMaterial(Material baseMaterial)
         {
@@ -203,11 +224,13 @@ namespace Coffee.UIExtensions
 #if UNITY_EDITOR
             if (Application.isPlaying)
 #endif
+            {
                 if (_particleSystem.isPlaying || _prewarm)
                 {
                     _particleSystem.Clear();
                     _particleSystem.Pause();
                 }
+            }
 
             _renderer = ps.GetComponent<ParticleSystemRenderer>();
             _renderer.enabled = false;
@@ -222,7 +245,9 @@ namespace Coffee.UIExtensions
             // Support sprite.
             var tsa = ps.textureSheetAnimation;
             if (tsa.mode == ParticleSystemAnimationMode.Sprites && tsa.uvChannelMask == 0)
+            {
                 tsa.uvChannelMask = UVChannelFlags.UV0;
+            }
 
             _prevScale = GetWorldScale();
             _prevPsPos = _particleSystem.transform.position;
@@ -279,14 +304,19 @@ namespace Coffee.UIExtensions
                     ResolveResolutionChange(psPos, scale);
                     Simulate(scale, _parent.isPaused || _delay);
 
-                    if (_delay && !_parent.isPaused) Simulate(scale, _parent.isPaused);
+                    if (_delay && !_parent.isPaused)
+                    {
+                        Simulate(scale, _parent.isPaused);
+                    }
 
                     // When the ParticleSystem simulation is complete, stop it.
                     if (!main.loop
                         && main.duration <= _particleSystem.time
                         && (_particleSystem.IsAlive() || _particleSystem.particleCount == 0)
                        )
+                    {
                         _particleSystem.Stop(false);
+                    }
                 }
 
                 _prevScale = scale;
@@ -401,7 +431,10 @@ namespace Coffee.UIExtensions
 
             // Get grouped renderers.
             s_Renderers.Clear();
-            if (_parent.useMeshSharing) UIParticleUpdater.GetGroupedRenderers(_parent.groupId, _index, s_Renderers);
+            if (_parent.useMeshSharing)
+            {
+                UIParticleUpdater.GetGroupedRenderers(_parent.groupId, _index, s_Renderers);
+            }
 
             // Set mesh to the CanvasRenderer.
             Profiler.BeginSample("[UIParticleRenderer] Set Mesh");
@@ -412,7 +445,10 @@ namespace Coffee.UIExtensions
                 s_Renderers[i]._lastBounds = _lastBounds;
             }
 
-            if (!_parent.canRender) workerMesh.Clear();
+            if (!_parent.canRender)
+            {
+                workerMesh.Clear();
+            }
 
             canvasRenderer.SetMesh(workerMesh);
             Profiler.EndSample();
@@ -433,7 +469,10 @@ namespace Coffee.UIExtensions
             UpdateMaterialProperties();
             if (_parent.useMeshSharing)
             {
-                if (!_currentMaterialForRendering) _currentMaterialForRendering = materialForRendering;
+                if (!_currentMaterialForRendering)
+                {
+                    _currentMaterialForRendering = materialForRendering;
+                }
 
                 for (var i = 0; i < s_Renderers.Count; i++)
                 {
@@ -450,7 +489,7 @@ namespace Coffee.UIExtensions
         }
 
         /// <summary>
-        ///     Call to update the geometry of the Graphic onto the CanvasRenderer.
+        /// Call to update the geometry of the Graphic onto the CanvasRenderer.
         /// </summary>
         protected override void UpdateGeometry()
         {
@@ -477,7 +516,9 @@ namespace Coffee.UIExtensions
             if (_parent.autoScalingMode == UIParticle.AutoScalingMode.UIParticle
                 && _particleSystem.main.scalingMode == ParticleSystemScalingMode.Local
                 && _parent.canvas)
+            {
                 scale = scale.GetScaled(_parent.canvas.transform.localScale);
+            }
 
             Profiler.EndSample();
             return scale;
@@ -486,10 +527,14 @@ namespace Coffee.UIExtensions
         private Matrix4x4 GetWorldMatrix(Vector3 psPos, Vector3 scale)
         {
             var space = _particleSystem.GetActualSimulationSpace();
-            if (_isTrail && _particleSystem.trails.worldSpace) space = ParticleSystemSimulationSpace.World;
+            if (_isTrail && _particleSystem.trails.worldSpace)
+            {
+                space = ParticleSystemSimulationSpace.World;
+            }
 
 #if UNITY_EDITOR
             if (!Application.isPlaying)
+            {
                 switch (space)
                 {
                     case ParticleSystemSimulationSpace.World:
@@ -497,6 +542,7 @@ namespace Coffee.UIExtensions
                                * Matrix4x4.Scale(scale)
                                * Matrix4x4.Translate(-psPos);
                 }
+            }
 #endif
 
             switch (space)
@@ -518,7 +564,7 @@ namespace Coffee.UIExtensions
         }
 
         /// <summary>
-        ///     For world simulation, interpolate particle positions when the screen size is changed.
+        /// For world simulation, interpolate particle positions when the screen size is changed.
         /// </summary>
         /// <param name="psPos"></param>
         /// <param name="scale"></param>
@@ -636,7 +682,10 @@ namespace Coffee.UIExtensions
         {
             if (_parent.m_AnimatableProperties.Length == 0) return;
 
-            if (s_Mpb == null) s_Mpb = new MaterialPropertyBlock();
+            if (s_Mpb == null)
+            {
+                s_Mpb = new MaterialPropertyBlock();
+            }
 
             _renderer.GetPropertyBlock(s_Mpb);
             if (s_Mpb.isEmpty) return;

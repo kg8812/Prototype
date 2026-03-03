@@ -28,7 +28,7 @@ namespace Save.Schema
     {
         public enum DataTypes
         {
-            SlotInfo
+            SlotInfo,Temp
         }
 
         private const string SlotInfoKey = "SlotInfoKey";

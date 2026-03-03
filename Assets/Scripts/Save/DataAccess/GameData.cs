@@ -1,3 +1,5 @@
+using Managers;
+
 namespace Save.Schema
 {
     public class GameData
@@ -6,7 +8,7 @@ namespace Save.Schema
 
         public void Save()
         {
-            GameManager.Save.SaveData(PersistentDataKeys.GetKey(PersistentDataKeys.DataTypes.GameData), Data);
+            GameManager.Save.SaveData(SaveManager.SaveType.Persistent,PersistentDataKeys.GetKey(PersistentDataKeys.DataTypes.GameData));
         }
     }
 }
