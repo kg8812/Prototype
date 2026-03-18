@@ -3,6 +3,9 @@ using EventData;
 
 namespace Apis
 {
+    
+    // 버프 사용 규칙, 정책, 진입점 관리 클래스
+    
     public class SubBuffManager
     {
         private BonusStat stat;

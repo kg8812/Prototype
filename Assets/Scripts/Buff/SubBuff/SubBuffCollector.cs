@@ -6,6 +6,10 @@ using UnityEngine.Events;
 
 namespace Apis
 {
+    
+    // 현재 책임 : 여러 버프 컬렉션을 통합 관리하고, 추가/제거/조회 요청을 분배하는 상위 저장소
+    // 목표 책임 : 하위 컬렉션들을 조합해서 버프를 저장/조회/삭제만 하는 순수 저장소 허브
+    
     public class SubBuffCollector
     {
         private readonly SubBuffManager manager;

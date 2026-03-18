@@ -45,6 +45,8 @@ namespace Apis
         }
     }
 
+    // 현재 책임 : SubBuffType 기준으로 서브버프를 관리하면서 생성/스택/시간/DB/상위 제거까지 처리
+    // 목표 책임 : 특정 타입의 서브버프들을 스택 규칙에 따라 보관하는 타입별 컬렉션
     public class SubBuffTypeList : ISubject<List<SubBuff>>
     {
         private readonly IBuffUpdate _buffUpdate;
@@ -64,26 +66,34 @@ namespace Apis
 
         public SubBuffTypeList(SubBuffType type, IBuffUser actor)
         {
+            // 데이터베이스 조회 및 데이터 가져오기 : 여기 책임 아님
             BuffDatabase.DataLoad.TryGetSubBuffIndex(type, out var index);
             BuffDatabase.DataLoad.TryGetSubBuffOption(index, out option);
 
+            // 내부 필드 수정 : 생성자 책임
             _type = type;
             maxStack = option.maxStack;
             Duration = option.duration;
             this.actor = actor;
 
+            // 스택 전략 판단 : 이곳 책임 아님
             _stackStrategy = new SubSingleStack(this);
 
+            // 타입 및 이름 데이터 추출 : 이곳 책임 아님
             var str = "Apis." + type;
             var tp = Type.GetType(str);
 
+            // 업데이트 전략 판단 : 이곳 책임 아님
             if (tp != null && tp.IsSubclassOf(typeof(Debuff_DotDmg)))
                 _buffUpdate = new DotDmgUpdate(list, actor);
             else
                 _buffUpdate = new BuffNoUpdate();
+            
+            // 옵저버 등록 : subject 생성자 책임
             Attach(_stackStrategy);
             Attach(_buffUpdate);
 
+            // 더미 버프 데이터 생성 : 생성자 책임 애매
             BuffDataType data = new(type)
             {
                 buffPower = option.amount, buffDuration = Duration, buffDispellType = 1,
@@ -139,13 +149,16 @@ namespace Apis
             {
                 wasMaxStack = true;
                 var temp = queue.Dequeue();
-                temp.OnRemove();
+                temp.OnRemove(); // subBuff 제거처리 함수 호출 : 이곳 책임 X
             }
 
             queue.Enqueue(subBuff);
             ResetList();
-            subBuff.OnAdd();
-            if (maxStack > 0 && Count >= maxStack && !wasMaxStack) subBuff.OnMaxStack();
+            subBuff.OnAdd(); // subBuff 추가처리 함수 호출 : 이곳 책임 X
+            if (maxStack > 0 && Count >= maxStack && !wasMaxStack)
+            {
+                subBuff.OnMaxStack(); // subBuff 최대스택처리 함수 호출 : 이곳 책임 X
+            }
         }
 
         public void Add(SubBuff subBuff)
@@ -155,11 +168,16 @@ namespace Apis
 
         public SubBuff Add(GameObject target)
         {
+            // 지속시간 초기화 : 컨테이너 책임
             _stackStrategy.CurTime = Duration;
+            
+            // 서브버프 생성 및 내부 데이터 변경 : 여기 책임 X 
             var sub = SubBuffResources.Get(dummyBuff);
             if (sub == null) return null;
             sub.User = actor;
             sub.target = target;
+            
+            // 서브버프 추가 : 컨테이너 책임
             AddSub(sub);
 
             return sub;
@@ -229,14 +247,20 @@ namespace Apis
 
         private void ResetList()
         {
+            // 기존 서브버프 조회 : 저장소 책임
             list = queue.ToList();
-            if (list.Count == 0)
+            
+            if (list.Count == 0) // 서브버프 카운트 조건 확인 : 저장소 책임
             {
+                // 상위 저장소 참조 : 여기 책임 아님
                 var temp = actor.SubBuffManager.Collector.subBuffs.ToDictionary(kv => kv.Key, kv => kv.Value);
+                // 상위 저장소 수정 : 여기 책임 아님
                 temp.Remove(_type);
+                // 상위 저장소 참조 수정 : 여기 책임 아님
                 actor.SubBuffManager.Collector.subBuffs = temp;
             }
 
+            // 내부 옵저버 변경 알림 : 상위 Subject 책임
             NotifyObservers();
         }
 
