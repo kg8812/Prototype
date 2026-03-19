@@ -158,7 +158,7 @@ public class Define
         public const string Loading = "LoadingScene";
         public const string TitleSceneName = "Title";
         public const string LobbySceneName = "Lobby";
-        public const string MainWorldSceneName = "MainWorld";
+        public const string MainWorldSceneName = "Main";
     }
 
     #endregion

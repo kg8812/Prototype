@@ -16,15 +16,17 @@ namespace Apis
         private Actor _actor;
         private Actor Actor => _actor ??= GetComponent<Actor>();
 
+        private BuffBarrierProcessor _barrierProcessor;
+        
         private void Awake()
         {
             if (TryGetComponent(out IBarrierUser barrierUser))
             {
-                barrierUser.BarrierCalculator.BarrierAddEvent += AddBarrier;
-                barrierUser.BarrierCalculator.BarrierMinusEvent += MinusBarrier;
+                _barrierProcessor = new(barrierUser, SubBuffManager);
+                _barrierProcessor.Bind();
             }
         }
-
+        
         private void Start()
         {
             Actor.BonusStatEvent += () => SubBuffManager.Stats;
@@ -38,40 +40,63 @@ namespace Apis
         {
             SubBuffManager.Update();
         }
-
-        float AddBarrier(float value)
+        
+        private void PublishSubBuffApplied(IBuffUser user, SubBuff subBuff)
         {
-            SubBuffManager.Traverse(x =>
-            {
-                if (x is BarrierBase barrier) value += barrier.Barrier;
-            });
+            if (user == null || subBuff == null)
+                return;
 
-            return value;
+            BuffEventData buffData = new()
+            {
+                activatedSubBuff = subBuff,
+                takenSubBuff = subBuff
+            };
+                
+            if (user.gameObject.TryGetComponent(out IEventUser eventUser))
+            {
+
+                EventParameters parameters = new(eventUser, SubBuffManager.User.gameObject.GetComponent<IOnHit>());
+                parameters.Set(buffData);
+
+                eventUser?.EventManager.ExecuteEvent(EventType.OnSubBuffApply, parameters);
+            }
         }
 
-        float MinusBarrier(float dmg)
+        private void PublishSubBuffTaken(IBuffUser user, SubBuff subBuff)
         {
-            SubBuffManager.Traverse(x =>
+            if (user == null || subBuff == null)
+                return;
+
+            BuffEventData buffData = new()
             {
-                if (dmg <= 0) return;
+                activatedSubBuff = subBuff,
+                takenSubBuff = subBuff
+            };
+            if (SubBuffManager.User.gameObject.TryGetComponent(out IEventUser eventUser))
+            {
+                EventParameters parameters =
+                    new EventParameters(eventUser,
+                        eventUser?.gameObject.GetComponent<IOnHit>());
+                parameters.Set(buffData);
+                       
+                eventUser?.EventManager.ExecuteEvent(EventType.OnSubBuffTaken, parameters);
+            }
+            // 기존 taken 이벤트 발행 코드
+        }
 
-                if (x is BarrierBase barrier)
-                {
-                    if (barrier.Barrier > dmg)
-                    {
-                        barrier.Barrier -= dmg;
-                        dmg = 0;
-                    }
-                    else
-                    {
-                        dmg -= barrier.Barrier;
-                        barrier.Barrier = 0;
-                        barrier.onBarrierDestroy.Invoke();
-                    }
-                }
-            });
+        private void PublishSubBuffRemoved(SubBuff subBuff)
+        {
+            if (subBuff == null)
+                return;
 
-            return dmg;
+            if (SubBuffManager.User.gameObject.TryGetComponent(out IEventUser eventUser))
+            {
+                EventParameters parameters = new(eventUser);
+                parameters.Set(new BuffEventData(){removedSubBuff = subBuff});
+                    
+                eventUser.EventManager.ExecuteEvent(EventType.OnSubBuffRemove, parameters);
+            }
+            // 기존 removed 이벤트 발행 코드
         }
         public void AddSubBuff(IBuffUser user, Buff buff, SubBuff subBuff) // 버프 추가 함수 (효과로)
         {
@@ -79,30 +104,8 @@ namespace Apis
 
             if (SubBuffManager.AddSubBuff(user, buff, subBuff))
             {
-                BuffEventData buffData = new()
-                {
-                    activatedSubBuff = subBuff,
-                    takenSubBuff = subBuff
-                };
-                
-                if (user.gameObject.TryGetComponent(out IEventUser eventUser))
-                {
-
-                    EventParameters parameters = new(eventUser, SubBuffManager.User.gameObject.GetComponent<IOnHit>());
-                    parameters.Set(buffData);
-
-                    eventUser?.EventManager.ExecuteEvent(EventType.OnSubBuffApply, parameters);
-                }
-
-                if (SubBuffManager.User.gameObject.TryGetComponent(out IEventUser eventUser2))
-                {
-                    EventParameters parameters =
-                        new EventParameters(eventUser2,
-                            eventUser?.gameObject.GetComponent<IOnHit>());
-                    parameters.Set(buffData);
-                       
-                    eventUser2.EventManager.ExecuteEvent(EventType.OnSubBuffTaken, parameters);
-                }
+                PublishSubBuffApplied(user,subBuff);
+                PublishSubBuffTaken(user, subBuff);
             }
         }
 
@@ -112,31 +115,12 @@ namespace Apis
             if (Actor.IsDead) return;
 
             var sub = SubBuffManager.AddSubBuff(type,user);
-            
-            if (sub != null)
-            {
-                BuffEventData buffData = new()
-                {
-                    activatedSubBuff = sub,
-                    takenSubBuff = sub
-                };
-                
-                if (user.gameObject.TryGetComponent(out IEventUser eventUser))
-                {
-                    EventParameters parameters = new(eventUser, SubBuffManager.User.gameObject.GetComponent<IOnHit>());
-                    parameters.Set(buffData);
-                    eventUser?.EventManager.ExecuteEvent(EventType.OnSubBuffApply, parameters);
-                }
 
-                if (SubBuffManager.User.gameObject.TryGetComponent(out IEventUser eventUser2))
-                {
-                    EventParameters parameters =
-                        new EventParameters(eventUser2,
-                            eventUser?.gameObject.GetComponent<IOnHit>());
-                    parameters.Set(buffData);
-                    eventUser2.EventManager.ExecuteEvent(EventType.OnSubBuffTaken, parameters);
-                }
-            }
+            if (sub == null) return;
+            
+            PublishSubBuffApplied(user,sub);
+            PublishSubBuffTaken(user, sub);
+            
         }
 
         /// <summary>
@@ -148,14 +132,7 @@ namespace Apis
         {
             if (SubBuffManager.RemoveSubBuff(buff, subBuff))
             {
-                if (SubBuffManager.User.gameObject.TryGetComponent(out IEventUser eventUser))
-                {
-                    EventParameters parameters = new(eventUser);
-                    parameters.Set(new BuffEventData(){removedSubBuff = subBuff});
-                    
-                    eventUser.EventManager.ExecuteEvent(EventType.OnSubBuffRemove, parameters);
-                }
-                
+                PublishSubBuffRemoved(subBuff);
             }
         }
 
@@ -167,15 +144,9 @@ namespace Apis
         {
             var sub = SubBuffManager.RemoveSubBuff(buff);
 
-            if (sub != null)
-            {
-                if (SubBuffManager.User.gameObject.TryGetComponent(out IEventUser eventUser))
-                {
-                    EventParameters parameters = new(eventUser);
-                    parameters.Get<BuffEventData>().removedSubBuff = sub;
-                    eventUser.EventManager.ExecuteEvent(EventType.OnSubBuffRemove, parameters);
-                }
-            }
+            if (sub == null) return;
+            
+            PublishSubBuffRemoved(sub);
         }
 
         /// <summary>
@@ -186,14 +157,10 @@ namespace Apis
         {
             SubBuffManager.RemoveBuff(buff);
 
-            if (SubBuffManager.User.gameObject.TryGetComponent(out IEventUser eventUser))
-            {
-                EventParameters parameters = new(eventUser);
-                parameters.Set(new BuffEventData { removedSubBuff = buff?.ActivatedSubBuff });
-
-                eventUser.EventManager.ExecuteEvent(EventType.OnSubBuffRemove, parameters);
-            }
-           
+            var sub = buff?.ActivatedSubBuff;
+            if (sub == null) return;
+            
+            PublishSubBuffRemoved(sub);
         }
 
         /// <summary>
@@ -220,7 +187,7 @@ namespace Apis
         /// </summary>
         public void RemoveAllBuff()
         {
-            SubBuffManager.Collector.Clear(); 
+            SubBuffManager.Clear(); 
         }
 
         /// <summary>
@@ -265,8 +232,8 @@ namespace Apis
 
         public Vector3 Position
         {
-            get => _actor.Position;
-            set => _actor.Position = value;
+            get => Actor.Position;
+            set => Actor.Position = value;
         }
 
         public ImmunityController ImmunityController => Actor.ImmunityController;

@@ -29,7 +29,7 @@ namespace Apis
 
         public IBuffUser User { get; }
 
-        public SubBuffCollector Collector { get; }
+        private SubBuffCollector Collector { get; }
 
         public BonusStat Stats
         {
@@ -153,6 +153,11 @@ namespace Apis
         public int Count(SubBuffType type)
         {
             return Collector.Count(type);
+        }
+
+        public void Clear()
+        {
+            Collector.Clear();
         }
 
         public void Update()
