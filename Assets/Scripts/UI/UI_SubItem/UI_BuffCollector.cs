@@ -37,7 +37,8 @@ namespace Apis.UI
             if (user == null) return;
             
             _user = user;
-            user.SubBuffManager.Collector.buffUIEvent.AddListener(Invoke);
+            _user.SubBuffManager.buffUIEvent.RemoveListener(Invoke);
+            user.SubBuffManager.buffUIEvent.AddListener(Invoke);
             if (user.gameObject.TryGetComponent(out IEventUser eventUser))
             {
                 eventUser.EventManager.AddEvent(EventType.OnBuffGroupAdd, SetBuffIcon);
@@ -50,7 +51,7 @@ namespace Apis.UI
         {
             base.Deactivated();
             if (_user == null) return;
-            _user.SubBuffManager.Collector.buffUIEvent.RemoveListener(Invoke);
+            _user.SubBuffManager.buffUIEvent.RemoveListener(Invoke);
             
             if (_user.gameObject.TryGetComponent(out IEventUser eventUser))
             {

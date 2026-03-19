@@ -32,6 +32,7 @@ namespace Apis
         public List<SubBuff> this[Buff buff] => buffs[buff].List;
         private List<IObserver<BuffList>> observers => _observers ??= new List<IObserver<BuffList>>();
 
+        private SubBuffLifeCycleHandler _buffLifeCycleHandler = new();
 
         public void Notify(SubBuffList value)
         {
@@ -59,7 +60,7 @@ namespace Apis
         {
             observers.ForEach(x => x.Notify(this));
         }
-
+        
         private void AddSub(Buff buff, SubBuff subBuff, Dictionary<Buff, SubBuffList> temp)
         {
             var wasMaxStack = false;
@@ -69,22 +70,21 @@ namespace Apis
             {
                 var sub = temp[buff].List[0]; 
                 temp[buff].List.RemoveAt(0); // 컬렉션에서 제거: 저장/컨테이너 조작 책임
-                sub.OnRemove(); // 버프 제거 반응 실행: 여기 책임 아님
+                _buffLifeCycleHandler.AfterSubBuffRemoved(sub);
                 wasMaxStack = true;
             }
 
             temp[buff].Add(subBuff); // 컬렉션에 추가: 저장/컨테이너 조작 책임
-            subBuff.OnAdd(); // 버프 추가 반응 실행: 여기 책임 아님
+            _buffLifeCycleHandler.AfterSubBuffAdded(subBuff);
 
             // 스택 한도 확인: 게임 규칙 해석 책임
             if (buff.BuffMaxStack > 0 && buff.BuffMaxStack <= temp[buff].Count && !wasMaxStack)
             {
-                // 최대 스택 반응 실행: 여기 책임 아님
-                subBuff.OnMaxStack();
+                _buffLifeCycleHandler.AfterSubBuffMaxStackReached(subBuff);
             }
         }
 
-        public void Add(Buff buff, SubBuff subBuff)
+        public SubBuffList Add(Buff buff, SubBuff subBuff)
         {
             // 기존 buff 묶음 조회: 상위 컨테이너 책임
             var b = buffs.Keys.FirstOrDefault(x => x.BuffIndex == buff.BuffIndex); 
@@ -93,23 +93,22 @@ namespace Apis
             {
                 var temp = buffs.ToDictionary(kv => kv.Key, kv => kv.Value);
                 
+                var createdList = new SubBuffList(buff, _user);
                 // 하위 컬렉션 생성 + 등록: 상위 컨테이너 책임(약간 애매하지만 허용 가능)
-                temp.Add(buff, new SubBuffList(buff, _user));
+                temp.Add(buff, createdList);
                 buffs = temp; // 저장소 최신화
 
                 // 지속시간 초기화: 상태 갱신/규칙 책임
-                temp[buff].CurTime = temp[buff].Duration;
+                createdList.CurTime = createdList.Duration;
 
                 // sub buff 추가: 상위 컨테이너 책임
                 AddSub(buff, subBuff, temp);
                 
                 // 옵저버 연결 및 변경 알림 : 상위 Subject 책임
-                temp[buff].Attach(this);
+                createdList.Attach(this);
                 NotifyObservers();
-
-                // UI 데이터 생성 + 외부 이벤트 호출: 여기 책임 아님
-                BuffInfo info = new() { subList = temp[buff], buff = buff };
-                _user.SubBuffManager.Collector.buffUIEvent.Invoke(info);
+                
+                return createdList;
             }
             else
             {
@@ -119,7 +118,9 @@ namespace Apis
                 AddSub(b, subBuff, buffs);
                 
                 // 내부 옵저버 변경 알림 : 상위 Subject 책임
-                NotifyObservers(); 
+                NotifyObservers();
+
+                return null;
             }
         }
 

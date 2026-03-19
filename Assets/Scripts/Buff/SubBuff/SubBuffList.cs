@@ -8,6 +8,7 @@ namespace Apis
     
     public class SubBuffList : SubBuffCollection, ISubject<SubBuffList>
     {
+        SubBuffLifeCycleHandler _subBuffLifeCycleHandler;
         protected readonly List<IObserver<SubBuffList>> observers2 = new();
 
         public SubBuffList(Buff buff, IBuffUser actor) : base(buff, actor)
@@ -48,7 +49,7 @@ namespace Apis
                 temp.Remove(subBuff); // 서브버프 제거 : 컨테이너 책임
                 list = temp; 
                 NotifyObservers(); // 옵저버 변경 알림 : Subject 책임
-                subBuff.OnRemove(); // subBuff 제거 함수 호출 : 이곳 책임 X
+                _subBuffLifeCycleHandler.AfterSubBuffRemoved(subBuff);
 
                 return true;
             }
@@ -69,7 +70,7 @@ namespace Apis
                     list = temp;
                     NotifyObservers();
 
-                    subBuff.OnRemove(); // subBuff 제거 함수 호출 : 이곳 책임 X
+                    _subBuffLifeCycleHandler.AfterSubBuffRemoved(subBuff);
                 }
                 else if (buff.StackDecrease == 1) // 스택 전략 판단 : 이곳 책임 X
                 {
@@ -90,7 +91,10 @@ namespace Apis
             list = a;
             NotifyObservers();
 
-            foreach (var x in temp) x.OnRemove();
+            foreach (var x in temp)
+            {
+                _subBuffLifeCycleHandler.AfterSubBuffRemoved(x);
+            }
         }
     }
 }

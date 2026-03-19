@@ -1,14 +1,24 @@
 using System;
 using EventData;
+using UnityEngine.Events;
 
 namespace Apis
 {
+    public class BuffInfo
+    {
+        public Buff buff;
+        public SubBuff subBuff;
+        public SubBuffList subList;
+        public SubBuffTypeList typeList;
+    }
     
     // 버프 사용 규칙, 정책, 진입점 관리 클래스
     
     public class SubBuffManager
     {
         private BonusStat stat;
+        private UnityEvent<BuffInfo> _buffUIEvent;
+        public UnityEvent<BuffInfo> buffUIEvent => _buffUIEvent ??= new UnityEvent<BuffInfo>();
 
         public SubBuffManager(IBuffUser user)
         {
@@ -33,16 +43,31 @@ namespace Apis
             }
         }
 
+        private void PublishTypeBuffCreated(Buff buff, SubBuffTypeList list)
+        {
+            var info = new BuffInfo
+            {
+                buff = buff,
+                typeList = list
+            };
+
+            buffUIEvent.Invoke(info);
+        }
+
+        private void PublishUniqueBuffCreated(Buff buff, SubBuffList list)
+        {
+            var info = new BuffInfo
+            {
+                buff = buff,
+                subList = list
+            };
+
+            buffUIEvent.Invoke(info);
+        }
+        
         public void Traverse(Action<SubBuff> action)
         {
-            foreach (var x in Collector.uniqueBuffs.Values)
-            foreach (var y in x.buffs.Keys)
-            foreach (var z in x[y])
-                action(z);
-
-            foreach (var x in Collector.subBuffs.Values)
-            foreach (var y in x.List)
-                action(y);
+            Collector.Traverse(action);
         }
 
         /// <summary>
@@ -59,7 +84,16 @@ namespace Apis
 
             if (target != null) subBuff.target = target.gameObject;
 
-            Collector.AddBuff(buff, subBuff);
+            var result = Collector.AddBuff(buff, subBuff);
+
+            if (result.CreatedTypeList)
+            {
+                PublishTypeBuffCreated(result.Buff,result.TypeList);
+            }
+            if (result.CreatedUniqueList)
+            {
+                PublishUniqueBuffCreated(result.Buff, result.UniqueList);
+            }
             
             return true;
         }
@@ -75,9 +109,15 @@ namespace Apis
         {
             if (IsImmune(type)) return null;
 
-            var sub = Collector.AddSubBuff(type, target?.gameObject);
+            var result = Collector.AddSubBuff(type, target?.gameObject);
 
-            return sub;
+            if (result.CreatedTypeList)
+            {
+                PublishTypeBuffCreated(result.CreatedSubBuff.buff, result.TypeList);
+            }
+
+            return result.CreatedSubBuff;
+
         }
 
         public bool RemoveSubBuff(Buff buff, SubBuff subBuff)
@@ -118,6 +158,7 @@ namespace Apis
         public void Update()
         {
             Collector.Update();
+            Collector.PruneUpdate();
         }
 
         private bool IsImmune(SubBuffType type)

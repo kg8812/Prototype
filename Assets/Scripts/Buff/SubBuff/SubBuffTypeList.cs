@@ -64,6 +64,8 @@ namespace Apis
         private List<SubBuff> list;
         public CustomQueue<SubBuff> queue = new();
 
+        private SubBuffLifeCycleHandler _subBuffLifeCycleHandler;
+        
         public SubBuffTypeList(SubBuffType type, IBuffUser actor)
         {
             // 데이터베이스 조회 및 데이터 가져오기 : 여기 책임 아님
@@ -149,15 +151,16 @@ namespace Apis
             {
                 wasMaxStack = true;
                 var temp = queue.Dequeue();
-                temp.OnRemove(); // subBuff 제거처리 함수 호출 : 이곳 책임 X
+                _subBuffLifeCycleHandler.AfterSubBuffRemoved(subBuff);
+                
             }
 
             queue.Enqueue(subBuff);
             ResetList();
-            subBuff.OnAdd(); // subBuff 추가처리 함수 호출 : 이곳 책임 X
+            _subBuffLifeCycleHandler.AfterSubBuffAdded(subBuff);
             if (maxStack > 0 && Count >= maxStack && !wasMaxStack)
             {
-                subBuff.OnMaxStack(); // subBuff 최대스택처리 함수 호출 : 이곳 책임 X
+                _subBuffLifeCycleHandler.AfterSubBuffMaxStackReached(subBuff);
             }
         }
 
@@ -171,7 +174,6 @@ namespace Apis
             // 지속시간 초기화 : 컨테이너 책임
             _stackStrategy.CurTime = Duration;
             
-            // 서브버프 생성 및 내부 데이터 변경 : 여기 책임 X 
             var sub = SubBuffResources.Get(dummyBuff);
             if (sub == null) return null;
             sub.User = actor;
@@ -191,7 +193,7 @@ namespace Apis
             {
                 case 0:
                     ResetList();
-                    subBuff.OnRemove();
+                    _subBuffLifeCycleHandler.AfterSubBuffRemoved(subBuff);
                     return subBuff;
                 case 1:
                     Clear();
@@ -213,7 +215,7 @@ namespace Apis
 
             queue.Remove(sub);
             ResetList();
-            sub?.OnRemove();
+            _subBuffLifeCycleHandler.AfterSubBuffRemoved(sub);
             return sub;
         }
 
@@ -229,7 +231,7 @@ namespace Apis
             removeList.ForEach(x =>
             {
                 queue.Remove(x);
-                x.OnRemove();
+                _subBuffLifeCycleHandler.AfterSubBuffRemoved(x);
             });
         }
 
@@ -242,23 +244,15 @@ namespace Apis
 
             if (tempList != null)
                 foreach (var x in tempList)
-                    x.OnRemove();
+                {
+                    _subBuffLifeCycleHandler.AfterSubBuffRemoved(x);
+                }
         }
 
         private void ResetList()
         {
             // 기존 서브버프 조회 : 저장소 책임
             list = queue.ToList();
-            
-            if (list.Count == 0) // 서브버프 카운트 조건 확인 : 저장소 책임
-            {
-                // 상위 저장소 참조 : 여기 책임 아님
-                var temp = actor.SubBuffManager.Collector.subBuffs.ToDictionary(kv => kv.Key, kv => kv.Value);
-                // 상위 저장소 수정 : 여기 책임 아님
-                temp.Remove(_type);
-                // 상위 저장소 참조 수정 : 여기 책임 아님
-                actor.SubBuffManager.Collector.subBuffs = temp;
-            }
 
             // 내부 옵저버 변경 알림 : 상위 Subject 책임
             NotifyObservers();
