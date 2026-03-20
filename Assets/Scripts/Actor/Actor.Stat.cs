@@ -6,20 +6,12 @@ using UnityEngine;
 
 public partial class Actor : IStatUser, IBarrierUser
 {
-    [TabGroup("기획쪽 수정 변수들/group1", "기본 스탯")] [LabelText("현재 체력")] [MinValue(0)] [SerializeField]
-    protected float curHp; // 현재 체력   
-
+    ActorHpController  _hpController;
+    public ActorHpController  HPController => _hpController;
+    
+    public BarrierCalculator BarrierCalculator => HPController.BarrierCalculator;
+    
     [SerializeField] protected StatManager _statManager;
-
-
-    private BarrierCalculator _barrierCalculator;
-    private TextShow _dmgText;
-
-    private TextShow _healText;
-
-    public float Barrier => BarrierCalculator?.Barrier ?? 0;
-    protected virtual TextShow HealText => _healText ??= new HealTextShow(this);
-    protected virtual TextShow DmgText => _dmgText ??= new DmgTextShow(this);
 
     public virtual float MoveSpeed => StatManager.GetFinalStat(ActorStatType.MoveSpeed);
     public virtual float AtkSpeed => StatManager.GetFinalStat(ActorStatType.AtkSpeed);
@@ -31,56 +23,19 @@ public partial class Actor : IStatUser, IBarrierUser
 
     public virtual float Atk => StatManager.GetFinalStat(ActorStatType.Atk);
 
-    public BarrierCalculator BarrierCalculator =>
-        _barrierCalculator ??= new BarrierCalculator(EventManager);
-
-    public bool IsInvincible => ImmunityController?.IsImmune("Invincible") ?? false;
-
     public virtual float CurHp
     {
-        get => curHp;
-        set
-        {
-            var dmg = Mathf.RoundToInt(curHp - value);
-            if (dmg < 0) dmg = Math.Abs(dmg) + (int)curHp;
-
-            if (value > curHp)
-            {
-                var heal = value - curHp;
-                HealText?.Show(heal, Position);
-                curHp = Math.Min(curHp + heal, MaxHp);
-                EventManager.ExecuteEvent(EventType.OnHpHeal, new EventParameters(this));
-                return;
-            }
-
-            if (!Mathf.Approximately(dmg, 0)) DmgText?.Show(dmg, Position);
-
-            var parameters = new EventParameters(this);
-            parameters.Set(new HitEventData()
-            {
-                dmg = dmg, dmgReceived = dmg
-            });
-            
-
-            ExecuteEvent(EventType.OnBeforeHpDown, parameters);
-
-            BarrierCalculator?.Calculate(parameters);
-
-            ExecuteEvent(EventType.OnBarrierChange, parameters);
-            curHp -= parameters.Get<HitEventData>().dmg;
-
-            ExecuteEvent(EventType.OnHpDown, parameters);
-            if (curHp <= 0) Die();
-        }
+        get => HPController.CurHp;
+        set => HPController.ApplyDmgToTargetValue(value);
     }
-
 
     public virtual float MaxHp => StatManager.GetFinalStat(ActorStatType.MaxHp);
     public virtual StatManager StatManager => _statManager;
 
+    public float Barrier => HPController.Barrier;
     public void SetHpWithoutEvent(float hp)
     {
-        curHp = hp;
+        HPController.SetHpWithoutEvent(hp);
     }
 
     public event StatManager.StatEvent BonusStatEvent
@@ -95,13 +50,12 @@ public partial class Actor : IStatUser, IBarrierUser
 
     public void AddBarrier(float amount)
     {
-        BarrierCalculator?.AddBarrier(amount);
+        HPController?.AddBarrier(amount);
     }
 
     protected void ResetTextVariables()
     {
-        HealText?.ResetVariables();
-        DmgText?.ResetVariables();
+        HPController.ResetTextVariables();
     }
 
     #region 대쉬 관련 (임시, 수치 정해지면 actormovement 내에 const로 뺄 듯)
@@ -112,4 +66,5 @@ public partial class Actor : IStatUser, IBarrierUser
     public float MaxEdgeModifier => maxEdgeModifier;
 
     #endregion
+
 }

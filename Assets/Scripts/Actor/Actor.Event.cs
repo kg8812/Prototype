@@ -5,35 +5,24 @@ using UnityEngine.Events;
 
 public partial class Actor : IEventUser
 {
-    private BuffEvent _buffEvent;
+    private ActorEvents _actorEvents;
 
-    private CollisionEventHandler _collisionEventHandler;
+    public IEventManager EventManager => _actorEvents.EventManager;
 
-    private List<IEventChild> _eventChildren;
-    private BuffEvent buffEvent => _buffEvent ??= gameObject.GetOrAddComponent<BuffEvent>();
-
-    private CollisionEventHandler collisionEventHandler =>
-        _collisionEventHandler ??= gameObject.GetOrAddComponent<CollisionEventHandler>();
-
-    public IEventManager EventManager => buffEvent;
-
-    public List<IEventChild> EventChildren => _eventChildren ??= new List<IEventChild>
-    {
-        buffEvent, collisionEventHandler
-    };
-
+    public List<IEventChild> EventChildren => _actorEvents.EventChildren;
+    
     public void AddEvent(EventType eventType, UnityAction<EventParameters> action)
     {
-        EventManager?.AddEvent(eventType, action);
+        _actorEvents?.AddEvent(eventType, action);
     }
 
     public void RemoveEvent(EventType eventType, UnityAction<EventParameters> action)
     {
-        EventManager?.RemoveEvent(eventType, action);
+        _actorEvents?.RemoveEvent(eventType, action);
     }
 
     public void ExecuteEvent(EventType eventType, EventParameters parameters)
     {
-        EventManager?.ExecuteEvent(eventType, parameters);
+        _actorEvents?.ExecuteEvent(eventType, parameters);
     }
 }

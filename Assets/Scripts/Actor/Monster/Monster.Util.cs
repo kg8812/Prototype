@@ -23,7 +23,7 @@ namespace Apis
             StatManager.BaseStat.Set(ActorStatType.MaxHp, MonsterData.maxHp);
             StatManager.BaseStat.Set(ActorStatType.Atk, MonsterData.atkPower);
             StatManager.BaseStat.Set(ActorStatType.MoveSpeed, MonsterData.moveSpeed);
-            curHp = MonsterData.maxHp;
+            SetHpWithoutEvent(MonsterData.maxHp);
         }
     }
 }

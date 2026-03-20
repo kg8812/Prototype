@@ -4,25 +4,46 @@ using Default;
 using Sirenix.OdinInspector;
 using UnityEngine.Events;
 
-public partial class Actor
+public partial class Actor : IImmunity
 {
     private Guid _guid;
     private UnityEvent _onAppear;
-
     private UnityEvent _onHide;
+
     public UnityEvent OnHide => _onHide ??= new UnityEvent();
     public UnityEvent OnAppear => _onAppear ??= new UnityEvent();
-    public bool HitImmune => ImmunityController.IsImmune("HitImmunity");
+
+    private ActorImmunity _actorImmunity;
+    public ActorImmunity ActorImmunity => _actorImmunity ??= new ActorImmunity();
+
+    public ImmunityController ImmunityController => ActorImmunity.Controller;
+    public bool HitImmune => ActorImmunity.IsHitImmune;
+
+    public bool IsInvincible => ActorImmunity.IsInvincible;
 
     public Guid AddHitImmunity()
     {
-        if (!ImmunityController.Contains("HitImmunity")) ImmunityController.MakeNewType("HitImmunity");
-        return ImmunityController.AddCount("HitImmunity");
+        return ActorImmunity.AddHitImmunity();
     }
 
     public void RemoveHitImmunity(Guid guid)
     {
-        ImmunityController.MinusCount("HitImmunity", guid);
+        ActorImmunity.RemoveHitImmunity(guid);
+    }
+
+    public Guid AddInvincibility()
+    {
+        return ActorImmunity.AddInvincible();
+    }
+
+    public void RemoveInvincibility(Guid guid)
+    {
+        ActorImmunity.RemoveInvincible(guid);
+    }
+
+    public void ForceRemoveHitImmunity()
+    {
+        ActorImmunity.ClearHitImmunity();
     }
 
     [Button("무적 On/Off")]
@@ -36,11 +57,6 @@ public partial class Actor
     {
         if (Utils.GetLowestPointByRay(Position, LayerMasks.GroundAndPlatform, out var value))
             transform.position = value;
-    }
-
-    public void ForceRemoveHitImmunity()
-    {
-        ImmunityController.MakeCountToZero("HitImmunity");
     }
 
     public void Hide()

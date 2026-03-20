@@ -57,9 +57,7 @@ public partial class Player : IDashUser, IMovable, IPlayer
     public PlayerEffector Effector => effector ??= new PlayerEffector(this);
 
     public bool IsIdleFixed { get; private set; }
-
-    protected override TextShow DmgText => null;
-
+    
     public bool[] PressingLR
     {
         get

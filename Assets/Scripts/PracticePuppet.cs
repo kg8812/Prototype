@@ -22,7 +22,7 @@ public class PracticePuppet : Actor
         {
             base.CurHp = value;
 
-            curHp = MaxHp;
+            SetHpWithoutEvent(MaxHp);
         }
     }
 
