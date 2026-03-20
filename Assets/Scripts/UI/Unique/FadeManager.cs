@@ -105,6 +105,7 @@ namespace Apis.UI
 
         IEnumerator FadeCoroutine(bool isFadeOut,float fadeDuration)
         {
+            Debug.Log("FadeIn");
             _isFadingIn = false;
             if (isLoading) yield break;
             isLoading = true;
@@ -130,11 +131,11 @@ namespace Apis.UI
                 }
             }
 
-            // 컨파이너 진입 안할 시 페이딩이 풀리지 않아서 일단 최대 5초로 임시처리해놨습니다.
+            // 컨파이너 진입 안할 시 페이딩이 풀리지 않아서 일단 최대 1초로 임시처리해놨습니다.
             
             float curTime = 0;
             
-            while (GameManager.instance.Player != null && curTime < 5)
+            while (GameManager.instance.Player != null && curTime < 1)
             {
                 curTime += 0.03f;
                 yield return new WaitForSecondsRealtime(0.03f);
@@ -168,6 +169,7 @@ namespace Apis.UI
 
         private void FadeOuted()
         {
+            Debug.Log("FadeOut");
             fadingTween?.Kill();
             canvas.enabled = false;
             _isFadingOut = false;

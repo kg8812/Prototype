@@ -280,7 +280,7 @@ MonoBehaviour:
     PrefabModificationsReferencedUnityObjects: []
     PrefabModifications: []
     SerializationNodes: []
-  sceneName: 
+  sceneName: Main
 --- !u!4 &721757143
 Transform:
   m_ObjectHideFlags: 0
