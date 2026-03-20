@@ -7,12 +7,7 @@ using UnityEngine.Events;
 public partial class Actor : IImmunity
 {
     private Guid _guid;
-    private UnityEvent _onAppear;
-    private UnityEvent _onHide;
-
-    public UnityEvent OnHide => _onHide ??= new UnityEvent();
-    public UnityEvent OnAppear => _onAppear ??= new UnityEvent();
-
+   
     private ActorImmunity _actorImmunity;
     public ActorImmunity ActorImmunity => _actorImmunity ??= new ActorImmunity();
 
@@ -53,22 +48,5 @@ public partial class Actor : IImmunity
         else RemoveInvincibility(_guid);
     }
 
-    public void MoveToFloor()
-    {
-        if (Utils.GetLowestPointByRay(Position, LayerMasks.GroundAndPlatform, out var value))
-            transform.position = value;
-    }
-
-    public void Hide()
-    {
-        actorRenderer.Hide();
-
-        OnHide.Invoke();
-    }
-
-    public void Appear()
-    {
-        actorRenderer.Appear();
-        OnAppear.Invoke();
-    }
+    
 }

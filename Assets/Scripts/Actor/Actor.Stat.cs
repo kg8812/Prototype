@@ -7,9 +7,9 @@ using UnityEngine;
 public partial class Actor : IStatUser, IBarrierUser
 {
     ActorHpController  _hpController;
-    public ActorHpController  HPController => _hpController;
+    private ActorHpController HpController => _hpController ??= new(this);
     
-    public BarrierCalculator BarrierCalculator => HPController.BarrierCalculator;
+    public BarrierCalculator BarrierCalculator => HpController.BarrierCalculator;
     
     [SerializeField] protected StatManager _statManager;
 
@@ -25,17 +25,17 @@ public partial class Actor : IStatUser, IBarrierUser
 
     public virtual float CurHp
     {
-        get => HPController.CurHp;
-        set => HPController.ApplyDmgToTargetValue(value);
+        get => HpController.CurHp;
+        set => HpController.ApplyDmgToTargetValue(value);
     }
 
     public virtual float MaxHp => StatManager.GetFinalStat(ActorStatType.MaxHp);
     public virtual StatManager StatManager => _statManager;
 
-    public float Barrier => HPController.Barrier;
+    public float Barrier => HpController.Barrier;
     public void SetHpWithoutEvent(float hp)
     {
-        HPController.SetHpWithoutEvent(hp);
+        HpController.SetHpWithoutEvent(hp);
     }
 
     public event StatManager.StatEvent BonusStatEvent
@@ -50,12 +50,12 @@ public partial class Actor : IStatUser, IBarrierUser
 
     public void AddBarrier(float amount)
     {
-        HPController?.AddBarrier(amount);
+        HpController?.AddBarrier(amount);
     }
 
     protected void ResetTextVariables()
     {
-        HPController.ResetTextVariables();
+        HpController.ResetTextVariables();
     }
 
     #region 대쉬 관련 (임시, 수치 정해지면 actormovement 내에 const로 뺄 듯)
