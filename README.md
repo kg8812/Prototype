@@ -96,6 +96,7 @@ SubBuff: 실제 버프
 별도의 계산기로 분리되어 있습니다.
 
 BarrierCalculator를 사용하는 예시코드)
+
 user.BarrierCalculator.BarrierAddEvent += AddBarrier;
 user.BarrierCalculator.BarrierMinusEvent += MinusBarrier;
 
