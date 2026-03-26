@@ -30,6 +30,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d09ec1b8667d9454e97045a1133de893
+    m_Address: DmgText
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e6a89cca9c272f842bba0e4210fa64bf
     m_Address: Player1Data
     m_ReadOnly: 0

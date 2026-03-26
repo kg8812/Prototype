@@ -94,7 +94,7 @@ namespace Apis
             if (value > _curHp)
             {
                 var heal = value - _curHp;
-                ApplyHeal(heal);
+                return ApplyHeal(heal);
             }
             
             var parameters = new EventParameters(_actor);

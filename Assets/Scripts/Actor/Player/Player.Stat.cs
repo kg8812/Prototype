@@ -95,10 +95,6 @@ public partial class Player
         playerStat = new PlayerStat(_unitData.playerStat);
     }
 
-    public void UpdatePlayerStat()
-    {
-    }
-
     #region 입력 버퍼
 
     [TabGroup("기획쪽 수정 변수들/group1", "조작감")] [LabelText("액션 커맨드 최대 버퍼 수")] [SerializeField]

@@ -84,7 +84,7 @@ public partial class Player : IDashUser, IMovable, IPlayer
         attackColliders = GetComponentsInChildren<AttackObject>(true);
         name = "Player";
 
-        effector = new PlayerEffector(this);
+        effector ??= new PlayerEffector(this);
 
         animator.keepAnimatorStateOnDisable = true;
         resister = GetComponentInChildren<PlayerResister>();
@@ -323,11 +323,6 @@ public partial class Player : IDashUser, IMovable, IPlayer
         DOTween.Sequence().SetDelay(3f).OnComplete(() => { GameManager.instance.GameOver(); });
     }
 
-
-    private void CheckInteractionCollider()
-    {
-    }
-
     public IOnInteract getInteract()
     {
         if (InteractionColliderNum <= 0) return null;
@@ -365,15 +360,6 @@ public partial class Player : IDashUser, IMovable, IPlayer
         Controller.BufferSetDirection(input);
     }
 
-    public void StopJumping()
-    {
-        // animator.SetBool("OnAir", false);
-        // currentJump = 0;
-        // if (IsDrop) DropOver();
-        // Rb.velocity = new Vector2(Rb.velocity.x, 0);
-        // AirDashed = 0;
-        // onAir = false;
-    }
 
     // removeListener를 위한 action 지정
     private void CorrectingPlayerPostureAction(SceneData _)
