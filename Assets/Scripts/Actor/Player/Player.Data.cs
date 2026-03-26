@@ -7,7 +7,7 @@ public partial class Player
 {
     private static Dictionary<PlayerType, UnitData> _unitDatas;
 
-    static Dictionary<PlayerType, UnitData> UnitDatas => _unitDatas ??= _unitDatas = new()
+    static Dictionary<PlayerType, UnitData> UnitDatas => _unitDatas ??= new()
     {
         { PlayerType.Player1, ResourceUtil.Load<UnitData>(Define.PlayerData.Player1) },
     };
@@ -39,10 +39,10 @@ public partial class Player
     }
 
     #region 공격 이벤트 관련
-    private List<AttackEvent> _AttackEvents = null;
+    private List<AttackEvent> _attackEvents = null;
     public List<AttackEvent> AttackEvents {
         get {
-            if(_AttackEvents != null) return _AttackEvents;
+            if(_attackEvents != null) return _attackEvents;
 
             var container = ResourceUtil.Load<AttackEventContainer>("AttackEvents");
 
@@ -51,9 +51,9 @@ public partial class Player
                 return null;
             }
 
-            _AttackEvents = container.AttackEvents;
+            _attackEvents = container.AttackEvents;
 
-            return _AttackEvents;
+            return _attackEvents;
         }
     }
     #endregion

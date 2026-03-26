@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__serena__get_symbols_overview",
+      "mcp__serena__read_file"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "serena"
+  ]
+}

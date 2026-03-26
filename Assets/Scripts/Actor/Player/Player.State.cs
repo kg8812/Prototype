@@ -20,9 +20,9 @@ public partial class Player : Actor
     public uint MaxAirDash = 1;
     public bool StateLog;
 
-    private readonly Dictionary<EPlayerState, bool> _AbleState = new();
+    private readonly Dictionary<EPlayerState, bool> _ableState = new();
 
-    private UnityEvent _OnChargeEnd;
+    private UnityEvent _onChargeEnd;
 
     private UnityEvent _onChargeStart;
 
@@ -55,7 +55,7 @@ public partial class Player : Actor
     public bool isInteractable { get; set; }
     public EActorDirection PressingDir => Controller.PressingDir;
     public UnityEvent OnChargeStart => _onChargeStart ??= new UnityEvent();
-    public UnityEvent OnChargeEnd => _OnChargeEnd ??= new UnityEvent();
+    public UnityEvent OnChargeEnd => _onChargeEnd ??= new UnityEvent();
     public bool IsFixGravity { get; set; }
 
     public PlayerStateMachine StateMachine { get; private set; }
@@ -227,14 +227,7 @@ public partial class Player : Actor
         }
     }
 
-    public EPlayerState GetState()
-    {
-        foreach (var kv in _playerStateDictionary)
-            if (kv.Value == StateMachine.CurrentState)
-                return kv.Key;
-
-        return EPlayerState.Idle;
-    }
+    public EPlayerState GetState() => CurrentState;
 
     private void MakeDict()
     {
@@ -266,8 +259,8 @@ public partial class Player : Actor
         isInteractable = true;
 
         foreach (var state in Enum.GetValues(typeof(EPlayerState)))
-            if (!_AbleState.TryAdd((EPlayerState)state, false))
-                SetAbleState((EPlayerState)state,false);
+            if (!_ableState.TryAdd((EPlayerState)state, false))
+                SetAbleState((EPlayerState)state, false);
 
         SetAbleState(EPlayerState.Idle);
 
@@ -277,12 +270,12 @@ public partial class Player : Actor
 
     public void SetAbleState(EPlayerState state, bool value = true)
     {
-        _AbleState[state] = value;
+        _ableState[state] = value;
     }
 
     public bool GetAbleState(EPlayerState state)
     {
-        return _AbleState.GetValueOrDefault(state, false);
+        return _ableState.GetValueOrDefault(state, false);
     }
 
     public void SetDropMaxVel(float value)
