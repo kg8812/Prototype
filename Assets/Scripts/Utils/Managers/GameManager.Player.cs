@@ -1,5 +1,4 @@
 using System;
-using Apis.DataType;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Events;
@@ -20,59 +19,10 @@ public partial class GameManager
 
     private UnityEvent<Player> _onPlayerDestroy;
     private UnityEvent<Player> _onPlayerDie = new();
-    private int exp;
-    public Action<int> expChange;
-    private int level = 1;
-
-    public Action<int> levelChange;
 
     public UnityEvent<Player> OnPlayerCreated => _onPlayerCreated ??= new UnityEvent<Player>();
     public UnityEvent<Player> OnPlayerDie => _onPlayerDie ??= new UnityEvent<Player>();
     public UnityEvent<Player> onPlayerChange => _onPlayerChange ??= new UnityEvent<Player>();
-
-    public int Level
-    {
-        get => level;
-        set
-        {
-            if (level <= 0)
-                level = 1;
-            else if (level > 100)
-                level = 100;
-            else
-                level = value;
-            levelChange?.Invoke(level);
-        }
-    }
-
-    public int Exp
-    {
-        get => exp;
-        set
-        {
-            if (value < 0) return;
-
-            exp = value;
-            var levelData = LevelDatabase.GetLevelData(level);
-            if (levelData == null)
-            {
-                expChange?.Invoke(exp);
-                return;
-            }
-
-            var maxExp = levelData.exp;
-            while (exp >= maxExp)
-            {
-                exp -= maxExp;
-                Level++;
-                levelData = LevelDatabase.GetLevelData(Level);
-                if (levelData == null) break;
-                maxExp = levelData.exp;
-            }
-
-            expChange?.Invoke(exp);
-        }
-    }
 
     public Player Player
     {
@@ -107,7 +57,7 @@ public partial class GameManager
             {
                 if (info?.target is null or { IsDead: true }) return;
 
-                Exp += info.target.Exp;
+                Progress.Exp += info.target.Exp;
             });
             // CameraManager.instance.PlayerCam.Follow = playerTrans;
             player.AddEvent(EventType.OnDeath, _ => OnPlayerDie.Invoke(player));

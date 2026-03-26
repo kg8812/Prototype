@@ -18,8 +18,6 @@ public partial class GameManager
     public UnityEvent WhenUnlock = new();
 
     private UnityEvent _whenReturnedToTitle;
-    private bool isCountPlayTime;
-
     private bool isInit;
 
     public UnityEvent WhenReturnedToTitle => _whenReturnedToTitle ??= new UnityEvent();
@@ -56,7 +54,7 @@ public partial class GameManager
 
         if (Time.timeScale > 0 && InputManager.GetKeyDown(KeyCode.F10)) UI.CreateUI("NewCheatUI", UIType.Scene);
 
-        if (isCountPlayTime) playTime += Time.deltaTime;
+        UpdatePlayTime();
     }
 
 

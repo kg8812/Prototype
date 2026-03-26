@@ -132,6 +132,9 @@ public partial class GameManager : Singleton<GameManager>
 
     public static ItemFactoryManager Item => _item ??= new ItemFactoryManager();
 
+    private static PlayerProgressManager _progress;
+    public static PlayerProgressManager Progress => _progress ??= new PlayerProgressManager();
+
     private static AttackObject _atkObj;
 
     public static AttackObject AtkObj

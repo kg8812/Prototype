@@ -14,7 +14,7 @@ namespace Save.Schema
         protected override void OnBeforeSave()
         {
             PlayerType = GameManager.instance.Player.playerType;
-            Lv = GameManager.instance.Level;
+            Lv = GameManager.Progress.Level;
             LastPlayTime = DateTime.Now;
             PlayTime = Mathf.RoundToInt(GameManager.instance.playTime);
         }

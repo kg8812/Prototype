@@ -127,21 +127,6 @@ public partial class GameManager : Singleton<GameManager>
         }
     }
 
-    private void ToggleCountPlayTime(GameStateType sType)
-    {
-        switch (sType)
-        {
-            case GameStateType.BattleState:
-            case GameStateType.NonBattleState:
-                isCountPlayTime = true;
-                break;
-            case GameStateType.DefaultState:
-            case GameStateType.InteractionState:
-                isCountPlayTime = false;
-                break;
-        }
-    }
-
     private void SAwake()
     {
         #region 변수 초기화
