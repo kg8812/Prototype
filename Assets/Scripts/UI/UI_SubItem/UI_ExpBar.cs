@@ -15,15 +15,15 @@ public class UI_ExpBar : UI_Base
     public override void Init()
     {
         base.Init();
-        GameManager.instance.levelChange += SetLevelText;
-        GameManager.instance.expChange += SetExpBar;
+        GameManager.Progress.levelChange += SetLevelText;
+        GameManager.Progress.expChange += SetExpBar;
         SetExpBar(0);
         SetLevelText(1);
     }
 
     void SetExpBar(int exp)
     {
-        int maxExp = LevelDatabase.GetLevelData(GameManager.instance.Level).exp;
+        int maxExp = LevelDatabase.GetLevelData(GameManager.Progress.Level).exp;
         expBar.fillAmount = exp / (float)maxExp;
     }
 
