@@ -7,9 +7,13 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 
 [RequireComponent(typeof(Rigidbody2D))]
-[RequireComponent(typeof(IActorRenderer))]
 public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAttackable, IDirection, IAnimator
 {
+    private void Reset()
+    {
+        if (GetComponent<IActorRenderer>() == null)
+            gameObject.AddComponent<ActorNormalRenderer>();
+    }
     #region Inspector Varieties
 
     [Tooltip("플레이어 충돌 시 밀어냄 발생 유무")]

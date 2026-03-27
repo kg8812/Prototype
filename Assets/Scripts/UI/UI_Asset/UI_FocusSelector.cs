@@ -20,6 +20,7 @@ public class UI_FocusSelector : UI_Base, IUI_Navigatable ,IUI_NavigationManager
     
     public override void Init()
     {
+        base.Init();
         // 초기에는 모든 자식 FocusParent를 비활성화
         foreach (var fp in focusParents)
         {

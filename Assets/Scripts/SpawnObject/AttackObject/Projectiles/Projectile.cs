@@ -338,6 +338,7 @@ namespace Apis
                     if (penetrationCount >= penetrationMax)
                     {
                         Destroy();
+                        return;
                     }
                     penetrationCount++;
                     _atkStrategy.DmgRatio += penetrationDmg;

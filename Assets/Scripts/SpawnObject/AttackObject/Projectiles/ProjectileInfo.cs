@@ -95,8 +95,6 @@ namespace Apis
 
         [ShowIf("targetConflictType", ProjectileConflictType.Penetrate)]
         [TabGroup("투사체 설정")]
-        [ShowIf("targetConflictType", ProjectileConflictType.Penetrate)]
-        [TabGroup("투사체 설정")]
         [LabelText("관통당 크기 증가량(%)")]
         [Tooltip("감소 시 마이너스로 기입")]
         public float penetrationRadius;

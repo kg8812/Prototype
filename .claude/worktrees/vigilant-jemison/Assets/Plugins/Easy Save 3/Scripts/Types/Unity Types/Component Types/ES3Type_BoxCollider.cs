@@ -1,0 +1,64 @@
+using UnityEngine;
+using UnityEngine.Scripting;
+
+namespace ES3Types
+{
+    [Preserve]
+    [ES3PropertiesAttribute("center", "size", "enabled", "isTrigger", "contactOffset", "sharedMaterial")]
+    public class ES3Type_BoxCollider : ES3ComponentType
+    {
+        public static ES3Type Instance;
+
+        public ES3Type_BoxCollider() : base(typeof(BoxCollider))
+        {
+            Instance = this;
+        }
+
+        protected override void WriteComponent(object obj, ES3Writer writer)
+        {
+            var instance = (BoxCollider)obj;
+
+            writer.WriteProperty("center", instance.center);
+            writer.WriteProperty("size", instance.size);
+            writer.WriteProperty("enabled", instance.enabled);
+            writer.WriteProperty("isTrigger", instance.isTrigger);
+            writer.WriteProperty("contactOffset", instance.contactOffset);
+            writer.WritePropertyByRef("material", instance.sharedMaterial);
+        }
+
+        protected override void ReadComponent<T>(ES3Reader reader, object obj)
+        {
+            var instance = (BoxCollider)obj;
+            foreach (string propertyName in reader.Properties)
+                switch (propertyName)
+                {
+                    case "center":
+                        instance.center = reader.Read<Vector3>();
+                        break;
+                    case "size":
+                        instance.size = reader.Read<Vector3>();
+                        break;
+                    case "enabled":
+                        instance.enabled = reader.Read<bool>();
+                        break;
+                    case "isTrigger":
+                        instance.isTrigger = reader.Read<bool>();
+                        break;
+                    case "contactOffset":
+                        instance.contactOffset = reader.Read<float>();
+                        break;
+                    case "material":
+#if UNITY_6000_0_OR_NEWER
+
+                        instance.sharedMaterial = reader.Read<PhysicsMaterial>();
+#else
+                        instance.sharedMaterial = reader.Read<UnityEngine.PhysicMaterial>();
+#endif
+                        break;
+                    default:
+                        reader.Skip();
+                        break;
+                }
+        }
+    }
+}

@@ -1,0 +1,60 @@
+﻿using UnityEngine;
+
+namespace Apis
+{
+    [RequireComponent(typeof(Actor))]
+    public class ActorEffect : MonoBehaviour
+    {
+        public enum EffectRotationType
+        {
+            Fixed, // 그냥 고정
+            ActorRotate, // actor 기준 방향 설정
+            PlayerRotate // player 기준 방향 설정
+        }
+
+        [SerializeField] private EventType eventType;
+
+        [SerializeField] private float size = 1f;
+
+        public EffectRotationType rotationType;
+        public string effectName;
+        private Actor _actor;
+
+        private void Awake()
+        {
+            _actor = GetComponent<Actor>();
+        }
+
+        private void Start()
+        {
+            ChangeEventType(eventType);
+        }
+
+        public void ChangeEventType(EventType toType)
+        {
+            _actor.RemoveEvent(eventType, EffectOn);
+            eventType = toType;
+            _actor.AddEvent(eventType, EffectOn);
+        }
+
+        private void EffectOn(EventParameters _)
+        {
+            if (effectName != null)
+            {
+                var effect = _actor.EffectSpawner.Spawn(effectName, _actor.Position, false);
+                var isRight = true;
+                switch (rotationType)
+                {
+                    case EffectRotationType.ActorRotate:
+                        isRight = _actor.transform.localScale.x > 0;
+                        break;
+                    case EffectRotationType.PlayerRotate:
+                        isRight = _actor.transform.position.x > GameManager.instance.ControllingEntity.Position.x;
+                        break;
+                }
+
+                effect.transform.localScale = new Vector3(isRight ? size : -size, size, size);
+            }
+        }
+    }
+}

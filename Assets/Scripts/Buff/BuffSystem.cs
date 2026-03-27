@@ -7,7 +7,6 @@ namespace Apis
     
     //버프를 유니티 컴포넌트 및 외부에 연결역할을 담당하는 클래스
     
-    [RequireComponent(typeof(Actor))]
     public class BuffSystem : MonoBehaviour, IBuffUser
     {
         private SubBuffManager _subBuffManager; //버프 관리자

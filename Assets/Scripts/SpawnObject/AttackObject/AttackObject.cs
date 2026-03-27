@@ -391,6 +391,7 @@ namespace Apis
             void Remove(EventParameters info)
             {
                 RemoveEvent(EventType.OnAttackSuccess, TempAction);
+                RemoveEvent(EventType.OnAttackSuccess, Remove);
                 RemoveEvent(EventType.OnDestroy, Remove);
                 RemoveEvent(EventType.OnInit, Remove);
             }

@@ -89,11 +89,12 @@ namespace Default
 
         public static IEnumerator Disappear(GameObject obj, float duration)
         {
-            if (GetComponentInParentAndChild<MeshRenderer>(obj) != null)
+            var render = GetComponentInParentAndChild<MeshRenderer>(obj);
+            if (render != null)
             {
-                GetComponentInParentAndChild<MeshRenderer>(obj).enabled = false;
+                render.enabled = false;
                 yield return new WaitForSeconds(duration);
-                GetComponentInParentAndChild<MeshRenderer>(obj).enabled = true;
+                render.enabled = true;
             }
         }
 
@@ -175,8 +176,9 @@ namespace Default
                 return value;
             else
             {
-                dict.Add(key, new TValue());
-                return dict[key];
+                var val = new TValue();
+                dict.Add(key, val);
+                return val;
             }
         }
 

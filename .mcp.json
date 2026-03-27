@@ -4,12 +4,12 @@
             "command": "C:\\Users\\kg881\\.local\\bin\\uv.exe",
             "args": [
                 "--directory",
-                "C:\\Users\\kg881\\OneDrive\\Documents\\GitHub\\serena",
+                "C:\\GitHub\\serena",
                 "run",
                 "serena",
                 "start-mcp-server",
                 "--project",
-                "C:\\Users\\kg881\\OneDrive\\Documents\\GitHub\\Prototype"
+                "C:\\GitHub\\Prototype"
             ]
         }
     }

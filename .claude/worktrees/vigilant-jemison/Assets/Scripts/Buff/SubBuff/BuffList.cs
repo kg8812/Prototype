@@ -1,0 +1,185 @@
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Apis
+{
+    // 현재 책임 : Buff → SubBuffList를 관리하면서 추가/제거/스택/이벤트/UI까지 모두 처리
+    // 목표 책임 : Buff 단위로 서브버프 컬렉션을 관리하는 상위 컨테이너
+    public class BuffList : ISubject<BuffList>, IObserver<SubBuffList>
+    {
+        private readonly IBuffUser _user;
+
+        private List<IObserver<BuffList>> _observers;
+
+        public Dictionary<Buff, SubBuffList> buffs = new();
+
+        public BuffList(IBuffUser user)
+        {
+            _user = user;
+        }
+
+        public int Count // 서브버프 개수
+        {
+            get
+            {
+                var count = 0;
+
+                foreach (var item in buffs.Values) count += item.Count;
+                return count;
+            }
+        }
+
+        public List<SubBuff> this[Buff buff] => buffs[buff].List;
+        private List<IObserver<BuffList>> observers => _observers ??= new List<IObserver<BuffList>>();
+
+        private SubBuffLifeCycleHandler _buffLifeCycleHandler = new();
+
+        public void Notify(SubBuffList value)
+        {
+            if (value != null && value.Count == 0)
+            {
+                var temp = buffs.ToDictionary(kv => kv.Key, kv => kv.Value);
+                temp.Remove(value.buff);
+                buffs = temp;
+            }
+
+            NotifyObservers();
+        }
+
+        public void Attach(IObserver<BuffList> observer)
+        {
+            observers.Add(observer);
+        }
+
+        public void Detach(IObserver<BuffList> observer)
+        {
+            observers.Remove(observer);
+        }
+
+        public void NotifyObservers()
+        {
+            observers.ForEach(x => x.Notify(this));
+        }
+        
+        private void AddSub(Buff buff, SubBuff subBuff, Dictionary<Buff, SubBuffList> temp)
+        {
+            var wasMaxStack = false;
+            
+            // 스택 한도 확인: 게임 규칙 해석 책임
+            if (buff.BuffMaxStack > 0 && buff.BuffMaxStack <= temp[buff].Count)
+            {
+                var sub = temp[buff].List[0]; 
+                temp[buff].List.RemoveAt(0); // 컬렉션에서 제거: 저장/컨테이너 조작 책임
+                _buffLifeCycleHandler.AfterSubBuffRemoved(sub);
+                wasMaxStack = true;
+            }
+
+            temp[buff].Add(subBuff); // 컬렉션에 추가: 저장/컨테이너 조작 책임
+            _buffLifeCycleHandler.AfterSubBuffAdded(subBuff);
+
+            // 스택 한도 확인: 게임 규칙 해석 책임
+            if (buff.BuffMaxStack > 0 && buff.BuffMaxStack <= temp[buff].Count && !wasMaxStack)
+            {
+                _buffLifeCycleHandler.AfterSubBuffMaxStackReached(subBuff);
+            }
+        }
+
+        public SubBuffList Add(Buff buff, SubBuff subBuff)
+        {
+            // 기존 buff 묶음 조회: 상위 컨테이너 책임
+            var b = buffs.Keys.FirstOrDefault(x => x.BuffIndex == buff.BuffIndex); 
+
+            if (b == null)
+            {
+                var temp = buffs.ToDictionary(kv => kv.Key, kv => kv.Value);
+                
+                var createdList = new SubBuffList(buff, _user);
+                // 하위 컬렉션 생성 + 등록: 상위 컨테이너 책임(약간 애매하지만 허용 가능)
+                temp.Add(buff, createdList);
+                buffs = temp; // 저장소 최신화
+
+                // 지속시간 초기화: 상태 갱신/규칙 책임
+                createdList.CurTime = createdList.Duration;
+
+                // sub buff 추가: 상위 컨테이너 책임
+                AddSub(buff, subBuff, temp);
+                
+                // 옵저버 연결 및 변경 알림 : 상위 Subject 책임
+                createdList.Attach(this);
+                NotifyObservers();
+                
+                return createdList;
+            }
+            else
+            {
+                // 지속시간 초기화: 상태 갱신/규칙 책임
+                buffs[b].CurTime = buffs[b].Duration;
+                // 기존 컬렉션에 추가: 상위 컨테이너 책임
+                AddSub(b, subBuff, buffs);
+                
+                // 내부 옵저버 변경 알림 : 상위 Subject 책임
+                NotifyObservers();
+
+                return null;
+            }
+        }
+
+        public bool RemoveSubBuff(Buff buff, SubBuff subBuff)
+        {
+            if (buffs.ContainsKey(buff))
+            {
+                var success = buffs[buff].RemoveSubBuff(subBuff);
+
+                return success;
+            }
+
+            return false;
+        }
+
+        public SubBuff RemoveSubBuff(Buff buff)
+        {
+            if (buffs.ContainsKey(buff))
+            {
+                var subBuff = buffs[buff].RemoveSubBuff();
+
+                return subBuff;
+            }
+
+            return null;
+        }
+
+        public bool RemoveBuff(Buff buff)
+        {
+            if (buffs.ContainsKey(buff))
+            {
+                buffs[buff].Clear();
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool Remove()
+        {
+            foreach (var x in buffs.Keys)
+            {
+                if (buffs[x].Count <= 0) continue;
+                buffs[x].RemoveSubBuff();
+                return true;
+            }
+
+            return false;
+        }
+
+        public void Clear()
+        {
+            foreach (var x in buffs.Keys) buffs[x].Clear();
+            buffs.Clear();
+        }
+
+        public void Update()
+        {
+            foreach (var x in buffs.Keys) buffs[x].Update();
+        }
+    }
+}

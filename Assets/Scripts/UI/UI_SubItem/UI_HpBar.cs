@@ -10,7 +10,7 @@ namespace Apis.UI
 {
     public class UI_HpBar : UI_Base
     {
-        readonly float duration = 0.5f;
+        const float duration = 0.5f;
         [SerializeField] private bool isShowText;
 
         enum Images

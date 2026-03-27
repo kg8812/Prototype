@@ -29,11 +29,12 @@ public class EventParameters
             Set(instance);
         }
 
-        return (datas[typeof(T)] ?? (datas[typeof(T)] = new T())) as T;
+        return datas[typeof(T)] as T;
     }
 
     public void Set<T>(T data) where T : class, IEventData
     {
+        
         datas.TryAdd(typeof(T), data);
         
         datas[typeof(T)] = data;

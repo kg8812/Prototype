@@ -17,6 +17,17 @@ public class BonusStat
         foreach (var x in Utils.StatTypes) Stats.Add(x, new BasicStat(x));
     }
 
+    public BonusStat(BonusStat other)
+    {
+        Stats = new Dictionary<ActorStatType, IStat>(Utils.StatTypes.Length);
+        foreach (var x in Utils.StatTypes)
+        {
+            Stats.Add(x, new BasicStat(x));
+            Stats[x].Value = other.Stats[x].Value;
+            Stats[x].Ratio = other.Stats[x].Ratio;
+        }
+    }
+
     public void Reset() // 초기화 함수
     {
         foreach (var x in Utils.StatTypes)

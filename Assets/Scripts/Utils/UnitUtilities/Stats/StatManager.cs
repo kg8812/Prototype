@@ -28,8 +28,9 @@ namespace Apis
 
         public StatManager(StatManager other)
         {
-            _baseStat = other._baseStat;
-            _bonusStat = other._bonusStat;
+            _baseStat = new BaseStat(other._baseStat); 
+            _bonusStat = other._bonusStat != null ? new BonusStat(other._bonusStat) : null;
+
         }
 
         public virtual BaseStat BaseStat

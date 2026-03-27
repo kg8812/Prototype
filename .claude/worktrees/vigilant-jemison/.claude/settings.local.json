@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__unityMCP__manage_editor",
+      "mcp__unityMCP__manage_scene",
+      "Bash(gh pr:*)"
+    ]
+  }
+}

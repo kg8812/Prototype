@@ -211,8 +211,8 @@ namespace Default
                     evt.OnDropHandler += action;
                     break;
                 case Define.UIEvent.PointDown:
-                    evt.OnPointerUpHandler -= action;
-                    evt.OnPointerUpHandler += action;
+                    evt.OnPointerDownHandler -= action;
+                    evt.OnPointerDownHandler += action;
                     break;
                 case Define.UIEvent.PointUp:
                     evt.OnPointerUpHandler -= action;

@@ -68,8 +68,7 @@ public class UI_NavigationController : MonoBehaviour, IController , IUI_Navigati
         _navigationMap = new Dictionary<IUI_Navigatable, Dictionary<NavigationDirection, IUI_Navigatable>>();
         var allParents = new HashSet<IUI_Navigatable>(); // 중복 등록 방지
 
-        _navigationMap = new Dictionary<IUI_Navigatable, Dictionary<NavigationDirection, IUI_Navigatable>>();
-        
+
         // MonoBehaviour로 받은 규칙들을 IUI_Navigatable 인터페이스 기반의 맵으로 변환
         foreach (var rule in navigationRules)
         {

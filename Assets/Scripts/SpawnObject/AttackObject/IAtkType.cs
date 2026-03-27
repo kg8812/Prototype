@@ -162,6 +162,7 @@ namespace Apis
                 targets.Clear();
                 hitTargets.Clear();
                 curTime = 0;
+                atk.RemoveEvent(EventType.OnUpdate, Update);
                 atk.AddEvent(EventType.OnUpdate, Update);
             }
 
@@ -215,7 +216,6 @@ namespace Apis
             private Dictionary<IOnHit, EventParameters> _hitTargets = new();
             private readonly AttackObject atk;
             public float delayTime;
-            private Sequence updateSequence;
 
 
             public DelayContinuousAttack(AttackObject atk, float delayTime)
@@ -243,22 +243,23 @@ namespace Apis
 
             public void OnInit()
             {
-                updateSequence = DOTween.Sequence();
-                updateSequence.AppendCallback(() =>
-                {
-                    foreach (var x in hitTargets.Keys) atk.DoAttackInvoke(hitTargets[x]);
-                });
-                updateSequence.AppendInterval(Time.deltaTime);
-                updateSequence.SetLoops(-1);
+                atk.RemoveEvent(EventType.OnUpdate, Update);
+                atk.AddEvent(EventType.OnUpdate, Update);
             }
 
             public void OnDisable()
             {
-                updateSequence?.Kill();
+                atk.RemoveEvent(EventType.OnUpdate, Update);
             }
 
             public void OnEnable()
             {
+            }
+
+            private void Update(EventParameters _)
+            {
+                var keys = new List<IOnHit>(hitTargets.Keys);
+                foreach (var x in keys) atk.DoAttackInvoke(hitTargets[x]);
             }
 
             private void Enter(EventParameters parameters)
