@@ -20,6 +20,18 @@ namespace Apis
             }
         }
 
+        /// <summary>로딩 단계에서 미리 인스턴스를 만들어 둔다.</summary>
+        public static void PrewarmPool(string address, int count)
+        {
+            Pool.Prewarm(address, count);
+        }
+
+        /// <summary>씬 전환 시 게임플레이 오브젝트를 모두 파기한다.</summary>
+        public static void ClearPool()
+        {
+            pool?.Clear();
+        }
+
         public abstract GameObject Get(string addressName, Vector2? pos = null);
 
         public Sequence Return(GameObject target, float time = 0) // 반환 함수

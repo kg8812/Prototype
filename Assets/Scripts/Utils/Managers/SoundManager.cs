@@ -33,9 +33,11 @@ namespace Default
         {
             if (_audioMixer == null)
             {
-                _audioMixer = ResourceUtil.Load<AudioMixer>("SoundMixer");
+                _audioMixer = ResourceUtil.Load<AudioMixer>(Define.SoundMixer.AudioMixer);
+                if (_audioMixer == null)
+                    Debug.LogError("[SoundManager] SoundMixer를 로드하지 못했습니다. 볼륨 조절이 동작하지 않습니다.");
             }
-           
+
             if (root != null) return;
 
             root = new GameObject("@Sound");
@@ -54,11 +56,11 @@ namespace Default
                 _baseAudioSource[i].reverbZoneMix = 0;
             }
            
-            _baseAudioSource[(int)Define.Sound.BGM].outputAudioMixerGroup = ResourceUtil.Load<AudioMixerGroup>("SoundMixer[BGM]");
-            _baseAudioSource[(int)Define.Sound.SFX].outputAudioMixerGroup = ResourceUtil.Load<AudioMixerGroup>("SoundMixer[SFX]");
-            _baseAudioSource[(int)Define.Sound.UI].outputAudioMixerGroup = ResourceUtil.Load<AudioMixerGroup>("SoundMixer[UI]");
-            _baseAudioSource[(int)Define.Sound.Ambience].outputAudioMixerGroup = ResourceUtil.Load<AudioMixerGroup>("SoundMixer[Ambience]");
-            _baseAudioSource[(int)Define.Sound.Master].outputAudioMixerGroup = ResourceUtil.Load<AudioMixerGroup>("SoundMixer[Master]");
+            _baseAudioSource[(int)Define.Sound.BGM].outputAudioMixerGroup = ResourceUtil.Load<AudioMixerGroup>(Define.SoundMixer.BGMMixer);
+            _baseAudioSource[(int)Define.Sound.SFX].outputAudioMixerGroup = ResourceUtil.Load<AudioMixerGroup>(Define.SoundMixer.SFXMixer);
+            _baseAudioSource[(int)Define.Sound.UI].outputAudioMixerGroup = ResourceUtil.Load<AudioMixerGroup>(Define.SoundMixer.UIMixer);
+            _baseAudioSource[(int)Define.Sound.Ambience].outputAudioMixerGroup = ResourceUtil.Load<AudioMixerGroup>(Define.SoundMixer.AmbienceMixer);
+            _baseAudioSource[(int)Define.Sound.Master].outputAudioMixerGroup = ResourceUtil.Load<AudioMixerGroup>(Define.SoundMixer.MasterMixer);
 
             ChangeVolume(0.5f);
             ChangeVolume(0.5f, Define.Sound.BGM);
@@ -68,8 +70,13 @@ namespace Default
             loadedClips ??= new();
             SceneBGMVolume = 1;
             _sceneBGMInfo.channel = -1;
-            LoadAll("SFX"); // sfx 전부 로드
-            LoadAll("BGM"); // bgm 전부 로드
+            // SFX는 짧고 전역에서 쓰이므로 통째로 올려둔다.
+            LoadAll(Define.Labels.SFX);
+
+            // BGM은 클립 하나가 수 MB라 전부 올리면 메모리를 크게 먹는다.
+            // 씬에서 쓰는 BGM은 씬 매니페스트(SceneManifestTable)에 등록해 미리 올리고,
+            // 씬을 벗어날 때 Scene 스코프와 함께 해제되도록 한다.
+            // AudioClip 임포트 설정도 Load Type = Streaming / Preload Audio Data = off 로 두는 것이 좋다.
             GameManager.instance.WhenReturnedToTitle.RemoveListener(Reset);
             GameManager.instance.WhenReturnedToTitle.AddListener(Reset);
         }
@@ -168,13 +175,52 @@ namespace Default
             return false;
         }
 
-        void LoadAll(string label) // 테스트용
+        void LoadAll(string label)
         {
             var list = ResourceUtil.LoadAll<AudioClip>(label);
             list.ForEach(y =>
             {
                 loadedClips.TryAdd(y.name, y);
             });
+        }
+
+        /// <summary>
+        ///     주소를 Sounds/{타입}/ 형태로 정규화한 뒤 클립을 해석한다.
+        /// </summary>
+        private AudioClip GetClip(string path, Define.Sound type)
+        {
+            if (string.IsNullOrEmpty(path)) return null;
+
+            var prefix = $"Sounds/{type}/";
+            if (!path.Contains(prefix)) path = prefix + path;
+
+            return ResolveClip(path);
+        }
+
+        /// <summary>
+        ///     클립 해석의 유일한 경로.
+        ///     LoadAll이 채워둔 캐시는 클립 '이름'을, ResourceUtil은 '주소'를 키로 쓰므로 둘 다 확인한다.
+        ///     어느 쪽에도 없으면 스코프에서 로드한다(프리로드되지 않았다면 동기 로드가 발생한다).
+        /// </summary>
+        private AudioClip ResolveClip(string address)
+        {
+            if (string.IsNullOrEmpty(address)) return null;
+
+            if (loadedClips.TryGetValue(address, out var byAddress) && byAddress != null) return byAddress;
+
+            var slash = address.LastIndexOf('/');
+            var clipName = slash >= 0 ? address[(slash + 1)..] : address;
+            if (loadedClips.TryGetValue(clipName, out var byName) && byName != null) return byName;
+
+            var clip = ResourceUtil.Load<AudioClip>(address);
+            if (clip == null)
+            {
+                Debug.LogError($"[SoundManager] AudioClip load failed: {address}");
+                return null;
+            }
+
+            loadedClips[address] = clip;
+            return clip;
         }
         private string lastPath = "";
         readonly Dictionary<string,CustomQueue<AudioSource>> playingSFXSources = new();
@@ -191,27 +237,19 @@ namespace Default
                 }
                 lastPath = path;
             }
-            if (path.Contains("Sounds/"+type+"/") == false)
-            {
-                path = $"Sounds/{type}/{path}";
-            }
+            var audioClip = GetClip(path, type);
+            if (audioClip == null) return;
 
-            var audioClip = ResourceUtil.Load<AudioClip>(path);
-            if (audioClip == null)
-            {
-                Debug.LogError($"AudioClip Load Fail : {path}");
-                return;
-            }
             var audioSourceIndex = (int)type;
 
             var audioSource = _baseAudioSource[audioSourceIndex];
             if (isMute[audioSourceIndex])
             {
-                _audioMixer.SetFloat(type.ToString(), Mathf.Log10(0.001f) * 20);
+                SetMixerFloat(type.ToString(), Mathf.Log10(0.001f) * 20);
             }
             else
             {
-                _audioMixer.SetFloat(type.ToString(), Mathf.Log10(volume[audioSourceIndex]) * 20);
+                SetMixerFloat(type.ToString(), Mathf.Log10(volume[audioSourceIndex]) * 20);
             }
             if (type == Define.Sound.BGM)
             {
@@ -288,13 +326,9 @@ namespace Default
             for (int i = 0; i < info.clipAddresses.Count; i++)
             {
                 string path = info.clipAddresses[i];
-                if (path.Contains("Sounds/BGM/") == false)
-                {
-                    path = $"Sounds/BGM/{path}";
-                }
                 int temp = i;
                 Sequence seq = GetSequence(SceneBGMSources[i]).SetUpdate(true);
-                SceneBGMSources[temp].clip = ResourceUtil.Load<AudioClip>(path);
+                SceneBGMSources[temp].clip = GetClip(path, Define.Sound.BGM);
 
                 if (SceneBGMSources[i].isPlaying)
                 {
@@ -402,13 +436,9 @@ namespace Default
             CustomQueue<AudioClip> clips = new();
             for (int i = 0; i < address.Count; i++)
             {
-                string x = address[i];
-                if (x.Contains("Sounds/BGM/") == false)
-                {
-                    x = $"Sounds/BGM/{x}";
-                }
-            
-                var clip = ResourceUtil.Load<AudioClip>(x);
+                var clip = GetClip(address[i], Define.Sound.BGM);
+                if (clip == null) continue; // null을 큐에 넣으면 재생 시점에 터진다
+
                 clips.Enqueue(clip);
             }
             ArenaBGMSource.AudioSource.volume = 0;
@@ -456,13 +486,9 @@ namespace Default
             CustomQueue<AudioClip> clips = new();
             for (int i = 0; i < address.Count; i++)
             {
-                string x = address[i];
-                if (x.Contains("Sounds/BGM/") == false)
-                {
-                    x = $"Sounds/BGM/{x}";
-                }
-            
-                var clip = ResourceUtil.Load<AudioClip>(x);
+                var clip = GetClip(address[i], Define.Sound.BGM);
+                if (clip == null) continue; // null을 큐에 넣으면 재생 시점에 터진다
+
                 clips.Enqueue(clip);
             }
             if (clips.Count == 1)
@@ -508,7 +534,14 @@ namespace Default
                 GameManager.Factory.Return(temp.gameObject);
             }
 
-            var clip = loadedClips[clipAddress];
+            var clip = ResolveClip(clipAddress);
+            if (clip == null)
+            {
+                GameManager.Factory.Return(source.gameObject);
+                queue.Remove(source);
+                return null;
+            }
+
             AudioSourceUtil util = Utils.GetOrAddComponent<AudioSourceUtil>(source.gameObject);
             util.OnEnd.AddListener(ReturnSource);
             util.PlaySingle(clip);
@@ -535,14 +568,8 @@ namespace Default
             
             clipAddresses.ForEach(x =>
             {
-                if (loadedClips.TryGetValue(x, out var clip))
-                {
-                    clips.Enqueue(clip);
-                }
-                else
-                {
-                    Debug.LogError($"{x}가 어드레서블에 SFX로 등록되어있지않음");
-                }
+                var clip = ResolveClip(x);
+                if (clip != null) clips.Enqueue(clip);
             });
             
             util.OnEnd.AddListener(ReturnSource);
@@ -582,12 +609,9 @@ namespace Default
         IEnumerator PlayNextBGM(AudioSource audio,string path)
         {
             yield return new WaitUntil(() => !audio.isPlaying);
-            var audioClip = ResourceUtil.Load<AudioClip>(path);
-            if (audioClip == null)
-            {
-                Debug.LogError($"AudioClip Load Fail : {path}");
-                yield break;
-            }
+            var audioClip = GetClip(path, Define.Sound.BGM);
+            if (audioClip == null) yield break;
+
             audio.clip = audioClip;
             audio.Play();
             audio.loop = true;
@@ -609,15 +633,19 @@ namespace Default
                 path = $"Sounds/{path}";
             }
 
-            var audioClip = ResourceUtil.Load<AudioClip>(path);
-            if (audioClip == null)
-            {
-                Debug.Log($"AudioClip Load Fail : {path}");
-                return;
-            }
+            var audioClip = ResolveClip(path);
+            if (audioClip == null) return;
+
             var audioSource = _baseAudioSource[(int)Define.Sound.SFX];
             audioSource.clip = audioClip;
             audioSource.Play();
+        }
+
+        /// <summary>믹서 로드가 실패해도 사운드 재생 자체는 계속되도록, 볼륨 설정은 여기로 모아 방어한다.</summary>
+        private void SetMixerFloat(string parameter, float decibel)
+        {
+            if (_audioMixer == null) return;
+            _audioMixer.SetFloat(parameter, decibel);
         }
 
         private Tween volumeFade;
@@ -627,21 +655,24 @@ namespace Default
 
             amount = Mathf.Clamp(amount, 0.01f, 1);
             volumeFade?.Kill();
+
+            if (_audioMixer == null) return;
+
             volumeFade = _audioMixer.DOSetFloat(soundType.ToString(), Mathf.Log10(amount) * 20, fadeTime).SetAutoKill(false);
             volumeFade.onKill += () =>
             {
-                _audioMixer.SetFloat(soundType.ToString(), Mathf.Log10(amount) * 20);
+                SetMixerFloat(soundType.ToString(), Mathf.Log10(amount) * 20);
                 volumeFade = null;
             };
         }
         public void ChangeVolume(float volume, Define.Sound type = Define.Sound.SFX)
         {
             // log를 이용해서 볼륨 계산을 하기 때문에, 수치가 0이 되면 안됨.
-            
+
             volume = Mathf.Clamp(volume, 0.01f, 1);
             if (!isMute[(int)type])
             {
-                _audioMixer.SetFloat(type.ToString(), Mathf.Log10(volume) * 20);
+                SetMixerFloat(type.ToString(), Mathf.Log10(volume) * 20);
             }
             this.volume[(int)type] = volume;
         }
@@ -650,9 +681,9 @@ namespace Default
         {
             isMute[(int)type] = ismute;
             if (ismute)
-                _audioMixer.SetFloat(type.ToString(), Mathf.Log10(0.001f) * 20);
+                SetMixerFloat(type.ToString(), Mathf.Log10(0.001f) * 20);
             else
-                _audioMixer.SetFloat(type.ToString(), Mathf.Log10(volume[(int)type]) * 20);
+                SetMixerFloat(type.ToString(), Mathf.Log10(volume[(int)type]) * 20);
         }
 
         public void Stop(Define.Sound type)

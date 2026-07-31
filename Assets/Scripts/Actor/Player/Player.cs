@@ -390,14 +390,32 @@ public partial class Player : IDashUser, IMovable, IPlayer
         Player player = GameManager.instance.Player;
         if (ReferenceEquals(null, player))
         {
-            player = ResourceUtil.Instantiate("Player").GetComponent<Player>();
+            var go = ResourceUtil.Instantiate("Player");
+            if (go == null)
+            {
+                Debug.LogError("[Player] 'Player' 프리팹을 생성하지 못했습니다. Addressables 등록을 확인하세요.");
+                return null;
+            }
+
+            player = go.GetComponent<Player>();
+            if (player == null)
+            {
+                Debug.LogError("[Player] 'Player' 프리팹에 Player 컴포넌트가 없습니다.");
+                Destroy(go);
+                return null;
+            }
+
             isCreated = true;
         }
 
         player._playerType = character;
         //player.animator.SetInteger("PlayerType", (int)character);
         GameManager.instance.Player = player;
-        player.SetUnitData(UnitDatas[character]);
+
+        if (UnitDatas.TryGetValue(character, out var unitData) && unitData != null)
+            player.SetUnitData(unitData);
+        else
+            Debug.LogError($"[Player] {character}의 UnitData를 찾지 못했습니다.");
         GameManager.instance.onPlayerChange.Invoke(player);
         player.ResetPlayerStatus();
         if (isCreated)

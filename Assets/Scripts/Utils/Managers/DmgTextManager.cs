@@ -21,7 +21,10 @@ namespace Apis
 
         public static void ShowDmgText(Vector3 pos, float dmg)
         {
-            var obj = Object.Instantiate(DmgText);
+            var prefab = DmgText;
+            if (prefab == null) return;
+
+            var obj = Object.Instantiate(prefab);
 
             obj.transform.position = pos + Vector3.up * Random.Range(0f, 0.5f);
             obj.transform.position += new Vector3(Random.Range(-0.5f, 0.5f), 0, 0);
@@ -33,7 +36,10 @@ namespace Apis
 
         public static void ShowDmgText(Vector3 pos, float dmg, Color color)
         {
-            var obj = Object.Instantiate(DmgText);
+            var prefab = DmgText;
+            if (prefab == null) return;
+
+            var obj = Object.Instantiate(prefab);
             obj.transform.position = pos + Vector3.up * Random.Range(0f, 0.5f);
             obj.transform.position += new Vector3(Random.Range(-0.5f, 0.5f), 0, 0);
 

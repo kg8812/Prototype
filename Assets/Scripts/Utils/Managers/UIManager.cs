@@ -136,6 +136,12 @@ namespace Apis
                     }
 
             var go = Pool.Get($"Prefabs/UI/{uiType}/{prefabName}");
+            if (go == null)
+            {
+                Debug.LogError($"[UIManager] UI 생성 실패: Prefabs/UI/{uiType}/{prefabName}");
+                return null;
+            }
+
             var uiComponent = GUtil.GetOrAddComponent<UI_Base>(go);
 
             return UIInitSetting(uiComponent, uiType, withoutActivation);
@@ -211,6 +217,11 @@ namespace Apis
         public UI_Base MakeSubItem(string prefabName, Transform parent)
         {
             var go = Pool.Get($"Prefabs/UI/SubItem/{prefabName}");
+            if (go == null)
+            {
+                Debug.LogError($"[UIManager] SubItem 생성 실패: Prefabs/UI/SubItem/{prefabName}");
+                return null;
+            }
 
             var subItem = GUtil.GetOrAddComponent<UI_Base>(go);
 
@@ -233,6 +244,12 @@ namespace Apis
         public T MakeUI<T>(string prefabName, Transform parent) where T : Component
         {
             var go = Pool.Get($"Prefabs/UI/SubItem/{prefabName}");
+            if (go == null)
+            {
+                Debug.LogError($"[UIManager] UI 생성 실패: Prefabs/UI/SubItem/{prefabName}");
+                return null;
+            }
+
             if (!ReferenceEquals(parent, null)) go.transform.SetParent(parent);
             go.transform.localScale = Vector3.one;
             go.transform.localPosition = Vector3.zero;

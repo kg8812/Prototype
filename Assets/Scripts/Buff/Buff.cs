@@ -33,7 +33,6 @@ namespace Apis
                     _applyStrategy = new TempApply(this);
                     break;
             }
-
             Icon = ResourceUtil.Load<Sprite>(_data.buffIconPath);
 
             Array.Resize(ref data.buffPower, 5);
@@ -63,11 +62,6 @@ namespace Apis
             Icon = ResourceUtil.Load<Sprite>(_data.buffIconPath);
 
             Array.Resize(ref data.buffPower, 5);
-        }
-
-        ~Buff()
-        {
-            if (Icon != null) Addressables.Release(Icon);
         }
 
         private void CreateDispell()

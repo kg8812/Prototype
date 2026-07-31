@@ -6,7 +6,6 @@ using Default;
 using Managers;
 using TMPro;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 
 namespace Apis.UI
@@ -189,8 +188,7 @@ namespace Apis.UI
             public void Detach()
             {
                 typeList.Detach(this);
-                if (sp != null) Addressables.Release(sp);
-
+                // 스프라이트 해제는 AssetScope가 담당한다. 여기서는 참조만 끊는다.
                 sp = null;
             }
         }
@@ -284,11 +282,8 @@ namespace Apis.UI
 
             public void Detach()
             {
-                if (sp != null)
-                {
-                    Addressables.Release(sp);
-                    sp = null;
-                }
+                // 스프라이트 해제는 AssetScope가 담당한다. 여기서는 참조만 끊는다.
+                sp = null;
             }
         }
 

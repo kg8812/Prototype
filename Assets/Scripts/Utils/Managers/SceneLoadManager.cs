@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Default;
 using Managers;
 using Apis.UI;
 using UnityEngine.Events;
@@ -85,6 +86,7 @@ namespace Apis.Managers
                         if (!CurSceneData.isPlayerMustExist) GameManager.instance.DestroyPlayer();
                     }
 
+                    ResourceUtil.ReleaseSceneAssets();
                     LoadingSceneManager.LoadStage(sceneName);
                 }, () => { }, isFadeIn: IsFading(CurSceneData), isFadeOut: false);
             }
@@ -100,6 +102,7 @@ namespace Apis.Managers
                         if (!CurSceneData.isPlayerMustExist) GameManager.instance.DestroyPlayer();
                     }
 
+                    ResourceUtil.ReleaseSceneAssets();
                     SceneManager.LoadScene(sceneName);
                 }, isFadeIn: IsFading(CurSceneData), isFadeOut: IsFading(nextData));
             }

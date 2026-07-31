@@ -73,7 +73,15 @@ namespace Apis
         public T Get<T>(FactoryType type, string address, Vector2? pos = null) where T : Component
         {
             _factory = Factories[type];
-            return _factory?.Get(address, pos).GetComponent<T>();
+
+            var obj = _factory?.Get(address, pos);
+            if (obj == null) return null;
+
+            var component = obj.GetComponent<T>();
+            if (component == null)
+                Debug.LogError($"[FactoryManager] '{address}'에 {typeof(T).Name} 컴포넌트가 없습니다.");
+
+            return component;
         }
 
 
