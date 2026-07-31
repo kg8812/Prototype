@@ -73,7 +73,8 @@ public class Define
 
     public struct SoundMixer
     {
-        public const string AudioMixer = "AudioMixer";
+        // 애셋 주소는 Assets/Sounds/SoundMixer.mixer 기준. 아래 그룹들은 그 서브애셋이다.
+        public const string AudioMixer = "SoundMixer";
         public const string BGMMixer = "SoundMixer[BGM]";
         public const string SFXMixer = "SoundMixer[SFX]";
         public const string UIMixer = "SoundMixer[UI]";
