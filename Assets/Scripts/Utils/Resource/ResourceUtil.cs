@@ -30,7 +30,7 @@ namespace Default
             }
             catch
             {
-                //Debug.Log("Resource not found: " + path);
+                Debug.LogError("Resource not found: " + path);
                 return null;
             }
 

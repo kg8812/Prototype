@@ -11,22 +11,19 @@ namespace Apis
     public class ActorEvents
     {
         private readonly BuffEvent _buffEvent;
-        private readonly CollisionEventHandler _collisionEventHandler;
-
-        private List<IEventChild> _eventChildren;
 
         public ActorEvents(GameObject owner)
         {
             _buffEvent = owner.GetOrAddComponent<BuffEvent>();
-            _collisionEventHandler = owner.GetOrAddComponent<CollisionEventHandler>();
-            _eventChildren = new List<IEventChild>
+            var collisionEventHandler = owner.GetOrAddComponent<CollisionEventHandler>();
+            EventChildren = new List<IEventChild>
             {
-                _buffEvent, _collisionEventHandler
+                _buffEvent, collisionEventHandler
             };
         }
 
         public IEventManager EventManager => _buffEvent;
-        public List<IEventChild> EventChildren => _eventChildren;
+        public List<IEventChild> EventChildren { get; }
 
         public void AddEvent(EventType eventType, UnityAction<EventParameters> action)
         {

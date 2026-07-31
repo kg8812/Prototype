@@ -14,7 +14,7 @@ namespace Command
         {
             return player.GetAbleState(EPlayerState.Dash)
                    && !player.IsDash
-                   && player.CoolDown.GetCd(EPlayerCd.Dash)
+                   && player.CoolDown.GetCd(EPlayerCooldown.Dash)
                    && player.AirDashed < player.MaxAirDash;
         }
     }

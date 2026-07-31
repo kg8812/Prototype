@@ -58,7 +58,7 @@ public class PlayerStateMachine : StateMachine<Player>
         var t = time < 0 ? interruptable.InterruptTime : time;
 
         yield return new WaitForSeconds(t);
-        foreach (var next in interruptable.InteruptableStates) _player.SetAbleState(next);
-        state.AbleStates.AddRange(interruptable.InteruptableStates);
+        foreach (var next in interruptable.InterruptableStates) _player.SetAbleState(next);
+        state.AbleStates.AddRange(interruptable.InterruptableStates);
     }
 }

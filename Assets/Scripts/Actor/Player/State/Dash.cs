@@ -7,7 +7,7 @@ namespace PlayerState
     public class Dash : EventState, IInterruptable, IAnimate
     {
         private Vector2 bufferSpeed;
-        private Player.IPlayerDash dashStrategy;
+        private IPlayerDash dashStrategy;
         private Tween dashTweener;
         private bool exitFlag;
 
@@ -34,7 +34,7 @@ namespace PlayerState
             set { }
         }
 
-        public EPlayerState[] InteruptableStates => new[]
+        public EPlayerState[] InterruptableStates => new[]
             { EPlayerState.Move, EPlayerState.Attack, EPlayerState.Skill, EPlayerState.Dash, EPlayerState.Run };
 
         public override void OnEnter(Player t)
@@ -71,9 +71,9 @@ namespace PlayerState
 
             if (_player.onAir) _player.AirDashed++;
 
-            _player.CoolDown.StartCd(EPlayerCd.Dash, _player.DashCoolTime);
-            _player.CoolDown.StartCd(EPlayerCd.DashToAttack, _player.DashAttackCoolTime);
-            _player.CoolDown.StartCd(EPlayerCd.DashToJump, _player.DashToJumpDelay);
+            _player.CoolDown.StartCd(EPlayerCooldown.Dash, _player.DashCoolTime);
+            _player.CoolDown.StartCd(EPlayerCooldown.DashToAttack, _player.DashAttackCoolTime);
+            _player.CoolDown.StartCd(EPlayerCooldown.DashToJump, _player.DashToJumpDelay);
 
             _player.StateEvent.AddEvent(EventType.OnLanding, e => _player.AirDashed = 0);
 
@@ -93,8 +93,8 @@ namespace PlayerState
 
             _player.Rb.linearVelocity = bufferSpeed; // 대쉬 이전 속도 유지
 
-            _player.CoolDown.StopCd(EPlayerCd.DashToAttack);
-            _player.CoolDown.StopCd(EPlayerCd.DashToJump);
+            _player.CoolDown.StopCd(EPlayerCooldown.DashToAttack);
+            _player.CoolDown.StopCd(EPlayerCooldown.DashToJump);
 
             _player.Controller.SetCommandState(ECommandType.None);
         }

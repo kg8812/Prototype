@@ -16,7 +16,7 @@ namespace Command
         {
             return player.GetAbleState(EPlayerState.Jump)
                    && player.CoyoteCurrentJump < player.playerStat.JumpMax
-                   && player.CoolDown.GetCd(EPlayerCd.DashToJump);
+                   && player.CoolDown.GetCd(EPlayerCooldown.DashToJump);
         }
     }
 }

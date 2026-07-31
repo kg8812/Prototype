@@ -223,12 +223,6 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
 
         ExecuteEvent(EventType.OnDeath, new EventParameters(this));
 
-        if (this is Monster)
-            GameManager.instance.Player?.ExecuteEvent(
-                EventType.OnKill,
-                new EventParameters(GameManager.instance.Player, this)
-            );
-
         IsDead = true;
     }
 
@@ -250,6 +244,7 @@ public abstract partial class Actor : MonoBehaviour, IOnHit, IOnHitReaction, IAt
 
     public virtual void Flip()
     {
+     
         SetDirection((EActorDirection)((int)_direction * -1));
     }
 

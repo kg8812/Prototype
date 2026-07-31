@@ -5,6 +5,7 @@ using Apis;
 using Command;
 using DG.Tweening;
 using PlayerState;
+using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Events;
 using Dash = PlayerState.Dash;
@@ -297,4 +298,76 @@ public partial class Player : Actor
         SetState(EPlayerState.Idle);
         AnimController.SetTrigger(EAnimationTrigger.IdleOn);
     }
+
+    #region StateInfo
+
+    public IDictionary<EPlayerState, StateInfo> StateInfoDict { get; } = new Dictionary<EPlayerState, StateInfo>();
+
+    public void AddInfo(EPlayerState state, StateInfo info)
+    {
+        if (StateInfoDict.ContainsKey(state))
+        {
+            StateInfoDict[state] = info;
+            return;
+        }
+
+        StateInfoDict.Add(state, info);
+    }
+
+    public void RemoveInfo(EPlayerState state)
+    {
+        if (!StateInfoDict.ContainsKey(state)) return;
+
+        StateInfoDict.Remove(state);
+    }
+
+    public StateInfo GetInfo(EPlayerState state)
+    {
+        if (!StateInfoDict.ContainsKey(state)) return null;
+
+        return StateInfoDict[state];
+    }
+
+    #endregion
+
+    #region 타이머 / 쿨다운
+
+    [TabGroup("기획쪽 수정 변수들/group1", "조작감")]
+    [LabelText("컨트롤러 버퍼 시간")] [SerializeField]
+    private float _bufferTime = 0.5f;
+
+    public PlayerCooldown CoolDown;
+
+    private Coroutine jumpCoroutine;
+    public float BufferTime => _bufferTime;
+
+    public void StopJumpCoroutine()
+    {
+        if (jumpCoroutine == null) return;
+        GameManager.instance.StopCoroutineWrapper(jumpCoroutine);
+    }
+
+    public Coroutine StartTimer(float time, UnityAction onEnd)
+    {
+        IEnumerator timer()
+        {
+            yield return new WaitForSeconds(time);
+            onEnd.Invoke();
+        }
+
+        return GameManager.instance.StartCoroutineWrapper(timer());
+    }
+
+    public void StopTimer(Coroutine timer)
+    {
+        GameManager.instance.StopCoroutineWrapper(timer);
+    }
+
+    #endregion
+}
+
+public class StateInfo
+{
+    public int CutSceneID;
+    public EventParameters eventParameters;
 }

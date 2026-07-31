@@ -4,7 +4,7 @@ namespace PlayerState
 {
     public class Skill : EventState, IInterruptable
     {
-        private EPlayerState[] _interuptableStates;
+        private EPlayerState[] _interruptableStates;
 
         private bool escape;
 
@@ -17,8 +17,8 @@ namespace PlayerState
 
         public float InterruptTime { get; set; } = 0;
 
-        public EPlayerState[] InteruptableStates =>
-            _interuptableStates ??= new[]
+        public EPlayerState[] InterruptableStates =>
+            _interruptableStates ??= new[]
             {
                 EPlayerState.Dash
             };
@@ -71,7 +71,7 @@ namespace PlayerState
 
     public class Charging : EventState, IInterruptable
     {
-        private EPlayerState[] _interuptableStates;
+        private EPlayerState[] _interruptableStates;
         private bool escape;
 
         private ActiveSkill skill;
@@ -84,8 +84,8 @@ namespace PlayerState
 
         public float InterruptTime { get; set; } = 0;
 
-        public EPlayerState[] InteruptableStates =>
-            _interuptableStates ??= new[]
+        public EPlayerState[] InterruptableStates =>
+            _interruptableStates ??= new[]
             {
                 EPlayerState.Dash
             };
@@ -129,7 +129,7 @@ namespace PlayerState
 
     public class Casting : EventState, IInterruptable
     {
-        private EPlayerState[] _interuptableStates;
+        private EPlayerState[] _interruptableStates;
 
         public override EPlayerState NextState
         {
@@ -139,8 +139,8 @@ namespace PlayerState
 
         public float InterruptTime { get; set; } = 0;
 
-        public EPlayerState[] InteruptableStates =>
-            _interuptableStates ??= new[]
+        public EPlayerState[] InterruptableStates =>
+            _interruptableStates ??= new[]
             {
                 EPlayerState.Dash,
                 EPlayerState.Jump

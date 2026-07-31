@@ -1,16 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Default;
-using Spine.Unity;
 using UnityEngine;
 using UnityEngine.Events;
+
 
 public class PlayerAnimator : MonoBehaviour
 {
     [SerializeField] private Animator _animator;
-
-    private Player _player;
 
     private Dictionary<EAnimationBool, int> boolHash;
     private Dictionary<EAnimationFloat, int> floatHash;
@@ -18,30 +15,25 @@ public class PlayerAnimator : MonoBehaviour
 
     private EAnimationTrigger recentTrigger = EAnimationTrigger.IdleOn;
 
-    private SkeletonMecanimRootMotion rootMotion;
+    private SpineRootMotionHelper rootMotionHelper;
     private Dictionary<EAnimationTrigger, int> triggerHash;
     public Animator Animator => _animator;
     public UnityAction<string> OnTransitionEvent { get; }
 
+    /// <summary>
+    /// Spine RootMotion 헬퍼. Spine을 사용하지 않는 프로젝트에서는 null.
+    /// </summary>
+    public SpineRootMotionHelper RootMotionHelper => rootMotionHelper;
+
     public void Awake()
     {
-        _player = gameObject.GetComponent<Player>();
-
         boolHash = new Dictionary<EAnimationBool, int>();
         intHash = new Dictionary<EAnimationInt, int>();
         floatHash = new Dictionary<EAnimationFloat, int>();
         triggerHash = new Dictionary<EAnimationTrigger, int>();
-        rootMotion = transform.GetComponentInParentAndChild<SkeletonMecanimRootMotion>();
+        rootMotionHelper = GetComponentInChildren<SpineRootMotionHelper>();
 
         Hashing();
-    }
-
-    public void Start()
-    {
-    }
-
-    public void FixedUpdate()
-    {
     }
 
     public int GetHash(EAnimationBool key)
@@ -130,14 +122,9 @@ public class PlayerAnimator : MonoBehaviour
         recentTrigger = key;
     }
 
-    public void ActivateLeg()
+    public void SetLayerWeight(int layerIndex, float weight)
     {
-        _animator.SetLayerWeight(4, 1);
-    }
-
-    public void DeactivateLeg()
-    {
-        _animator.SetLayerWeight(4, 0);
+        _animator.SetLayerWeight(layerIndex, weight);
     }
 
     public void WaitUntilAnimStart(string animName, UnityAction onEnd)
@@ -154,43 +141,5 @@ public class PlayerAnimator : MonoBehaviour
     public float GetCurrentClipLength(int layer)
     {
         return _animator.GetCurrentAnimatorClipInfo(layer)[0].clip.length;
-    }
-
-    public void SetRootmotionOffset(float x, float y)
-    {
-        if (rootMotion == null) return;
-
-        rootMotion.rootMotionTranslateXPerY = x;
-        rootMotion.rootMotionTranslateYPerX = y;
-    }
-
-    public Vector2 GetRootmotionOffset()
-    {
-        if (rootMotion == null) return Vector2.zero;
-
-        return new Vector2(rootMotion.rootMotionTranslateXPerY, rootMotion.rootMotionTranslateYPerX);
-    }
-
-    public void AddRootmotionOffset(float x, float y)
-    {
-        if (rootMotion == null) return;
-
-        rootMotion.rootMotionTranslateXPerY += x;
-        rootMotion.rootMotionTranslateYPerX += y;
-    }
-
-    public void SetRootMotionScale(float x, float y)
-    {
-        if (rootMotion == null) return;
-
-        rootMotion.rootMotionScaleX = x;
-        rootMotion.rootMotionScaleY = y;
-    }
-
-    public Vector2 GetRootMotionScale()
-    {
-        if (rootMotion == null) return Vector2.zero;
-
-        return new Vector2(rootMotion.rootMotionScaleX, rootMotion.rootMotionScaleY);
     }
 }

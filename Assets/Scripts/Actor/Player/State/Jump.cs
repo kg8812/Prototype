@@ -36,9 +36,9 @@ namespace PlayerState
 
             else if (_player.CoyoteCurrentJump > 0) _player.CoyoteCurrentJump.Value++;
 
-            _player.CoolDown.StartCd(EPlayerCd.JumpToAttack, _player.JumpAttackCoolTime);
+            _player.CoolDown.StartCd(EPlayerCooldown.JumpToAttack, _player.JumpAttackCoolTime);
 
-            _player.StateEvent.AddEvent(EventType.OnEventState, e => _player.CoolDown.StopCd(EPlayerCd.JumpToAttack));
+            _player.StateEvent.AddEvent(EventType.OnEventState, e => _player.CoolDown.StopCd(EPlayerCooldown.JumpToAttack));
         }
 
         public override void FixedUpdate()

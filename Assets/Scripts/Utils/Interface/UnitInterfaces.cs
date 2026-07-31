@@ -128,7 +128,7 @@ namespace Apis
     public interface IDashUser : IMonoBehaviour
     {
         public bool IsDash { get; set; }
-        public void SetDash(Player.IPlayerDash dash);
+        public void SetDash(IPlayerDash dash);
         public void SetDashToNormal();
         public void DashOn();
         public void DashOff();

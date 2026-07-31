@@ -1,9 +1,12 @@
 using Apis;
+using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
 public partial class Player
 {
+    #region 대시 조작감
+
     [TabGroup("기획쪽 수정 변수들/group1", "조작감")] [LabelText("대시 쿨타임")] [SerializeField]
     private float dashCoolTime; //대시 쿨타임
 
@@ -21,6 +24,20 @@ public partial class Player
 
     [TabGroup("기획쪽 수정 변수들/group1", "조작감")] [LabelText("지상 회피 후 착지 시간")] [SerializeField]
     private float dashLandingTime = 0.6f;
+
+    [TabGroup("기획쪽 수정 변수들/group1", "조작감")] [LabelText("회피 속도 그래프")] [SerializeField]
+    private Ease dodgeSpeedGraph = Ease.OutSine;
+
+    [TabGroup("기획쪽 수정 변수들/group1", "조작감")] [LabelText("회피 후딜레이 속도 그래프(deprecated)")] [SerializeField]
+    private Ease dashDelaySpeedGraph = Ease.OutSine;
+
+    [TabGroup("기획쪽 수정 변수들/group1", "조작감")] [LabelText("회피 후딜레이 이동거리(deprecated)")] [SerializeField]
+    private float dashDelayDistance = 0.7f;
+
+    [TabGroup("기획쪽 수정 변수들/group1", "조작감")] [LabelText("회피 캔슬 시간")] [SerializeField]
+    private float dashDelayCancelTime = 0.3f;
+
+    #endregion
 
 
     [HideInInspector] public PlayerStat playerStat;
@@ -51,6 +68,11 @@ public partial class Player
     public float DashLandingTime => dashLandingTime;
 
     public float DashToJumpDelay => dashToJumpDelay;
+
+    public Ease DodgeSpeedGraph => dodgeSpeedGraph;
+    public Ease DashDelaySpeedGraph => dashDelaySpeedGraph;
+    public float DashDelayDistance => dashDelayDistance;
+    public float DashDelayCancelTime => dashDelayCancelTime;
 
     private BonusStat LevelBonusStat() //레벨업시 스탯 변경
     {

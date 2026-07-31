@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-public enum EPlayerCd
+public enum EPlayerCooldown
 {
     Dash,
     Jump,
@@ -14,23 +14,23 @@ public enum EPlayerCd
     JumpToAttack,
 }
 
-public class PlayerCd
+public class PlayerCooldown
 {
-    private readonly Dictionary<EPlayerCd, Coroutine> CdCoroutineDict;
-    private readonly Dictionary<EPlayerCd, bool> CdDict;
-    private readonly Dictionary<EPlayerCd, UnityAction> CdEventDict;
+    private readonly Dictionary<EPlayerCooldown, Coroutine> CdCoroutineDict;
+    private readonly Dictionary<EPlayerCooldown, bool> CdDict;
+    private readonly Dictionary<EPlayerCooldown, UnityAction> CdEventDict;
     private readonly Player _player;
 
-    public PlayerCd(Player player)
+    public PlayerCooldown(Player player)
     {
         _player = player;
-        CdCoroutineDict = new Dictionary<EPlayerCd, Coroutine>();
-        CdDict = new Dictionary<EPlayerCd, bool>();
-        CdEventDict = new Dictionary<EPlayerCd, UnityAction>();
+        CdCoroutineDict = new Dictionary<EPlayerCooldown, Coroutine>();
+        CdDict = new Dictionary<EPlayerCooldown, bool>();
+        CdEventDict = new Dictionary<EPlayerCooldown, UnityAction>();
         Init();
     }
 
-    public void StartCd(EPlayerCd state, float time = -1)
+    public void StartCd(EPlayerCooldown state, float time = -1)
     {
         var cd = CdCoroutineDict[state];
 
@@ -61,7 +61,7 @@ public class PlayerCd
         CdCoroutineDict[state] = GameManager.instance.StartCoroutineWrapper(cdCoroutine());
     }
 
-    public void StartCd(EPlayerCd state, UnityAction onFinish, float time = -1)
+    public void StartCd(EPlayerCooldown state, UnityAction onFinish, float time = -1)
     {
         StartCd(state, time);
 
@@ -74,14 +74,14 @@ public class PlayerCd
     public void Init()
     {
         CdCoroutineDict.Clear();
-        foreach (EPlayerCd cd in Enum.GetValues(typeof(EPlayerCd)))
+        foreach (EPlayerCooldown cd in Enum.GetValues(typeof(EPlayerCooldown)))
         {
             CdCoroutineDict.Add(cd, null);
             CdDict.Add(cd, true);
         }
     }
 
-    public void StopCd(EPlayerCd state)
+    public void StopCd(EPlayerCooldown state)
     {
         if (CdDict[state]) return;
 
@@ -93,7 +93,7 @@ public class PlayerCd
         if (CdEventDict.ContainsKey(state)) CdEventDict.Remove(state);
     }
 
-    public void CompleteCd(EPlayerCd state)
+    public void CompleteCd(EPlayerCooldown state)
     {
         if (CdDict[state]) return;
 
@@ -110,7 +110,7 @@ public class PlayerCd
         }
     }
 
-    public bool GetCd(EPlayerCd state)
+    public bool GetCd(EPlayerCooldown state)
     {
         return CdDict[state];
     }

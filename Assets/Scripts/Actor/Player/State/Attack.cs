@@ -16,9 +16,9 @@ namespace PlayerState
         public void OnEnterAnimate()
         {
             if (_player.PressingDir != 0)
-                _player.AnimController.ActivateLeg();
+                _player.AnimController.SetLayerWeight(4, 1);
             else
-                _player.AnimController.DeactivateLeg();
+                _player.AnimController.SetLayerWeight(4, 0);
 
             
             _player.AnimController.ResetTrigger(EAnimationTrigger.Attack);

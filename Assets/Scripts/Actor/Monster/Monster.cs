@@ -89,6 +89,12 @@ namespace Apis
         public override void Die()
         {
             base.Die();
+
+            GameManager.instance.Player?.ExecuteEvent(
+                EventType.OnKill,
+                new EventParameters(GameManager.instance.Player, this)
+            );
+
             IsRecognized = false;
             GameManager.Sound.Play("kill_dummy");
         }
