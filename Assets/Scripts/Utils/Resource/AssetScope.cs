@@ -16,16 +16,23 @@ namespace Default
     /// </summary>
     public sealed class AssetScope : IDisposable
     {
+        // [캐시] (주소,타입) → 로드된 애셋 본체. 조회 적중 시 여기서 바로 꺼내 준다.
         private readonly Dictionary<AssetKey, Object> _assets = new();
+
+        // [소유권] (주소,타입) → 그 애셋을 붙잡고 있는 Addressables 핸들. Dispose가 해제할 대상 목록.
+        // _assets와 항상 같은 키로 짝을 이룬다. 애셋은 "쓰려고", 핸들은 "놓아주려고" 들고 있다.
         private readonly Dictionary<AssetKey, AsyncOperationHandle> _assetHandles = new();
 
         // 주소만 알고 타입은 모르는 경우(라벨 프리로드)를 위한 보조 색인.
         // 프리로드가 채워두면 이후 Load<T>가 타입 키로 못 찾아도 여기서 찾아 재로드를 피한다.
         private readonly Dictionary<string, Object> _byAddress = new();
 
+        // 위 두 개의 라벨 버전. 키가 주소가 아니라 (라벨,타입)이고, 값이 애셋 하나가 아니라 배열이다.
+        // 라벨 로드는 핸들 하나가 여러 애셋을 통째로 붙잡으므로 개별 애셋 캐시와 섞을 수 없어 따로 둔다.
         private readonly Dictionary<AssetKey, Array> _labelAssets = new();
         private readonly Dictionary<AssetKey, AsyncOperationHandle> _labelHandles = new();
 
+        // 로그 식별용 이름("Global" / "Scene"). 동작에는 관여하지 않는다.
         private readonly string _name;
 
         public AssetScope(string name)
@@ -33,8 +40,10 @@ namespace Default
             _name = name;
         }
 
+        /// <summary>이 스코프가 붙잡고 있는 핸들 수(개별 + 라벨). 진단용.</summary>
         public int LoadedCount => _assetHandles.Count + _labelHandles.Count;
 
+        /// <summary>보유한 핸들을 전부 Addressables에 반납하고 캐시를 비운다. 이 스코프의 유일한 해제 경로.</summary>
         public void Dispose()
         {
             foreach (var handle in _assetHandles.Values)
@@ -54,6 +63,10 @@ namespace Default
 
         #region 동기 조회
 
+        /// <summary>
+        ///     주소로 애셋 하나를 가져온다. 캐시에 없으면 그 자리에서 동기 로드한다(메인 스레드가 멈춘다).
+        ///     T가 Component면 프리팹을 로드해 컴포넌트를 꺼내 준다.
+        /// </summary>
         public T Load<T>(string address) where T : Object
         {
             if (string.IsNullOrEmpty(address))
@@ -99,6 +112,7 @@ namespace Default
             return TryGetCached(address, out result) && result != null;
         }
 
+        /// <summary>라벨이 붙은 애셋을 전부 동기 로드한다. 반환 배열은 캐시된 것이므로 호출부가 수정하면 안 된다.</summary>
         public T[] LoadAll<T>(string label) where T : Object
         {
             if (string.IsNullOrEmpty(label))
@@ -118,6 +132,7 @@ namespace Default
             return LoadAssets<T>(label) ?? Array.Empty<T>();
         }
 
+        /// <summary>동기 로드 본체. 캐시 조회 → (없으면) 로드 후 완료까지 대기 → 등록. Load/LoadAsync가 공유하는 흐름의 동기 버전.</summary>
         private TAsset LoadAsset<TAsset>(string address) where TAsset : Object
         {
             if (TryGetCached<TAsset>(address, out var hit)) return hit;
@@ -130,6 +145,7 @@ namespace Default
             return Register<TAsset>(address, handle);
         }
 
+        /// <summary>라벨 동기 로드 본체. 핸들 1개가 배열 전체를 붙잡으므로 _labelHandles/_labelAssets에 등록한다.</summary>
         private TAsset[] LoadAssets<TAsset>(string label) where TAsset : Object
         {
             var key = new AssetKey(label, typeof(TAsset));
@@ -158,6 +174,7 @@ namespace Default
 
         #region 비동기 로드 / 프리로드
 
+        /// <summary>Addressables 시스템 자체를 초기화한다(카탈로그 로드). 어떤 로드보다 먼저, 게임당 한 번.</summary>
         public static async Awaitable InitializeAsync(CancellationToken ct = default)
         {
             var handle = Addressables.InitializeAsync(false);
@@ -168,6 +185,7 @@ namespace Default
             if (handle.IsValid()) Addressables.Release(handle);
         }
 
+        /// <summary>Load의 비동기 버전. 프레임을 넘기며 기다리므로 게임이 멈추지 않는다. 결과는 동일하게 캐시된다.</summary>
         public async Awaitable<T> LoadAsync<T>(string address, CancellationToken ct = default) where T : Object
         {
             if (string.IsNullOrEmpty(address))
@@ -197,6 +215,7 @@ namespace Default
             await PreloadAddressesAsync(addresses, progress, ct);
         }
 
+        /// <summary>주소 목록을 하나씩 비동기 로드해 이 스코프에 미리 올려둔다. 진행률은 개수 기준.</summary>
         public async Awaitable PreloadAddressesAsync(IReadOnlyList<string> addresses, IProgress<float> progress = null,
             CancellationToken ct = default)
         {
@@ -213,6 +232,7 @@ namespace Default
             }
         }
 
+        /// <summary>라벨 목록 → 그 라벨이 가리키는 주소 목록으로 펼친다. 애셋을 로드하지는 않는다(위치 조회만).</summary>
         private async Awaitable<List<string>> ResolveAddressesAsync(IReadOnlyList<string> labels, CancellationToken ct)
         {
             var addresses = new List<string>();
@@ -242,6 +262,7 @@ namespace Default
             return addresses;
         }
 
+        /// <summary>LoadAsset의 비동기 버전. 캐시 조회 → 로드 → 등록의 흐름은 같고 대기 방식만 다르다.</summary>
         private async Awaitable<TAsset> LoadAssetAsync<TAsset>(string address, CancellationToken ct) where TAsset : Object
         {
             if (TryGetCached<TAsset>(address, out var hit)) return hit;
@@ -252,6 +273,7 @@ namespace Default
             return Register<TAsset>(address, handle);
         }
 
+        /// <summary>핸들이 끝날 때까지 프레임 단위로 대기하고 성공 여부를 돌려준다.</summary>
         private static async Awaitable<bool> WaitFor(AsyncOperationHandle handle, CancellationToken ct)
         {
             while (!handle.IsDone) await Awaitable.NextFrameAsync(ct);
@@ -273,6 +295,7 @@ namespace Default
 
         public static IReadOnlyCollection<string> SyncLoadedAddresses => SyncLoaded;
 
+        /// <summary>동기 로드가 발생했음을 주소당 한 번만 기록/경고한다.</summary>
         private void ReportSyncLoad(string address, Type type)
         {
             if (!SyncLoaded.Add($"{address} ({type.Name})")) return;
@@ -312,6 +335,10 @@ namespace Default
 
         #region 캐시 조회 / 등록
 
+        /// <summary>
+        ///     캐시에서만 찾는다. 타입 키(_assets) → 주소 색인(_byAddress) 순으로 본다.
+        ///     캐시에 있으나 실제 오브젝트가 죽었으면 그 항목을 걷어내고 실패 처리한다.
+        /// </summary>
         private bool TryGetCached<TAsset>(string address, out TAsset result) where TAsset : Object
         {
             var key = new AssetKey(address, typeof(TAsset));
@@ -340,6 +367,10 @@ namespace Default
             return false;
         }
 
+        /// <summary>
+        ///     로드 결과를 이 스코프의 소유로 등록한다(핸들 + 애셋 + 주소 색인 3곳).
+        ///     실패했거나 이미 등록된 경우엔 새 핸들을 즉시 반납한다.
+        /// </summary>
         private TAsset Register<TAsset>(string address, AsyncOperationHandle<TAsset> handle) where TAsset : Object
         {
             if (handle.Status != AsyncOperationStatus.Succeeded || handle.Result == null)
@@ -364,6 +395,7 @@ namespace Default
             return handle.Result;
         }
 
+        /// <summary>특정 항목 하나만 해제하고 세 자료구조에서 지운다. Dispose의 단건 버전.</summary>
         private void Purge(AssetKey key, string address)
         {
             if (_assetHandles.TryGetValue(key, out var handle) && handle.IsValid())
