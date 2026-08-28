@@ -53,7 +53,7 @@ namespace Apis.CommonMonster2
 
             _dist = -1;
             if (GameManager.instance.playerDied ||
-                GameManager.instance.CurGameStateType == GameStateType.InteractionState)
+                GameManager.instance.IsInState<InteractionState>())
             {
                 IsRecognized = false;
             }

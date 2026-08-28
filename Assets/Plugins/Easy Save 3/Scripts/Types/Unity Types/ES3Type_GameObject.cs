@@ -1,31 +1,26 @@
 using System;
+using UnityEngine;
 using System.Collections.Generic;
 using ES3Internal;
-using UnityEngine;
-using UnityEngine.Scripting;
-using Object = UnityEngine.Object;
 
 namespace ES3Types
 {
-    [Preserve]
+    [UnityEngine.Scripting.Preserve]
     [ES3PropertiesAttribute("layer", "isStatic", "tag", "name", "hideFlags", "children", "components")]
     public class ES3Type_GameObject : ES3UnityObjectType
     {
         private const string prefabPropertyName = "es3Prefab";
         private const string transformPropertyName = "transformID";
-        public static ES3Type Instance;
+        public static ES3Type Instance = null;
         public bool saveChildren = false;
 
-        public ES3Type_GameObject() : base(typeof(GameObject))
-        {
-            Instance = this;
-        }
+        public ES3Type_GameObject() : base(typeof(UnityEngine.GameObject)) { Instance = this; }
 
         public override void WriteObject(object obj, ES3Writer writer, ES3.ReferenceMode mode)
         {
             if (WriteUsingDerivedType(obj, writer))
                 return;
-            var instance = (GameObject)obj;
+            var instance = (UnityEngine.GameObject)obj;
 
             var mgr = ES3ReferenceMgrBase.GetManagerFromScene(instance.scene);
 
@@ -46,7 +41,7 @@ namespace ES3Types
 
             var es3AutoSave = instance.GetComponent<ES3AutoSave>();
 
-            if (es3AutoSave == null || es3AutoSave.saveLayer)
+            if(es3AutoSave == null || es3AutoSave.saveLayer)
                 writer.WriteProperty("layer", instance.layer, ES3Type_int.Instance);
             if (es3AutoSave == null || es3AutoSave.saveTag)
                 writer.WriteProperty("tag", instance.tag, ES3Type_string.Instance);
@@ -58,7 +53,7 @@ namespace ES3Types
                 writer.WriteProperty("active", instance.activeSelf);
 
             if ((es3AutoSave == null && saveChildren) || (es3AutoSave != null && es3AutoSave.saveChildren))
-                writer.WriteProperty("children", GetChildren(instance), ES3.ReferenceMode.ByRefAndValue);
+                    writer.WriteProperty("children", GetChildren(instance), ES3.ReferenceMode.ByRefAndValue);
 
             List<Component> components;
 
@@ -85,13 +80,13 @@ namespace ES3Types
                         components.Add(component);
             }
 
-            if ((components != null) & (components.Count > 0))
+            if(components != null & components.Count > 0)
                 writer.WriteProperty("components", components, ES3.ReferenceMode.ByRefAndValue);
         }
 
         protected override object ReadObject<T>(ES3Reader reader)
         {
-            Object obj = null;
+            UnityEngine.Object obj = null;
             var refMgr = ES3ReferenceMgrBase.Current;
             long id = 0;
 
@@ -99,14 +94,13 @@ namespace ES3Types
             while (true)
             {
                 if (refMgr == null)
-                    throw new InvalidOperationException(
-                        $"An Easy Save 3 Manager is required to save references. To add one to your scene, exit playmode and go to Tools > Easy Save 3 > Add Manager to Scene. Object being saved by reference is {obj.GetType()} with name {obj.name}.");
+                    throw new InvalidOperationException($"An Easy Save 3 Manager is required to save references. To add one to your scene, exit playmode and go to Tools > Easy Save 3 > Add Manager to Scene. Object being saved by reference is {obj.GetType()} with name {obj.name}.");
 
                 var propertyName = ReadPropertyName(reader);
 
-                if (propertyName == typeFieldName)
+                if (propertyName == ES3Type.typeFieldName)
                     return ES3TypeMgr.GetOrCreateES3Type(reader.ReadType()).Read<T>(reader);
-                if (propertyName == ES3ReferenceMgrBase.referencePropertyName)
+                else if (propertyName == ES3ReferenceMgrBase.referencePropertyName)
                 {
                     id = reader.Read_ref();
                     obj = refMgr.Get(id, true);
@@ -114,7 +108,7 @@ namespace ES3Types
                 else if (propertyName == transformPropertyName)
                 {
                     // Now load the Transform's ID and assign it to the Transform of our object.
-                    var transformID = reader.Read_ref();
+                    long transformID = reader.Read_ref();
                     if (obj == null)
                         obj = CreateNewGameObject(refMgr, id);
                     refMgr.Add(((GameObject)obj).transform, transformID);
@@ -153,9 +147,10 @@ namespace ES3Types
 
         protected override void ReadObject<T>(ES3Reader reader, object obj)
         {
-            var instance = (GameObject)obj;
+            var instance = (UnityEngine.GameObject)obj;
 
             foreach (string propertyName in reader.Properties)
+            {
                 switch (propertyName)
                 {
                     case ES3ReferenceMgrBase.referencePropertyName:
@@ -164,16 +159,16 @@ namespace ES3Types
                     case "prefab":
                         break;
                     case "layer":
-                        instance.layer = reader.Read<int>(ES3Type_int.Instance);
+                        instance.layer = reader.Read<System.Int32>(ES3Type_int.Instance);
                         break;
                     case "tag":
-                        instance.tag = reader.Read<string>(ES3Type_string.Instance);
+                        instance.tag = reader.Read<System.String>(ES3Type_string.Instance);
                         break;
                     case "name":
-                        instance.name = reader.Read<string>(ES3Type_string.Instance);
+                        instance.name = reader.Read<System.String>(ES3Type_string.Instance);
                         break;
                     case "hideFlags":
-                        instance.hideFlags = reader.Read<HideFlags>();
+                        instance.hideFlags = reader.Read<UnityEngine.HideFlags>();
                         break;
                     case "active":
                         instance.SetActive(reader.Read<bool>(ES3Type_bool.Instance));
@@ -192,6 +187,7 @@ namespace ES3Types
                         reader.Skip();
                         break;
                 }
+            }
         }
 
         private void ReadComponents(ES3Reader reader, GameObject go)
@@ -219,7 +215,7 @@ namespace ES3Types
                 {
                     propertyName = ReadPropertyName(reader);
 
-                    if (propertyName == typeFieldName)
+                    if (propertyName == ES3Type.typeFieldName)
                     {
                         typeName = reader.Read<string>(ES3Type_string.Instance);
                         type = ES3Reflection.GetType(typeName);
@@ -229,10 +225,9 @@ namespace ES3Types
                         if (type == null)
                         {
                             if (string.IsNullOrEmpty(typeName))
-                                throw new InvalidOperationException(
-                                    "Cannot load Component because no type data has been stored with it, so it's not possible to determine it's type");
-                            Debug.LogWarning(
-                                $"Cannot load Component of type {typeName} because this type no longer exists in your project. Note that this issue will create an empty GameObject named 'New Game Object' in your scene due to the way in which this Component needs to be skipped.");
+                                throw new InvalidOperationException("Cannot load Component because no type data has been stored with it, so it's not possible to determine it's type");
+                            else
+                                Debug.LogWarning($"Cannot load Component of type {typeName} because this type no longer exists in your project. Note that this issue will create an empty GameObject named 'New Game Object' in your scene due to the way in which this Component needs to be skipped.");
 
                             // Read past the Component.
                             reader.overridePropertiesName = propertyName;
@@ -260,13 +255,10 @@ namespace ES3Types
                             ES3TypeMgr.GetOrCreateES3Type(type).ReadInto<Component>(reader, component);
                             ES3ReferenceMgrBase.Current.Add(component, componentRef);
                         }
-
                         break;
                     }
                     else if (propertyName == null)
-                    {
                         break;
-                    }
                     else
                     {
                         reader.overridePropertiesName = propertyName;
@@ -286,7 +278,7 @@ namespace ES3Types
 
         private GameObject CreateNewGameObject(ES3ReferenceMgrBase refMgr, long id)
         {
-            var go = new GameObject();
+            GameObject go = new GameObject();
             if (id != 0)
                 refMgr.Add(go, id);
             else
@@ -295,8 +287,8 @@ namespace ES3Types
         }
 
         /*
-         * 	Gets the direct children of this GameObject.
-         */
+		 * 	Gets the direct children of this GameObject.
+		 */
         public static List<GameObject> GetChildren(GameObject go)
         {
             var goTransform = go.transform;
@@ -311,25 +303,16 @@ namespace ES3Types
         }
 
         // These are not used as we've overridden the ReadObject methods instead.
-        protected override void WriteUnityObject(object obj, ES3Writer writer)
-        {
-        }
-
-        protected override void ReadUnityObject<T>(ES3Reader reader, object obj)
-        {
-        }
-
-        protected override object ReadUnityObject<T>(ES3Reader reader)
-        {
-            return null;
-        }
+        protected override void WriteUnityObject(object obj, ES3Writer writer) { }
+        protected override void ReadUnityObject<T>(ES3Reader reader, object obj) { }
+        protected override object ReadUnityObject<T>(ES3Reader reader) { return null; }
     }
 
     public class ES3Type_GameObjectArray : ES3ArrayType
     {
         public static ES3Type Instance;
 
-        public ES3Type_GameObjectArray() : base(typeof(GameObject[]), ES3Type_GameObject.Instance)
+        public ES3Type_GameObjectArray() : base(typeof(UnityEngine.GameObject[]), ES3Type_GameObject.Instance)
         {
             Instance = this;
         }

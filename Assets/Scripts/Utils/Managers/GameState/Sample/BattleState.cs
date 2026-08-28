@@ -7,8 +7,15 @@ using UnityEngine;
 
 namespace GameStateSpace
 {
+    /// <summary>
+    ///     전투 상태. 전투가 있는 게임에서만 쓰는 장르 특화 상태다.
+    ///     GameManager.Sample.cs가 RegisterState로 등록한다.
+    /// </summary>
     public class BattleState : GameState
     {
+        /// <summary>Interaction(10)보다 낮고 Play(100)보다 높다.</summary>
+        public override int Priority => 50;
+
         private readonly Dictionary<StateCond, Guid> _guids;
 
         public BattleState()
@@ -58,13 +65,13 @@ namespace GameStateSpace
 
         private void TryOnWithCondition(StateCond condition)
         {
-            _guids[condition] = GameManager.instance.TryOnGameState(GameStateType.BattleState);
+            _guids[condition] = GameManager.instance.TryOnGameState(this);
         }
 
         private void TryOffWithCondition(StateCond condition)
         {
             if (_guids[condition] == Guid.Empty) return;
-            GameManager.instance.TryOffGameState(GameStateType.BattleState, _guids[condition]);
+            GameManager.instance.TryOffGameState(this, _guids[condition]);
             _guids[condition] = Guid.Empty;
         }
 

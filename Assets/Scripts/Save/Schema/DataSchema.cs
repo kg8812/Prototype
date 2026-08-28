@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Apis;
 using Managers;
 using Sirenix.Utilities;
-using UnityEditor;
-using UnityEditor.Rendering;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 
 namespace Save.Schema
 {
@@ -65,7 +66,7 @@ namespace Save.Schema
 #if UNITY_EDITOR
                             EditorApplication.isPlaying = false;
 #else
-                            string exePath = Process.GetCurrentProcess().MainModule.FileName;
+                            string exePath = Process.GetCurrentProcess().MainModule?.FileName?? "";
                             Process.Start(exePath);
                             Application.Quit();
 #endif

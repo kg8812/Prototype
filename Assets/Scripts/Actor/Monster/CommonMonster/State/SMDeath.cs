@@ -26,7 +26,7 @@ namespace Apis.CommonMonster2
             _cM.Projectiles.Clear();
 
 
-            GameManager.instance.BattleStateClass.RemoveRecogMonster(_cM);
+            GameManager.instance.GetState<GameStateSpace.BattleState>()?.RemoveRecogMonster(_cM);
         }
 
         public void Update()

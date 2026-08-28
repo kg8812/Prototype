@@ -1,18 +1,18 @@
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class UnityObjectType : MonoBehaviour
 {
-    public List<Object> objs; // Assign to this in the Editor
+    public List<UnityEngine.Object> objs; // Assign to this in the Editor
 
-    private void Start()
+    void Start()
     {
-        if (!ES3.KeyExists("this"))
+        if(!ES3.KeyExists("this"))
             ES3.Save("this", this);
         else
             ES3.LoadInto("this", this);
-
-        foreach (var obj in objs)
+        
+        foreach(var obj in objs)
             Debug.Log(obj);
     }
 }

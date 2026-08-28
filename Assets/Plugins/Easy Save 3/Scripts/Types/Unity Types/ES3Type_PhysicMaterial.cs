@@ -1,23 +1,19 @@
-using UnityEngine;
-using UnityEngine.Scripting;
+using System;
 
 namespace ES3Types
 {
 #if UNITY_6000_0_OR_NEWER
-    [Preserve]
+    [UnityEngine.Scripting.Preserve]
     [ES3PropertiesAttribute("dynamicFriction", "staticFriction", "bounciness", "frictionCombine", "bounceCombine")]
     public class ES3Type_PhysicsMaterial : ES3ObjectType
     {
-        public static ES3Type Instance;
+        public static ES3Type Instance = null;
 
-        public ES3Type_PhysicsMaterial() : base(typeof(PhysicsMaterial))
-        {
-            Instance = this;
-        }
+        public ES3Type_PhysicsMaterial() : base(typeof(UnityEngine.PhysicsMaterial)) { Instance = this; }
 
         protected override void WriteObject(object obj, ES3Writer writer)
         {
-            var instance = (PhysicsMaterial)obj;
+            var instance = (UnityEngine.PhysicsMaterial)obj;
 
             writer.WriteProperty("dynamicFriction", instance.dynamicFriction, ES3Type_float.Instance);
             writer.WriteProperty("staticFriction", instance.staticFriction, ES3Type_float.Instance);
@@ -28,34 +24,37 @@ namespace ES3Types
 
         protected override void ReadObject<T>(ES3Reader reader, object obj)
         {
-            var instance = (PhysicsMaterial)obj;
+            var instance = (UnityEngine.PhysicsMaterial)obj;
             foreach (string propertyName in reader.Properties)
+            {
                 switch (propertyName)
                 {
+
                     case "dynamicFriction":
-                        instance.dynamicFriction = reader.Read<float>(ES3Type_float.Instance);
+                        instance.dynamicFriction = reader.Read<System.Single>(ES3Type_float.Instance);
                         break;
                     case "staticFriction":
-                        instance.staticFriction = reader.Read<float>(ES3Type_float.Instance);
+                        instance.staticFriction = reader.Read<System.Single>(ES3Type_float.Instance);
                         break;
                     case "bounciness":
-                        instance.bounciness = reader.Read<float>(ES3Type_float.Instance);
+                        instance.bounciness = reader.Read<System.Single>(ES3Type_float.Instance);
                         break;
                     case "frictionCombine":
-                        instance.frictionCombine = reader.Read<PhysicsMaterialCombine>();
+                        instance.frictionCombine = reader.Read<UnityEngine.PhysicsMaterialCombine>();
                         break;
                     case "bounceCombine":
-                        instance.bounceCombine = reader.Read<PhysicsMaterialCombine>();
+                        instance.bounceCombine = reader.Read<UnityEngine.PhysicsMaterialCombine>();
                         break;
                     default:
                         reader.Skip();
                         break;
                 }
+            }
         }
 
         protected override object ReadObject<T>(ES3Reader reader)
         {
-            var instance = new PhysicsMaterial();
+            var instance = new UnityEngine.PhysicsMaterial();
             ReadObject<T>(reader, instance);
             return instance;
         }
@@ -65,7 +64,7 @@ namespace ES3Types
     {
         public static ES3Type Instance;
 
-        public ES3Type_PhysicsMaterialArray() : base(typeof(PhysicsMaterial[]), ES3Type_PhysicsMaterial.Instance)
+        public ES3Type_PhysicsMaterialArray() : base(typeof(UnityEngine.PhysicsMaterial[]), ES3Type_PhysicsMaterial.Instance)
         {
             Instance = this;
         }

@@ -1,13 +1,13 @@
 using System.Numerics;
-using UnityEngine.Scripting;
+using UnityEngine;
 
 namespace ES3Types
 {
-    [Preserve]
+    [UnityEngine.Scripting.Preserve]
     [ES3Properties("bytes")]
     public class ES3Type_BigInteger : ES3Type
     {
-        public static ES3Type Instance;
+        public static ES3Type Instance = null;
 
         public ES3Type_BigInteger() : base(typeof(BigInteger))
         {
@@ -16,7 +16,7 @@ namespace ES3Types
 
         public override void Write(object obj, ES3Writer writer)
         {
-            var casted = (BigInteger)obj;
+            BigInteger casted = (BigInteger)obj;
             writer.WriteProperty("bytes", casted.ToByteArray(), ES3Type_byteArray.Instance);
         }
 

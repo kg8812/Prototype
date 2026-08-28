@@ -10,11 +10,11 @@
 #pragma warning disable
 #endif
 
-using Sirenix.OdinInspector.Editor.Validation;
-using Sirenix.OdinInspector.Modules.Addressables.Editor;
-using UnityEditor.AddressableAssets;
 using UnityEngine;
+using UnityEditor.AddressableAssets;
+using Sirenix.OdinInspector.Editor.Validation;
 using UnityEngine.AddressableAssets;
+using Sirenix.OdinInspector.Modules.Addressables.Editor;
 
 #if ODIN_VALIDATOR_3_1
 [assembly: RegisterValidationRule(typeof(AssetLabelReferenceValidator), Description =
@@ -28,29 +28,28 @@ using UnityEngine.AddressableAssets;
 
 namespace Sirenix.OdinInspector.Modules.Addressables.Editor
 {
-    /// <summary>
-    ///     Validator for AssetLabelReference values.
-    /// </summary>
-    public class AssetLabelReferenceValidator : ValueValidator<AssetLabelReference>
+	/// <summary>
+	/// Validator for AssetLabelReference values.
+	/// </summary>
+	public class AssetLabelReferenceValidator : ValueValidator<AssetLabelReference>
     {
-        private bool optional;
-        private bool required;
-
         [Tooltip("If enabled, the validator will display an error message if the AssetLabelReference is not set. " +
-                 "If disabled, the validator will only display an error message if the AssetLabelReference is set, but the " +
-                 "assigned label does not exist.")]
+            "If disabled, the validator will only display an error message if the AssetLabelReference is set, but the " +
+            "assigned label does not exist.")]
         [ToggleLeft]
         public bool RequiredByDefault;
 
+        private bool required;
+        private bool optional;
         private string requiredMessage;
 
         protected override void Initialize()
         {
-            var requiredAttr = Property.GetAttribute<RequiredAttribute>();
+            var requiredAttr = this.Property.GetAttribute<RequiredAttribute>();
 
-            requiredMessage = requiredAttr?.ErrorMessage ?? $"<b>{Property.NiceName}</b> is required.";
+            this.requiredMessage = requiredAttr?.ErrorMessage ?? $"<b>{this.Property.NiceName}</b> is required.";
 
-            if (RequiredByDefault)
+            if (this.RequiredByDefault)
             {
                 required = true;
                 optional = Property.GetAttribute<OptionalAttribute>() != null;
@@ -77,18 +76,23 @@ namespace Sirenix.OdinInspector.Modules.Addressables.Editor
             if (string.IsNullOrEmpty(value))
             {
                 if (optional == false && required) // Optional == false & required? Nice.
+                {
                     result.AddError(requiredMessage).EnableRichText();
+                }
             }
             else
             {
                 var labels = AddressableAssetSettingsDefaultObject.Settings.GetLabels();
 
                 if (labels.Contains(value) == false)
+                {
                     result.AddError($"Label <i>{value}</i> has not been created as a label.")
                         .WithButton("Open Label Settings", () => OdinAddressableUtility.OpenLabelsWindow());
+                }
             }
         }
     }
+
 }
 
 #endif

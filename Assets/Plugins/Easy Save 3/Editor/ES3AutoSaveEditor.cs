@@ -1,11 +1,10 @@
-﻿using ES3Editor;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 namespace ES3Internal
 {
     [CustomEditor(typeof(ES3AutoSave))]
-    public class ES3AutoSaveEditor : Editor
+    public class ES3AutoSaveEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
@@ -15,17 +14,16 @@ namespace ES3Internal
             var autoSave = (ES3AutoSave)target;
 
             if (GUILayout.Button("Manage Auto Save Settings"))
-                ES3Window.InitAndShowAutoSave();
+                ES3Editor.ES3Window.InitAndShowAutoSave();
 
 
             DisplayToggle("saveActive", "active", autoSave == null ? false : autoSave.saveActive);
 
             if (!PrefabUtility.IsPartOfPrefabAsset(autoSave.transform))
                 DisplayToggle("saveDestroyed", "destroyed", autoSave == null ? false : autoSave.saveDestroyed);
-            else if (EditorGUILayout.ToggleLeft("destroyed", false))
-                EditorUtility.DisplayDialog("Marking prefabs destroyed is not necessary",
-                    "Marking prefabs as destroyed is not necessary because their destroyed state is implied by their absense from the save data.\nFor example if you destroy a prefab instance and save, it will not be in the save data so will never be created when you load.",
-                    "Ok");
+            else
+                if (EditorGUILayout.ToggleLeft("destroyed", false))
+                EditorUtility.DisplayDialog("Marking prefabs destroyed is not necessary", "Marking prefabs as destroyed is not necessary because their destroyed state is implied by their absense from the save data.\nFor example if you destroy a prefab instance and save, it will not be in the save data so will never be created when you load.", "Ok");
 
             DisplayToggle("saveHideFlags", "hideFlags", autoSave == null ? false : autoSave.saveHideFlags);
             DisplayToggle("saveName", "name", autoSave == null ? false : autoSave.saveName);
@@ -55,14 +53,13 @@ namespace ES3Internal
             if (autoSave.componentsToSave.RemoveAll(t => t == null) > 0)
                 Undo.RecordObject(autoSave, "Removed null Component from ES3AutoSave");
         }
-
-        private void DisplayToggle(string fieldName, string label, bool value)
+        void DisplayToggle(string fieldName, string label, bool value)
         {
             if (EditorGUILayout.ToggleLeft(label, value) != value)
                 ApplyBool(fieldName, !value);
         }
 
-        private void ApplyBool(string propertyName, bool value)
+        void ApplyBool(string propertyName, bool value)
         {
             var autoSave = (ES3AutoSave)target;
 

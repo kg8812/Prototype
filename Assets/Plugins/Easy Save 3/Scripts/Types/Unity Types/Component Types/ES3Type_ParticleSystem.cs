@@ -1,27 +1,24 @@
+using System;
 using UnityEngine;
-using UnityEngine.Scripting;
 
 namespace ES3Types
 {
-    [Preserve]
-    [ES3PropertiesAttribute("time", "hideFlags", "collision", "colorBySpeed", "colorOverLifetime", "emission",
-        "externalForces", "forceOverLifetime", "inheritVelocity",
-        "lights", "limitVelocityOverLifetime", "main", "noise", "rotatonBySpeed", "rotationOverLifetime", "shape",
-        "sizeBySpeed", "sizeOverLifetime",
-        "subEmitters", "textureSheetAnimation", "trails", "trigger", "useAutoRandomSeed", "velocityOverLifetime",
-        "isPaused", "isPlaying", "isStopped")]
+    [UnityEngine.Scripting.Preserve]
+    [ES3PropertiesAttribute("time", "hideFlags", "collision", "colorBySpeed", "colorOverLifetime", "emission", "externalForces", "forceOverLifetime", "inheritVelocity",
+                            "lights", "limitVelocityOverLifetime", "main", "noise", "rotatonBySpeed", "rotationOverLifetime", "shape", "sizeBySpeed", "sizeOverLifetime",
+                            "subEmitters", "textureSheetAnimation", "trails", "trigger", "useAutoRandomSeed", "velocityOverLifetime", "isPaused", "isPlaying", "isStopped")]
     public class ES3Type_ParticleSystem : ES3ComponentType
     {
-        public static ES3Type Instance;
+        public static ES3Type Instance = null;
 
-        public ES3Type_ParticleSystem() : base(typeof(ParticleSystem))
+        public ES3Type_ParticleSystem() : base(typeof(UnityEngine.ParticleSystem))
         {
             Instance = this;
         }
 
         protected override void WriteComponent(object obj, ES3Writer writer)
         {
-            var instance = (ParticleSystem)obj;
+            var instance = (UnityEngine.ParticleSystem)obj;
 
             writer.WriteProperty("time", instance.time);
             writer.WriteProperty("hideFlags", instance.hideFlags);
@@ -54,98 +51,84 @@ namespace ES3Types
 
         protected override void ReadComponent<T>(ES3Reader reader, object obj)
         {
-            var instance = (ParticleSystem)obj;
+            var instance = (UnityEngine.ParticleSystem)obj;
             // Stop particle system as some properties require it to not be playing to be set.
             instance.Stop();
             foreach (string propertyName in reader.Properties)
+            {
                 switch (propertyName)
                 {
                     case "time":
-                        instance.time = reader.Read<float>();
+                        instance.time = reader.Read<System.Single>();
                         break;
                     case "hideFlags":
-                        instance.hideFlags = reader.Read<HideFlags>();
+                        instance.hideFlags = reader.Read<UnityEngine.HideFlags>();
                         break;
                     case "collision":
-                        reader.ReadInto<ParticleSystem.CollisionModule>(instance.collision,
-                            ES3Type_CollisionModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.CollisionModule>(instance.collision, ES3Type_CollisionModule.Instance);
                         break;
                     case "colorBySpeed":
-                        reader.ReadInto<ParticleSystem.ColorBySpeedModule>(instance.colorBySpeed,
-                            ES3Type_ColorBySpeedModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.ColorBySpeedModule>(instance.colorBySpeed, ES3Type_ColorBySpeedModule.Instance);
                         break;
                     case "colorOverLifetime":
-                        reader.ReadInto<ParticleSystem.ColorOverLifetimeModule>(instance.colorOverLifetime,
-                            ES3Type_ColorOverLifetimeModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.ColorOverLifetimeModule>(instance.colorOverLifetime, ES3Type_ColorOverLifetimeModule.Instance);
                         break;
                     case "sizeOverLifetime":
-                        reader.ReadInto<ParticleSystem.SizeOverLifetimeModule>(instance.sizeOverLifetime,
-                            ES3Type_SizeOverLifetimeModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.SizeOverLifetimeModule>(instance.sizeOverLifetime, ES3Type_SizeOverLifetimeModule.Instance);
                         break;
                     case "shape":
-                        reader.ReadInto<ParticleSystem.ShapeModule>(instance.shape, ES3Type_ShapeModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.ShapeModule>(instance.shape, ES3Type_ShapeModule.Instance);
                         break;
                     case "emission":
-                        reader.ReadInto<ParticleSystem.EmissionModule>(instance.emission,
-                            ES3Type_EmissionModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.EmissionModule>(instance.emission, ES3Type_EmissionModule.Instance);
                         break;
                     case "externalForces":
-                        reader.ReadInto<ParticleSystem.ExternalForcesModule>(instance.externalForces,
-                            ES3Type_ExternalForcesModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.ExternalForcesModule>(instance.externalForces, ES3Type_ExternalForcesModule.Instance);
                         break;
                     case "forceOverLifetime":
-                        reader.ReadInto<ParticleSystem.ForceOverLifetimeModule>(instance.forceOverLifetime,
-                            ES3Type_ForceOverLifetimeModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.ForceOverLifetimeModule>(instance.forceOverLifetime, ES3Type_ForceOverLifetimeModule.Instance);
                         break;
                     case "inheritVelocity":
-                        reader.ReadInto<ParticleSystem.InheritVelocityModule>(instance.inheritVelocity,
-                            ES3Type_InheritVelocityModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.InheritVelocityModule>(instance.inheritVelocity, ES3Type_InheritVelocityModule.Instance);
                         break;
                     case "lights":
-                        reader.ReadInto<ParticleSystem.LightsModule>(instance.lights, ES3Type_LightsModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.LightsModule>(instance.lights, ES3Type_LightsModule.Instance);
                         break;
                     case "limitVelocityOverLifetime":
-                        reader.ReadInto<ParticleSystem.LimitVelocityOverLifetimeModule>(
-                            instance.limitVelocityOverLifetime, ES3Type_LimitVelocityOverLifetimeModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.LimitVelocityOverLifetimeModule>(instance.limitVelocityOverLifetime, ES3Type_LimitVelocityOverLifetimeModule.Instance);
                         break;
                     case "main":
-                        reader.ReadInto<ParticleSystem.MainModule>(instance.main, ES3Type_MainModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.MainModule>(instance.main, ES3Type_MainModule.Instance);
                         break;
                     case "noise":
-                        reader.ReadInto<ParticleSystem.NoiseModule>(instance.noise, ES3Type_NoiseModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.NoiseModule>(instance.noise, ES3Type_NoiseModule.Instance);
                         break;
                     case "sizeBySpeed":
-                        reader.ReadInto<ParticleSystem.SizeBySpeedModule>(instance.sizeBySpeed,
-                            ES3Type_SizeBySpeedModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.SizeBySpeedModule>(instance.sizeBySpeed, ES3Type_SizeBySpeedModule.Instance);
                         break;
                     case "rotationBySpeed":
-                        reader.ReadInto<ParticleSystem.RotationBySpeedModule>(instance.rotationBySpeed,
-                            ES3Type_RotationBySpeedModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.RotationBySpeedModule>(instance.rotationBySpeed, ES3Type_RotationBySpeedModule.Instance);
                         break;
                     case "rotationOverLifetime":
-                        reader.ReadInto<ParticleSystem.RotationOverLifetimeModule>(instance.rotationOverLifetime,
-                            ES3Type_RotationOverLifetimeModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.RotationOverLifetimeModule>(instance.rotationOverLifetime, ES3Type_RotationOverLifetimeModule.Instance);
                         break;
                     case "subEmitters":
-                        reader.ReadInto<ParticleSystem.SubEmittersModule>(instance.subEmitters,
-                            ES3Type_SubEmittersModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.SubEmittersModule>(instance.subEmitters, ES3Type_SubEmittersModule.Instance);
                         break;
                     case "textureSheetAnimation":
-                        reader.ReadInto<ParticleSystem.TextureSheetAnimationModule>(instance.textureSheetAnimation,
-                            ES3Type_TextureSheetAnimationModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.TextureSheetAnimationModule>(instance.textureSheetAnimation, ES3Type_TextureSheetAnimationModule.Instance);
                         break;
                     case "trails":
-                        reader.ReadInto<ParticleSystem.TrailModule>(instance.trails, ES3Type_TrailModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.TrailModule>(instance.trails, ES3Type_TrailModule.Instance);
                         break;
                     case "trigger":
-                        reader.ReadInto<ParticleSystem.TriggerModule>(instance.trigger, ES3Type_TriggerModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.TriggerModule>(instance.trigger, ES3Type_TriggerModule.Instance);
                         break;
                     case "useAutoRandomSeed":
                         instance.useAutoRandomSeed = reader.Read<bool>(ES3Type_bool.Instance);
                         break;
                     case "velocityOverLifetime":
-                        reader.ReadInto<ParticleSystem.VelocityOverLifetimeModule>(instance.velocityOverLifetime,
-                            ES3Type_VelocityOverLifetimeModule.Instance);
+                        reader.ReadInto<UnityEngine.ParticleSystem.VelocityOverLifetimeModule>(instance.velocityOverLifetime, ES3Type_VelocityOverLifetimeModule.Instance);
                         break;
                     case "isPaused":
                         if (reader.Read<bool>(ES3Type_bool.Instance)) instance.Pause();
@@ -160,6 +143,7 @@ namespace ES3Types
                         reader.Skip();
                         break;
                 }
+            }
         }
     }
 }

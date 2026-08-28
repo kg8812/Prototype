@@ -1,17 +1,16 @@
 using System;
 using ES3Internal;
-using UnityEngine.Scripting;
 
 namespace ES3Types
 {
-    [Preserve]
+    [UnityEngine.Scripting.Preserve]
     public class ES3Type_Nullable : ES3Type
     {
         public ES3Type argumentES3Type;
         public Type genericArgument;
 
-        private ES3Reflection.ES3ReflectedMember hasValueProperty;
-        private ES3Reflection.ES3ReflectedMember valueProperty;
+        ES3Reflection.ES3ReflectedMember hasValueProperty;
+        ES3Reflection.ES3ReflectedMember valueProperty;
 
         public ES3Type_Nullable() : base(typeof(Nullable<>))
         {
@@ -24,7 +23,7 @@ namespace ES3Types
 
             genericArgument = ES3Reflection.GetGenericArguments(type)[0];
             argumentES3Type = ES3TypeMgr.GetOrCreateES3Type(genericArgument, false);
-            isUnsupported = argumentES3Type == null;
+            isUnsupported = (argumentES3Type == null);
         }
 
         public override void Write(object obj, ES3Writer writer)
@@ -32,7 +31,7 @@ namespace ES3Types
             var hasValue = (bool)hasValueProperty.GetValue(obj);
             writer.WriteProperty("HasValue", hasValue, ES3Type_bool.Instance);
 
-            if (hasValue)
+            if(hasValue)
             {
                 var value = valueProperty.GetValue(obj);
                 writer.WriteProperty("Value", value, argumentES3Type);
@@ -43,7 +42,7 @@ namespace ES3Types
         {
             var hasValue = reader.ReadProperty<bool>(ES3Type_bool.Instance);
 
-            if (!hasValue)
+            if(!hasValue)
             {
                 // Call parameterless constructor to set it as null.
                 var constructor = ES3Reflection.GetConstructor(type, new Type[0]);
@@ -52,8 +51,8 @@ namespace ES3Types
             else
             {
                 var value = reader.ReadProperty<object>(argumentES3Type);
-                var constructor = ES3Reflection.GetConstructor(type, new[] { genericArgument });
-                return constructor.Invoke(new[] { value });
+                var constructor = ES3Reflection.GetConstructor(type, new Type[] { genericArgument });
+                return constructor.Invoke(new object[] { value });
             }
         }
     }

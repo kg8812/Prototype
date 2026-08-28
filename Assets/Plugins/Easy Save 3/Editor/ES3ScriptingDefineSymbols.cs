@@ -1,9 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using UnityEditor;
+﻿using UnityEditor;
+using UnityEngine;
 using UnityEditor.Build;
+using System.Collections.Generic;
+using UnityEditor.Compilation;
+using System.Reflection;
+using System.Linq;
+using System;
 
 [InitializeOnLoad]
 public class ES3ScriptingDefineSymbols
@@ -13,7 +15,7 @@ public class ES3ScriptingDefineSymbols
         SetDefineSymbols();
     }
 
-    private static void SetDefineSymbols()
+    static void SetDefineSymbols()
     {
         if (Type.GetType("Unity.VisualScripting.IncludeInSettingsAttribute, Unity.VisualScripting.Core") != null)
             SetDefineSymbol("UNITY_VISUAL_SCRIPTING");
@@ -34,18 +36,14 @@ public class ES3ScriptingDefineSymbols
         string[] defines;
         try
         {
-            var namedBuildTarget =
-                NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+            NamedBuildTarget namedBuildTarget = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
             PlayerSettings.GetScriptingDefineSymbols(namedBuildTarget, out defines);
             if (defines.Contains(symbol))
                 return true;
         }
-        catch
-        {
-        }
+        catch { }
 #else
-        string definesString =
- PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+        string definesString = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
         var allDefines = new HashSet<string>(definesString.Split(';'));
         if (allDefines.Contains(symbol))
             return true;
@@ -68,17 +66,15 @@ public class ES3ScriptingDefineSymbols
                     PlayerSettings.SetScriptingDefineSymbols(target, defines);
                 }
             }
-            catch
-            {
-            }
+            catch { }
         }
 #else
-        string definesString =
- PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+        string definesString = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
         var allDefines = new HashSet<string>(definesString.Split(';'));
         if (!allDefines.Contains(symbol))
             PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, string.Join(";", allDefines.Concat(new string[] { symbol }).ToArray()));
 #endif
+        return;
     }
 
     internal static void RemoveDefineSymbol(string symbol)
@@ -93,21 +89,19 @@ public class ES3ScriptingDefineSymbols
                 ArrayUtility.Remove(ref defines, symbol);
                 PlayerSettings.SetScriptingDefineSymbols(target, defines);
             }
-            catch
-            {
-            }
+            catch { }
         }
 #else
-        string definesString =
- PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+        string definesString = PlayerSettings.GetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
         definesString.Replace(symbol + ";", ""); // With semicolon
         definesString.Replace(symbol, ""); // Without semicolon
         PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, definesString);
 #endif
+        return;
     }
 
 #if UNITY_2021_2_OR_NEWER
-    private static List<NamedBuildTarget> GetAllNamedBuildTargets()
+    static List<NamedBuildTarget> GetAllNamedBuildTargets()
     {
         var staticFields = typeof(NamedBuildTarget).GetFields(BindingFlags.Public | BindingFlags.Static);
         var buildTargets = new List<NamedBuildTarget>();

@@ -48,6 +48,7 @@ GameObject:
   - component: {fileID: 8531896475810202468}
   - component: {fileID: 7619192914006537395}
   - component: {fileID: 555997761031005877}
+  - component: {fileID: 5365416671280253852}
   m_Layer: 7
   m_Name: Player
   m_TagString: Player
@@ -76,6 +77,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &3184169112294873649
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -99,7 +101,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: ad1350e9911ed8a4ea8e44306c27455b, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -121,6 +123,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: -9095717837082945937, guid: 207ee8102dd4143d288186ef0be518ee, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -130,7 +133,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!50 &4892690787160981599
 Rigidbody2D:
@@ -174,7 +176,6 @@ MonoBehaviour:
   IsResist: 1
   maxVelocity: 10
   effectParent: {fileID: 2964416438397140308}
-  curHp: 100
   _statManager:
     _baseStat:
       maxHp: 100
@@ -204,16 +205,16 @@ MonoBehaviour:
   resister: {fileID: 0}
   atkInfo: {fileID: 0}
   isStarted: 0
-  dodgeSpeedGraph: 3
-  dashDelaySpeedGraph: 3
-  dashDelayDistance: 0.7
-  dashDelayCancelTime: 0.3
   dashCoolTime: 0.3
   jumpToAttackDelay: 0.3
   dashToAttackDelay: 0.3
   dashToMoveDelay: 0.7
   dashToJumpDelay: 0.01
   dashLandingTime: 0.6
+  dodgeSpeedGraph: 3
+  dashDelaySpeedGraph: 3
+  dashDelayDistance: 0.7
+  dashDelayCancelTime: 0.3
   playerStat:
     JumpPower: 0
     JumpMax: 0
@@ -439,6 +440,18 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &5365416671280253852
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3487118130851089163}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7520da95f17c7e44aa966535b1f115c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Apis.BuffSystem
 --- !u!1 &4015734272802015543
 GameObject:
   m_ObjectHideFlags: 0

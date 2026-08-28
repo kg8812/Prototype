@@ -6,13 +6,12 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
-///     A Component added to a save slot to allow it to be selected, deleted, and un-deleted.
+/// A Component added to a save slot to allow it to be selected, deleted, and un-deleted.
 /// </summary>
 public class ES3Slot : MonoBehaviour
 {
     [Tooltip("The text label containing the slot name.")]
     public TMP_Text nameLabel;
-
     [Tooltip("The text label containing the last updated timestamp for the slot.")]
     public TMP_Text timestampLabel;
 
@@ -24,17 +23,15 @@ public class ES3Slot : MonoBehaviour
 
     [Tooltip("The button for selecting this slot.")]
     public Button selectButton;
-
     [Tooltip("The button for deleting this slot.")]
     public Button deleteButton;
-
     [Tooltip("The button for undoing the deletion of this slot.")]
     public Button undoButton;
 
     // Whether this slot has been marked for deletion.
-    public bool markedForDeletion;
+    public bool markedForDeletion = false;
 
-    #region Initialisation and Clean-up
+#region Initialisation and Clean-up
 
     // See Unity's docs for more info: https://docs.unity3d.com/ScriptReference/MonoBehaviour.OnEnable.html
     public virtual void OnEnable()
@@ -58,20 +55,18 @@ public class ES3Slot : MonoBehaviour
             DeleteSlot();
     }
 
-    #endregion
+#endregion
 
-    #region Select methods
+#region Select methods
 
     // Called when the Select Slot button is pressed.
     protected virtual void TrySelectSlot()
     {
         // Manage the confirmation dialog if necessary.
-        if (mgr.showConfirmationIfExists)
+        if(mgr.showConfirmationIfExists)
         {
             if (confirmationDialog == null)
-                Debug.LogError(
-                    "The confirmationDialog field of this ES3SelectSlot Component hasn't been set in the inspector.",
-                    this);
+                Debug.LogError("The confirmationDialog field of this ES3SelectSlot Component hasn't been set in the inspector.", this);
 
             // Display a confirmation dialog if we're overwriting a save slot.
             if (ES3.FileExists(GetSlotPath()))
@@ -79,8 +74,7 @@ public class ES3Slot : MonoBehaviour
                 // Show the dialog.
                 confirmationDialog.SetActive(true);
                 // Register the event for the confirmation button.
-                confirmationDialog.GetComponent<ES3SlotDialog>().confirmButton.onClick
-                    .AddListener(OverwriteThenSelectSlot);
+                confirmationDialog.GetComponent<ES3SlotDialog>().confirmButton.onClick.AddListener(OverwriteThenSelectSlot);
                 return;
             }
         }
@@ -108,9 +102,9 @@ public class ES3Slot : MonoBehaviour
             SceneManager.LoadScene(mgr.loadSceneAfterSelectSlot);
     }
 
-    #endregion
+#endregion
 
-    #region Delete methods
+#region Delete methods
 
     // Marks a slot to be deleted and displays an undo button.
     protected virtual void MarkSlotForDeletion()
@@ -147,12 +141,12 @@ public class ES3Slot : MonoBehaviour
         ES3.DeleteFile(GetSlotPath(), new ES3Settings(ES3.Location.Cache));
         ES3.DeleteFile(GetSlotPath(), new ES3Settings(ES3.Location.File));
         // Destroy this slot.
-        Destroy(gameObject);
+        Destroy(this.gameObject);
     }
 
-    #endregion
+#endregion
 
-    #region Utility methods
+#region Utility methods
 
     // Gets the relative file path of the slot with the given slot name.
     public virtual string GetSlotPath()
@@ -167,7 +161,7 @@ public class ES3Slot : MonoBehaviour
         transform.SetSiblingIndex(1);
     }
 
-    #endregion
+#endregion
 }
 
 #endif

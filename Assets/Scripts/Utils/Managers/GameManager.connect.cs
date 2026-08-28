@@ -132,24 +132,4 @@ public partial class GameManager : Singleton<GameManager>
 
     public static ItemFactoryManager Item => _item ??= new ItemFactoryManager();
 
-    private static PlayerProgressManager _progress;
-    public static PlayerProgressManager Progress => _progress ??= new PlayerProgressManager();
-
-    private static AttackObject _atkObj;
-
-    public static AttackObject AtkObj
-    {
-        get
-        {
-            if (_atkObj == null || !_atkObj.gameObject.activeSelf)
-            {
-                _atkObj = Factory.Get<AttackObject>(FactoryManager.FactoryType.AttackObject, "SquareAttackObject");
-                _atkObj.transform.SetParent(instance.transform);
-                _atkObj.Collider.enabled = false;
-                _atkObj.transform.localPosition = Vector3.zero;
-            }
-
-            return _atkObj;
-        }
-    }
 }

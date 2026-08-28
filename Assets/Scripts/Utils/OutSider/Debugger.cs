@@ -14,7 +14,7 @@ namespace UtilSpace
         protected override void Awake()
         {
             base.Awake();
-            SetStateText(GameStateType.DefaultState);
+            SetStateText(GameManager.instance.CurState);
             GameManager.instance.GameStateChangedTo.AddListener(SetStateText);
             canv.worldCamera = CameraManager.instance.UICam;
         }
@@ -26,9 +26,9 @@ namespace UtilSpace
             timeScaleText.text = $"speed: {Time.timeScale}";
         }
 
-        private void SetStateText(GameStateType gameStateType)
+        private void SetStateText(GameState state)
         {
-            gameStateText.text = gameStateType.ToString();
+            gameStateText.text = state == null ? "-" : state.GetType().Name;
         }
     }
 }

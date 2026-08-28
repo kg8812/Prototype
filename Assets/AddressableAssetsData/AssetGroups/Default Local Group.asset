@@ -20,6 +20,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 32295b6bf5c5b654cac7befd66256ab9
+    m_Address: Triangle(1)
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Triangles
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4488fe5ea5ced1044bcd60701a974578
+    m_Address: Triangle
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Triangles
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4ed4d17a01b92ca4d9d815e7964a1a4b
     m_Address: SoundMixer
     m_ReadOnly: 0
@@ -34,6 +46,12 @@ MonoBehaviour:
     m_Address: DmgText
     m_ReadOnly: 0
     m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e619cdffc67efe243ad1150aa29dce7e
+    m_Address: Triangle(2)
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Triangles
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e6a89cca9c272f842bba0e4210fa64bf
     m_Address: Player1Data

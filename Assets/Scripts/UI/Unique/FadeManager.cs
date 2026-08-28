@@ -74,12 +74,12 @@ namespace Apis.UI
                 {
                     // Debug.LogError("fade guid가 empty가 아니데 try on 중");
                     Guid preGuid = _fadeStateGuid;
-                    _fadeStateGuid = GameManager.instance.TryOnGameState(GameStateType.DefaultState);
-                    GameManager.instance.TryOffGameState(GameStateType.DefaultState, preGuid);
+                    _fadeStateGuid = GameManager.instance.TryOnGameState<DefaultState>();
+                    GameManager.instance.TryOffGameState<DefaultState>(preGuid);
                 }
                 else
                 {
-                    _fadeStateGuid = GameManager.instance.TryOnGameState(GameStateType.DefaultState);
+                    _fadeStateGuid = GameManager.instance.TryOnGameState<DefaultState>();
                 }
             }
                 
@@ -149,7 +149,7 @@ namespace Apis.UI
         {
             if (GameManager.Scene.CurSceneData.isPlayerMustExist && _fadeStateGuid != Guid.Empty)
             {
-                GameManager.instance.TryOffGameState(GameStateType.DefaultState,_fadeStateGuid);
+                GameManager.instance.TryOffGameState<DefaultState>(_fadeStateGuid);
                 _fadeStateGuid = Guid.Empty;
             } 
             

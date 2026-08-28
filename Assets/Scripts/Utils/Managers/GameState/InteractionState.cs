@@ -1,7 +1,10 @@
 ﻿namespace GameStateSpace
 {
+    /// <summary>UI + 기본 조작이 가능한 상태. 상호작용 UI가 떠 있을 때.</summary>
     public class InteractionState : GameState
     {
+        public override int Priority => StatePriority.Interaction;
+
         public override void OnEnterState()
         {
         }

@@ -178,7 +178,7 @@ namespace Apis
              * Common => 자체적으로 Player Ray 쏴서 판단하고 호출
              */
             _isRecognized = true;
-            GameManager.instance.BattleStateClass.AddRecogMonster(this);
+            GameManager.instance.GetState<GameStateSpace.BattleState>()?.AddRecogMonster(this);
             // 보스나 엘리트면 체력바 생성
 
             ExecuteEvent(EventType.OnRecognitionEnter, new EventParameters(this));

@@ -2,18 +2,18 @@ using System;
 
 namespace GameStateSpace
 {
+    /// <summary>UI만 조작 가능한 상태. 페이드 중, 시스템 알림 중, 플레이어가 없는 씬에서 쓴다.</summary>
     public class DefaultState : GameState
     {
-        private Guid _pauseGuid;
+        public override int Priority => StatePriority.Default;
+
 
         public override void OnEnterState()
         {
-            _pauseGuid = GameManager.instance.RegisterPause();
         }
 
         public override void OnExitState()
         {
-            GameManager.instance.RemovePause(_pauseGuid);
         }
 
         public override void KeyBoardControlling()

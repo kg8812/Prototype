@@ -1,25 +1,24 @@
 using System;
 using ES3Internal;
-using UnityEngine.Scripting;
 
 namespace ES3Types
 {
-    [Preserve]
+    [UnityEngine.Scripting.Preserve]
     public abstract class ES3GenericType : ES3Type
     {
-        public ES3Type[] genericArgumentES3Types;
         public Type[] genericArguments;
+        public ES3Type[] genericArgumentES3Types;
 
         public ES3GenericType(Type type) : base(type)
         {
             genericArguments = ES3Reflection.GetGenericArguments(type);
             genericArgumentES3Types = new ES3Type[genericArguments.Length];
 
-            for (var i = 0; i < genericArguments.Length; i++)
+            for (int i = 0; i < genericArguments.Length; i++)
             {
                 genericArgumentES3Types[i] = ES3TypeMgr.GetOrCreateES3Type(genericArguments[i], false);
                 if (genericArgumentES3Types[i] == null || genericArgumentES3Types[i].isUnsupported)
-                    isUnsupported = true;
+                    this.isUnsupported = true;
             }
         }
 

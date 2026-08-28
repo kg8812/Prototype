@@ -1,69 +1,52 @@
-﻿using System;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
-using System.Linq;
-using ES3Internal;
+using System;
 using ES3Types;
+using UnityEngine;
+using ES3Internal;
+using System.Linq;
 
 /// <summary>Represents a cached file which can be saved to and loaded from, and commited to storage when necessary.</summary>
 public class ES3File
 {
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public static Dictionary<string, ES3File> cachedFiles = new();
-
-    private readonly Dictionary<string, ES3Data> cache = new();
-    private bool dirty;
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    public static Dictionary<string, ES3File> cachedFiles = new Dictionary<string, ES3File>();
 
     public ES3Settings settings;
-    private bool syncWithFile;
-    private readonly DateTime timestamp = DateTime.UtcNow;
+    private Dictionary<string, ES3Data> cache = new Dictionary<string, ES3Data>();
+    private bool syncWithFile = false;
+    private DateTime timestamp = DateTime.UtcNow;
+    private bool dirty = false;
 
     /// <summary>Creates a new ES3File and loads the default file into the ES3File if there is data to load.</summary>
-    public ES3File() : this(new ES3Settings(), true)
-    {
-    }
+    public ES3File() : this(new ES3Settings(), true) { }
 
     /// <summary>Creates a new ES3File and loads the specified file into the ES3File if there is data to load.</summary>
     /// <param name="filepath">The relative or absolute path of the file in storage our ES3File is associated with.</param>
-    public ES3File(string filePath) : this(new ES3Settings(filePath), true)
-    {
-    }
+    public ES3File(string filePath) : this(new ES3Settings(filePath), true) { }
 
     /// <summary>Creates a new ES3File and loads the specified file into the ES3File if there is data to load.</summary>
     /// <param name="filepath">The relative or absolute path of the file in storage our ES3File is associated with.</param>
     /// <param name="settings">The settings we want to use to override the default settings.</param>
-    public ES3File(string filePath, ES3Settings settings) : this(new ES3Settings(filePath, settings), true)
-    {
-    }
+    public ES3File(string filePath, ES3Settings settings) : this(new ES3Settings(filePath, settings), true) { }
 
     /// <summary>Creates a new ES3File and loads the specified file into the ES3File if there is data to load.</summary>
     /// <param name="settings">The settings we want to use to override the default settings.</param>
-    public ES3File(ES3Settings settings) : this(settings, true)
-    {
-    }
+    public ES3File(ES3Settings settings) : this(settings, true) { }
 
     /// <summary>Creates a new ES3File and only loads the default file into it if syncWithFile is set to true.</summary>
     /// <param name="syncWithFile">Whether we should sync this ES3File with the one in storage immediately after creating it.</param>
-    public ES3File(bool syncWithFile) : this(new ES3Settings(), syncWithFile)
-    {
-    }
-
+    public ES3File(bool syncWithFile) : this(new ES3Settings(), syncWithFile) { }
     /// <summary>Creates a new ES3File and only loads the specified file into it if syncWithFile is set to true.</summary>
     /// <param name="filepath">The relative or absolute path of the file in storage our ES3File is associated with.</param>
     /// <param name="syncWithFile">Whether we should sync this ES3File with the one in storage immediately after creating it.</param>
-    public ES3File(string filePath, bool syncWithFile) : this(new ES3Settings(filePath), syncWithFile)
-    {
-    }
-
+    public ES3File(string filePath, bool syncWithFile) : this(new ES3Settings(filePath), syncWithFile) { }
     /// <summary>Creates a new ES3File and only loads the specified file into it if syncWithFile is set to true.</summary>
     /// <param name="filepath">The relative or absolute path of the file in storage our ES3File is associated with.</param>
     /// <param name="settings">The settings we want to use to override the default settings.</param>
     /// <param name="syncWithFile">Whether we should sync this ES3File with the one in storage immediately after creating it.</param>
-    public ES3File(string filePath, ES3Settings settings, bool syncWithFile) : this(new ES3Settings(filePath, settings),
-        syncWithFile)
-    {
-    }
+    public ES3File(string filePath, ES3Settings settings, bool syncWithFile) : this(new ES3Settings(filePath, settings), syncWithFile) { }
 
     /// <summary>Creates a new ES3File and loads the specified file into the ES3File if there is data to load.</summary>
     /// <param name="settings">The settings we want to use to override the default settings.</param>
@@ -101,8 +84,7 @@ public class ES3File
         else
             this.settings = settings;
 
-        syncWithFile =
-            true; // This ensures that the file won't be merged, which would prevent deleted keys from being deleted.
+        syncWithFile = true; // This ensures that the file won't be merged, which would prevent deleted keys from being deleted.
 
         SaveRaw(bytes, settings);
     }
@@ -110,7 +92,7 @@ public class ES3File
     /// <summary>Synchronises this ES3File with a file in storage.</summary>
     public void Sync()
     {
-        Sync(settings);
+        Sync(this.settings);
     }
 
     /// <summary>Synchronises this ES3File with a file in storage.</summary>
@@ -145,13 +127,12 @@ public class ES3File
                 // In this case, use System.Object as the type.
                 Type type;
                 if (kvp.Value.type == null)
-                    type = typeof(object);
+                    type = typeof(System.Object);
                 else
                     type = kvp.Value.type.type;
 
                 baseWriter.Write(kvp.Key, type, kvp.Value.bytes);
             }
-
             baseWriter.Save(!syncWithFile);
         }
 
@@ -174,162 +155,6 @@ public class ES3File
         return keys;
     }
 
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    internal static ES3File GetCachedFile(ES3Settings settings)
-    {
-        ES3File cachedFile;
-        cachedFiles.TryGetValue(settings.path, out cachedFile);
-
-        // Settings might refer to the same file, but might have changed.
-        // To account for this, we update the settings of the ES3File each time we access it.
-        if (cachedFile != null)
-            cachedFile.settings = settings;
-
-        return cachedFile;
-    }
-
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    internal static ES3File GetOrCreateCachedFile(ES3Settings settings)
-    {
-        var cachedFile = GetCachedFile(settings);
-
-        if (cachedFile == null)
-        {
-            cachedFile = new ES3File(settings, false);
-            cachedFiles.Add(settings.path, cachedFile);
-            cachedFile.syncWithFile =
-                true; // This ensures that the file won't be merged, which would prevent deleted keys from being deleted.
-        }
-
-        return cachedFile;
-    }
-
-    internal static ES3File CacheFile(ES3Settings settings)
-    {
-        // If we're still using cached settings, set it to the default location.
-        if (settings.location == ES3.Location.Cache)
-        {
-            settings = (ES3Settings)settings.Clone();
-            // If the default settings are also set to cache, assume ES3.Location.File. Otherwise, set it to the default location.
-            settings.location = ES3Settings.defaultSettings.location == ES3.Location.Cache
-                ? ES3.Location.File
-                : ES3Settings.defaultSettings.location;
-        }
-
-        if (!ES3.FileExists(settings))
-            return null;
-
-        // Disable compression and encryption when loading the raw bytes, and the ES3File constructor will expect encrypted/compressed bytes.
-        var loadSettings = (ES3Settings)settings.Clone();
-        loadSettings.compressionType = ES3.CompressionType.None;
-        loadSettings.encryptionType = ES3.EncryptionType.None;
-
-        var es3File = new ES3File(ES3.LoadRawBytes(loadSettings), settings);
-        es3File.dirty = false; // Mark the ES3File as not dirty as a newly cached file will never be dirty.
-        cachedFiles[settings.path] = es3File;
-
-        return es3File;
-    }
-
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    internal static void Store(ES3Settings settings = null)
-    {
-        if (settings == null)
-        {
-            settings = new ES3Settings(ES3.Location.File);
-        }
-        // If we're still using cached settings, set it to the default location.
-        else if (settings.location == ES3.Location.Cache)
-        {
-            settings = (ES3Settings)settings.Clone();
-            // If the default settings are also set to cache, assume ES3.Location.File. Otherwise, set it to the default location.
-            settings.location = ES3Settings.defaultSettings.location == ES3.Location.Cache
-                ? ES3.Location.File
-                : ES3Settings.defaultSettings.location;
-        }
-
-        ES3File cachedFile;
-        if (!cachedFiles.TryGetValue(settings.path, out cachedFile))
-            throw new FileNotFoundException("The file '" + settings.path +
-                                            "' could not be stored because it could not be found in the cache.");
-        cachedFile.Sync(settings);
-    }
-
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    internal static void StoreAll()
-    {
-        foreach (var kvp in cachedFiles)
-            if (kvp.Key != null && kvp.Value != null)
-                Store(kvp.Value.settings);
-    }
-
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    internal static void RemoveCachedFile(ES3Settings settings)
-    {
-        cachedFiles.Remove(settings.path);
-    }
-
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    internal static void CopyCachedFile(ES3Settings oldSettings, ES3Settings newSettings)
-    {
-        ES3File cachedFile;
-        if (!cachedFiles.TryGetValue(oldSettings.path, out cachedFile))
-            throw new FileNotFoundException("The file '" + oldSettings.path +
-                                            "' could not be copied because it could not be found in the cache.");
-        if (cachedFiles.ContainsKey(newSettings.path))
-            throw new InvalidOperationException("Cannot copy file '" + oldSettings.path + "' to '" + newSettings.path +
-                                                "' because '" + newSettings.path + "' already exists");
-
-        cachedFiles.Add(newSettings.path, (ES3File)cachedFile.MemberwiseClone());
-    }
-
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    internal static void DeleteKey(string key, ES3Settings settings)
-    {
-        ES3File cachedFile;
-        if (cachedFiles.TryGetValue(settings.path, out cachedFile))
-            cachedFile.DeleteKey(key);
-    }
-
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    internal static bool KeyExists(string key, ES3Settings settings)
-    {
-        ES3File cachedFile;
-        if (cachedFiles.TryGetValue(settings.path, out cachedFile))
-            return cachedFile.KeyExists(key);
-        return false;
-    }
-
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    internal static bool FileExists(ES3Settings settings)
-    {
-        return cachedFiles.ContainsKey(settings.path);
-    }
-
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    internal static string[] GetKeys(ES3Settings settings)
-    {
-        ES3File cachedFile;
-        if (!cachedFiles.TryGetValue(settings.path, out cachedFile))
-            throw new FileNotFoundException("Could not get keys from the file '" + settings.path +
-                                            "' because it could not be found in the cache.");
-        return cachedFile.cache.Keys.ToArray();
-    }
-
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    internal static string[] GetFiles()
-    {
-        return cachedFiles.Keys.ToArray();
-    }
-
-    internal static DateTime GetTimestamp(ES3Settings settings)
-    {
-        ES3File cachedFile;
-        if (!cachedFiles.TryGetValue(settings.path, out cachedFile))
-            return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-        return cachedFile.timestamp;
-    }
-
     #region Save Methods
 
     /// <summary>Saves a value to a key in this ES3File.</summary>
@@ -348,7 +173,7 @@ public class ES3File
         else
             type = value.GetType();
 
-        var es3Type = ES3TypeMgr.GetOrCreateES3Type(typeof(T));
+        ES3Type es3Type = ES3TypeMgr.GetOrCreateES3Type(typeof(T));
 
         cache[key] = new ES3Data(es3Type, ES3.Serialize(value, es3Type, unencryptedSettings));
 
@@ -419,10 +244,9 @@ public class ES3File
         ES3Data es3Data;
 
         if (!cache.TryGetValue(key, out es3Data))
-            throw new KeyNotFoundException("Key \"" + key +
-                                           "\" was not found in this ES3File. Use Load<T>(key, defaultValue) if you want to return a default value if the key does not exist.");
+            throw new KeyNotFoundException("Key \"" + key + "\" was not found in this ES3File. Use Load<T>(key, defaultValue) if you want to return a default value if the key does not exist.");
 
-        var unencryptedSettings = (ES3Settings)settings.Clone();
+        var unencryptedSettings = (ES3Settings)this.settings.Clone();
         unencryptedSettings.encryptionType = ES3.EncryptionType.None;
         unencryptedSettings.compressionType = ES3.CompressionType.None;
 
@@ -441,7 +265,7 @@ public class ES3File
 
         if (!cache.TryGetValue(key, out es3Data))
             return defaultValue;
-        var unencryptedSettings = (ES3Settings)settings.Clone();
+        var unencryptedSettings = (ES3Settings)this.settings.Clone();
         unencryptedSettings.encryptionType = ES3.EncryptionType.None;
         unencryptedSettings.compressionType = ES3.CompressionType.None;
 
@@ -459,10 +283,9 @@ public class ES3File
         ES3Data es3Data;
 
         if (!cache.TryGetValue(key, out es3Data))
-            throw new KeyNotFoundException("Key \"" + key +
-                                           "\" was not found in this ES3File. Use Load<T>(key, defaultValue) if you want to return a default value if the key does not exist.");
+            throw new KeyNotFoundException("Key \"" + key + "\" was not found in this ES3File. Use Load<T>(key, defaultValue) if you want to return a default value if the key does not exist.");
 
-        var unencryptedSettings = (ES3Settings)settings.Clone();
+        var unencryptedSettings = (ES3Settings)this.settings.Clone();
         unencryptedSettings.encryptionType = ES3.EncryptionType.None;
         unencryptedSettings.compressionType = ES3.CompressionType.None;
 
@@ -486,14 +309,10 @@ public class ES3File
             newSettings.encryptionType = ES3.EncryptionType.None;
             newSettings.compressionType = ES3.CompressionType.None;
         }
-
         return GetBytes(newSettings);
     }
 
-    /// <summary>
-    ///     Loads the ES3File as a raw, unencrypted, uncompressed string, using the encoding defined in the ES3File's
-    ///     settings variable.
-    /// </summary>
+    /// <summary>Loads the ES3File as a raw, unencrypted, uncompressed string, using the encoding defined in the ES3File's settings variable.</summary>
     public string LoadRawString()
     {
         if (cache.Count == 0)
@@ -512,7 +331,7 @@ public class ES3File
         if (settings == null)
             settings = this.settings;
 
-        using (var ms = new MemoryStream())
+        using (var ms = new System.IO.MemoryStream())
         {
             var memorySettings = (ES3Settings)settings.Clone();
             memorySettings.location = ES3.Location.InternalMS;
@@ -523,8 +342,7 @@ public class ES3File
                 memorySettings.compressionType = ES3.CompressionType.None;
             }
 
-            using (var baseWriter = ES3Writer.Create(ES3Stream.CreateStream(ms, memorySettings, ES3FileMode.Write),
-                       memorySettings, true, false))
+            using (var baseWriter = ES3Writer.Create(ES3Stream.CreateStream(ms, memorySettings, ES3FileMode.Write), memorySettings, true, false))
             {
                 foreach (var kvp in cache)
                     baseWriter.Write(kvp.Key, kvp.Value.type.type, kvp.Value.bytes);
@@ -558,7 +376,7 @@ public class ES3File
     /// <summary>Gets the size of the cached data in bytes.</summary>
     public int Size()
     {
-        var size = 0;
+        int size = 0;
         foreach (var kvp in cache)
             size += kvp.Value.bytes.Length;
         return size;
@@ -568,13 +386,157 @@ public class ES3File
     {
         ES3Data es3data;
         if (!cache.TryGetValue(key, out es3data))
-            throw new KeyNotFoundException("Key \"" + key +
-                                           "\" was not found in this ES3File. Use Load<T>(key, defaultValue) if you want to return a default value if the key does not exist.");
+            throw new KeyNotFoundException("Key \"" + key + "\" was not found in this ES3File. Use Load<T>(key, defaultValue) if you want to return a default value if the key does not exist.");
 
         return es3data.type.type;
     }
 
     #endregion
+
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    internal static ES3File GetCachedFile(ES3Settings settings)
+    {
+        ES3File cachedFile;
+        cachedFiles.TryGetValue(settings.path, out cachedFile);
+
+        // Settings might refer to the same file, but might have changed.
+        // To account for this, we update the settings of the ES3File each time we access it.
+        if (cachedFile != null)
+            cachedFile.settings = settings;
+
+        return cachedFile;
+    }
+
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    internal static ES3File GetOrCreateCachedFile(ES3Settings settings)
+    {
+        ES3File cachedFile = GetCachedFile(settings);
+
+        if (cachedFile == null)
+        {
+            cachedFile = new ES3File(settings, false);
+            cachedFiles.Add(settings.path, cachedFile);
+            cachedFile.syncWithFile = true; // This ensures that the file won't be merged, which would prevent deleted keys from being deleted.
+        }
+
+        return cachedFile;
+    }
+
+    internal static ES3File CacheFile(ES3Settings settings)
+    {
+        // If we're still using cached settings, set it to the default location.
+        if (settings.location == ES3.Location.Cache)
+        {
+            settings = (ES3Settings)settings.Clone();
+            // If the default settings are also set to cache, assume ES3.Location.File. Otherwise, set it to the default location.
+            settings.location = ES3Settings.defaultSettings.location == ES3.Location.Cache ? ES3.Location.File : ES3Settings.defaultSettings.location;
+        }
+
+        if (!ES3.FileExists(settings))
+            return null;
+
+        // Disable compression and encryption when loading the raw bytes, and the ES3File constructor will expect encrypted/compressed bytes.
+        var loadSettings = (ES3Settings)settings.Clone();
+        loadSettings.compressionType = ES3.CompressionType.None;
+        loadSettings.encryptionType = ES3.EncryptionType.None;
+
+        var es3File = new ES3File(ES3.LoadRawBytes(loadSettings), settings);
+        es3File.dirty = false; // Mark the ES3File as not dirty as a newly cached file will never be dirty.
+        cachedFiles[settings.path] = es3File;
+
+        return es3File;
+    }
+
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    internal static void Store(ES3Settings settings = null)
+    {
+        if (settings == null)
+            settings = new ES3Settings(ES3.Location.File);
+        // If we're still using cached settings, set it to the default location.
+        else if (settings.location == ES3.Location.Cache)
+        {
+            settings = (ES3Settings)settings.Clone();
+            // If the default settings are also set to cache, assume ES3.Location.File. Otherwise, set it to the default location.
+            settings.location = ES3Settings.defaultSettings.location == ES3.Location.Cache ? ES3.Location.File : ES3Settings.defaultSettings.location;
+        }
+
+        ES3File cachedFile;
+        if (!cachedFiles.TryGetValue(settings.path, out cachedFile))
+            throw new FileNotFoundException("The file '" + settings.path + "' could not be stored because it could not be found in the cache.");
+        cachedFile.Sync(settings);
+    }
+
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    internal static void StoreAll()
+    {
+        foreach (var kvp in cachedFiles)
+            if (kvp.Key != null && kvp.Value != null)
+                Store(kvp.Value.settings);
+    }
+
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    internal static void RemoveCachedFile(ES3Settings settings)
+    {
+        cachedFiles.Remove(settings.path);
+    }
+
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    internal static void CopyCachedFile(ES3Settings oldSettings, ES3Settings newSettings)
+    {
+        ES3File cachedFile;
+        if (!cachedFiles.TryGetValue(oldSettings.path, out cachedFile))
+            throw new FileNotFoundException("The file '" + oldSettings.path + "' could not be copied because it could not be found in the cache.");
+        if (cachedFiles.ContainsKey(newSettings.path))
+            throw new InvalidOperationException("Cannot copy file '" + oldSettings.path + "' to '" + newSettings.path + "' because '" + newSettings.path + "' already exists");
+
+        cachedFiles.Add(newSettings.path, (ES3File)cachedFile.MemberwiseClone());
+    }
+
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    internal static void DeleteKey(string key, ES3Settings settings)
+    {
+        ES3File cachedFile;
+        if (cachedFiles.TryGetValue(settings.path, out cachedFile))
+            cachedFile.DeleteKey(key);
+    }
+
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    internal static bool KeyExists(string key, ES3Settings settings)
+    {
+        ES3File cachedFile;
+        if (cachedFiles.TryGetValue(settings.path, out cachedFile))
+            return cachedFile.KeyExists(key);
+        return false;
+    }
+
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    internal static bool FileExists(ES3Settings settings)
+    {
+        return cachedFiles.ContainsKey(settings.path);
+    }
+
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    internal static string[] GetKeys(ES3Settings settings)
+    {
+        ES3File cachedFile;
+        if (!cachedFiles.TryGetValue(settings.path, out cachedFile))
+            throw new FileNotFoundException("Could not get keys from the file '" + settings.path + "' because it could not be found in the cache.");
+        return cachedFile.cache.Keys.ToArray();
+    }
+
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    internal static string[] GetFiles()
+    {
+        return cachedFiles.Keys.ToArray();
+    }
+
+    internal static DateTime GetTimestamp(ES3Settings settings)
+    {
+        ES3File cachedFile;
+        if (!cachedFiles.TryGetValue(settings.path, out cachedFile))
+            return new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
+        return cachedFile.timestamp;
+    }
 }
 
 namespace ES3Internal

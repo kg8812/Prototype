@@ -1,28 +1,26 @@
-﻿using System;
-using ES3Internal;
+﻿using UnityEngine;
 using UnityEditor;
-using UnityEditor.SceneManagement;
-using UnityEngine;
 using UnityEngine.SceneManagement;
-using Object = UnityEngine.Object;
+using UnityEditor.SceneManagement;
+using ES3Internal;
 
 namespace ES3Editor
 {
-    [Serializable]
-    public class AutoSaveWindow : SubWindow
-    {
-        public bool showAdvancedSettings;
+	[System.Serializable]
+	public class AutoSaveWindow : SubWindow
+	{
+		public bool showAdvancedSettings = false;
 
-        public ES3AutoSaveMgr mgr;
+		public ES3AutoSaveMgr mgr = null;
 
-        private HierarchyItem[] hierarchy;
+        private HierarchyItem[] hierarchy = null;
+        public HierarchyItem selected = null;
 
         private Vector2 hierarchyScrollPosition = Vector2.zero;
 
         private bool sceneOpen = true;
 
         private string searchTerm = "";
-        public HierarchyItem selected = null;
 
         public AutoSaveWindow(EditorWindow window) : base("Auto Save", window)
         {
@@ -36,19 +34,19 @@ namespace ES3Editor
         }
 
         public override void OnGUI()
-        {
-            Init();
+		{
+			Init();
 
-            if (mgr == null)
-            {
+			if(mgr == null)
+			{
                 EditorGUILayout.Space();
                 if (GUILayout.Button("Enable Auto Save for this scene"))
                     mgr = ES3Postprocessor.AddManagerToScene().GetComponent<ES3AutoSaveMgr>();
                 else
                     return;
-            }
+			}
 
-            var style = EditorStyle.Get;
+			var style = EditorStyle.Get;
 
             using (var changeCheck = new EditorGUI.ChangeCheckScope())
             {
@@ -63,15 +61,11 @@ namespace ES3Editor
                     showAdvancedSettings = EditorGUILayout.Foldout(showAdvancedSettings, "Show Advanced Settings");
                     if (showAdvancedSettings)
                     {
-                        EditorGUILayout.HelpBox(
-                            "We recommend against changing these settings unless instructed to do so by the documentation or by support.",
-                            MessageType.Warning);
+                        EditorGUILayout.HelpBox("We recommend against changing these settings unless instructed to do so by the documentation or by support.", MessageType.Warning);
                         EditorGUI.indentLevel++;
                         mgr.key = EditorGUILayout.TextField("Key", mgr.key);
                         ES3SettingsEditor.Draw(mgr.settings);
-                        mgr.immediatelyCommitToFile =
-                            EditorGUILayout.ToggleLeft("Immediately commit cached data to file",
-                                mgr.immediatelyCommitToFile);
+                        mgr.immediatelyCommitToFile = EditorGUILayout.ToggleLeft("Immediately commit cached data to file", mgr.immediatelyCommitToFile);
                         EditorGUI.indentLevel--;
                     }
                 }
@@ -84,7 +78,6 @@ namespace ES3Editor
                         sceneOpen = true;
                         OnFocus();
                     }
-
                     if (GUILayout.Button("Prefabs", sceneOpen ? style.menuButton : style.menuButtonSelected))
                     {
                         sceneOpen = false;
@@ -96,9 +89,7 @@ namespace ES3Editor
 
                 if (hierarchy == null || hierarchy.Length == 0)
                 {
-                    EditorGUILayout.LabelField(
-                        "Right-click a prefab and select 'Easy Save 3 > Enable Easy Save for Scene' to enable Auto Save for it.\n\nYour scene will also need to reference this prefab for it to be recognised.",
-                        style.area);
+                    EditorGUILayout.LabelField("Right-click a prefab and select 'Easy Save 3 > Enable Easy Save for Scene' to enable Auto Save for it.\n\nYour scene will also need to reference this prefab for it to be recognised.", style.area);
                     return;
                 }
 
@@ -132,14 +123,13 @@ namespace ES3Editor
                         if (go != null)
                             go.DrawHierarchy(searchTerm.ToLowerInvariant());
                 }
-
                 if (changeCheck.changed)
                     EditorUtility.SetDirty(mgr);
             }
         }
 
-        public void Init()
-        {
+		public void Init()
+		{
             if (mgr == null)
                 foreach (var thisMgr in Resources.FindObjectsOfTypeAll<ES3AutoSaveMgr>())
                     if (thisMgr != null && thisMgr.gameObject.scene == SceneManager.GetActiveScene())
@@ -157,7 +147,7 @@ namespace ES3Editor
 
             if (sceneOpen)
             {
-                parentObjects = SceneManager.GetActiveScene().GetRootGameObjects();
+                parentObjects = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
 
                 if (mgr != null)
                     ArrayUtility.Remove(ref parentObjects, mgr.gameObject);
@@ -166,37 +156,34 @@ namespace ES3Editor
             {
                 var prefabs = mgr.prefabs;
                 parentObjects = new GameObject[prefabs.Count];
-                for (var i = 0; i < prefabs.Count; i++)
+                for (int i = 0; i < prefabs.Count; i++)
                     if (prefabs[i] != null)
                         parentObjects[i] = prefabs[i].gameObject;
             }
-
             hierarchy = new HierarchyItem[parentObjects.Length];
-            for (var i = 0; i < parentObjects.Length; i++)
-                if (parentObjects[i] != null)
+            for (int i = 0; i < parentObjects.Length; i++)
+                if(parentObjects[i] != null)
                     hierarchy[i] = new HierarchyItem(parentObjects[i].transform, null, this);
         }
 
         public class HierarchyItem
         {
             private ES3AutoSave autoSave;
-
+            private Transform t;
+            private Component[] components = null;
             // Immediate children of this GameObject
-            private readonly HierarchyItem[] children = new HierarchyItem[0];
-            private readonly Component[] components;
-            private bool showComponents;
-
-            private readonly Transform t;
+            private HierarchyItem[] children = new HierarchyItem[0];
+            private bool showComponents = false;
             //private AutoSaveWindow window;
 
             public HierarchyItem(Transform t, HierarchyItem parent, AutoSaveWindow window)
             {
-                autoSave = t.GetComponent<ES3AutoSave>();
+                this.autoSave = t.GetComponent<ES3AutoSave>();
                 this.t = t;
-                components = t.GetComponents<Component>();
+                this.components = t.GetComponents<Component>();
 
                 children = new HierarchyItem[t.childCount];
-                for (var i = 0; i < t.childCount; i++)
+                for (int i = 0; i < t.childCount; i++)
                     children[i] = new HierarchyItem(t.GetChild(i), this, window);
 
                 //this.window = window;
@@ -211,7 +198,6 @@ namespace ES3Editor
                         autoSave.componentsToSave.AddRange(autoSave.componentsToSave);
                         Object.DestroyImmediate(this.autoSave);
                     }
-
                     this.autoSave = autoSave;
                 }
 
@@ -221,7 +207,7 @@ namespace ES3Editor
 
             public void DrawHierarchy(string searchTerm)
             {
-                var containsSearchTerm = false;
+                bool containsSearchTerm = false;
 
                 if (t != null)
                 {
@@ -238,13 +224,11 @@ namespace ES3Editor
                         EditorGUIUtility.SetIconSize(new Vector2(16, 16));
 
                         if (HasSelectedComponentsOrFields())
-                            saveIcon = new GUIContent(t.name, EditorStyle.Get.saveIconSelected,
-                                "There are Components on this GameObject which will be saved.");
+                            saveIcon = new GUIContent(t.name, EditorStyle.Get.saveIconSelected, "There are Components on this GameObject which will be saved.");
                         else
-                            saveIcon = new GUIContent(t.name, EditorStyle.Get.saveIconUnselected,
-                                "No Components on this GameObject will be saved");
+                            saveIcon = new GUIContent(t.name, EditorStyle.Get.saveIconUnselected, "No Components on this GameObject will be saved");
 
-                        var style = GUI.skin.GetStyle("Foldout");
+                        GUIStyle style = GUI.skin.GetStyle("Foldout");
                         if (Selection.activeTransform == t)
                         {
                             style = new GUIStyle(style);
@@ -259,7 +243,6 @@ namespace ES3Editor
                                 EditorGUIUtility.PingObject(t.gameObject);
                             DrawComponents();
                         }
-
                         showComponents = open;
 
                         EditorGUI.indentLevel += 1;
@@ -285,10 +268,9 @@ namespace ES3Editor
 
                     if (!PrefabUtility.IsPartOfPrefabAsset(t))
                         DisplayToggle("saveDestroyed", "destroyed", autoSave == null ? false : autoSave.saveDestroyed);
-                    else if (EditorGUILayout.ToggleLeft("destroyed", false))
-                        EditorUtility.DisplayDialog("Marking prefabs destroyed is not necessary",
-                            "Marking prefabs as destroyed is not necessary because their destroyed state is implied by their absense from the save data.\nFor example if you destroy a prefab instance and save, it will not be in the save data so will never be created when you load.",
-                            "Ok");
+                    else
+                        if (EditorGUILayout.ToggleLeft("destroyed", false))
+                        EditorUtility.DisplayDialog("Marking prefabs destroyed is not necessary", "Marking prefabs as destroyed is not necessary because their destroyed state is implied by their absense from the save data.\nFor example if you destroy a prefab instance and save, it will not be in the save data so will never be created when you load.", "Ok");
 
                     DisplayToggle("saveHideFlags", "hideFlags", autoSave == null ? false : autoSave.saveHideFlags);
                     DisplayToggle("saveName", "name", autoSave == null ? false : autoSave.saveName);
@@ -301,12 +283,11 @@ namespace ES3Editor
 
                         using (var horizontalScope = new EditorGUILayout.HorizontalScope())
                         {
-                            var saveComponent = false;
+                            bool saveComponent = false;
                             if (autoSave != null)
                                 saveComponent = autoSave.componentsToSave.Contains(component);
 
-                            var newValue = EditorGUILayout.ToggleLeft(
-                                EditorGUIUtility.ObjectContent(component, component.GetType()), saveComponent);
+                            var newValue = EditorGUILayout.ToggleLeft(EditorGUIUtility.ObjectContent(component, component.GetType()), saveComponent);
                             // If the checkbox has changed, we want to save or not save a Component
                             if (newValue != saveComponent)
                             {
@@ -317,7 +298,6 @@ namespace ES3Editor
                                     so.FindProperty("saveChildren").boolValue = false;
                                     so.ApplyModifiedProperties();
                                 }
-
                                 // If we've unchecked the box, remove the Component from the array.
                                 if (newValue == false)
                                 {
@@ -337,7 +317,6 @@ namespace ES3Editor
                                     so.ApplyModifiedProperties();
                                 }
                             }
-
                             if (GUILayout.Button(EditorGUIUtility.IconContent("_Popup"), new GUIStyle("Label")))
                                 ES3Window.InitAndShowTypes(component.GetType());
                         }
@@ -351,18 +330,15 @@ namespace ES3Editor
                         PrefabUtility.RecordPrefabInstancePropertyModifications(autoSave.gameObject);
                 }*/
 
-                if (autoSave != null && (autoSave.componentsToSave == null || autoSave.componentsToSave.Count == 0) &&
-                    !autoSave.saveActive && !autoSave.saveChildren && !autoSave.saveHideFlags && !autoSave.saveLayer &&
-                    !autoSave.saveName && !autoSave.saveTag && !autoSave.saveDestroyed)
+                if (autoSave != null && (autoSave.componentsToSave == null || autoSave.componentsToSave.Count == 0) && !autoSave.saveActive && !autoSave.saveChildren && !autoSave.saveHideFlags && !autoSave.saveLayer && !autoSave.saveName && !autoSave.saveTag &&!autoSave.saveDestroyed)
                 {
                     Undo.DestroyObjectImmediate(autoSave);
                     autoSave = null;
                 }
-
                 EditorGUI.indentLevel -= 3;
             }
 
-            private void DisplayToggle(string fieldName, string label, bool value)
+            void DisplayToggle(string fieldName, string label, bool value)
             {
                 if (EditorGUILayout.ToggleLeft(label, value) != value)
                     ApplyBool(fieldName, !value);
@@ -388,12 +364,12 @@ namespace ES3Editor
                     if (component != null && autoSave.componentsToSave.Contains(component))
                         return true;
 
-                if (autoSave.saveActive || autoSave.saveHideFlags || autoSave.saveLayer || autoSave.saveName ||
-                    autoSave.saveTag || autoSave.saveDestroyed)
+                if (autoSave.saveActive || autoSave.saveHideFlags || autoSave.saveLayer || autoSave.saveName || autoSave.saveTag || autoSave.saveDestroyed)
                     return true;
 
                 return false;
             }
         }
     }
+
 }

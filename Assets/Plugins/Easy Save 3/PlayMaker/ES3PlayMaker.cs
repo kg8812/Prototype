@@ -1,4 +1,5 @@
 ﻿#if PLAYMAKER_1_8_OR_NEWER
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -1785,12 +1786,10 @@ namespace ES3Types
                 {
 
                     case "objs":
-                        instance.objs =
- reader.Read<System.Collections.Generic.Dictionary<System.String, System.Object>>();
+                        instance.objs = reader.Read<System.Collections.Generic.Dictionary<System.String, System.Object>>();
                         break;
                     case "arrays":
-                        instance.arrays =
- reader.Read<System.Collections.Generic.Dictionary<System.String, System.Object[]>>();
+                        instance.arrays = reader.Read<System.Collections.Generic.Dictionary<System.String, System.Object[]>>();
                         break;
                     case "obj":
                         instance.obj = reader.Read<System.Object>();

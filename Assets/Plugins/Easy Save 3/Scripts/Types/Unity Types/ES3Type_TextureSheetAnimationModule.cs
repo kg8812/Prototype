@@ -1,25 +1,22 @@
+using System;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.Scripting;
 
 namespace ES3Types
 {
-    [Preserve]
-    [ES3PropertiesAttribute("enabled", "numTilesX", "numTilesY", "animation", "useRandomRow", "frameOverTime",
-        "frameOverTimeMultiplier", "startFrame", "startFrameMultiplier", "cycleCount", "rowIndex", "uvChannelMask",
-        "flipU", "flipV")]
+	[UnityEngine.Scripting.Preserve]
+    [ES3PropertiesAttribute("enabled", "numTilesX", "numTilesY", "animation", "useRandomRow", "frameOverTime", "frameOverTimeMultiplier", "startFrame", "startFrameMultiplier", "cycleCount", "rowIndex", "uvChannelMask", "flipU", "flipV")]
     public class ES3Type_TextureSheetAnimationModule : ES3Type
     {
-        public static ES3Type Instance;
+        public static ES3Type Instance = null;
 
-        public ES3Type_TextureSheetAnimationModule() : base(typeof(ParticleSystem.TextureSheetAnimationModule))
+        public ES3Type_TextureSheetAnimationModule() : base(typeof(UnityEngine.ParticleSystem.TextureSheetAnimationModule))
         {
             Instance = this;
         }
 
         public override void Write(object obj, ES3Writer writer)
         {
-            var instance = (ParticleSystem.TextureSheetAnimationModule)obj;
+            var instance = (UnityEngine.ParticleSystem.TextureSheetAnimationModule)obj;
 
             writer.WriteProperty("enabled", instance.enabled, ES3Type_bool.Instance);
             writer.WriteProperty("numTilesX", instance.numTilesX, ES3Type_int.Instance);
@@ -43,29 +40,31 @@ namespace ES3Types
 
         public override object Read<T>(ES3Reader reader)
         {
-            var instance = new ParticleSystem.TextureSheetAnimationModule();
+            var instance = new UnityEngine.ParticleSystem.TextureSheetAnimationModule();
             ReadInto<T>(reader, instance);
             return instance;
         }
 
         public override void ReadInto<T>(ES3Reader reader, object obj)
         {
-            var instance = (ParticleSystem.TextureSheetAnimationModule)obj;
+            var instance = (UnityEngine.ParticleSystem.TextureSheetAnimationModule)obj;
             string propertyName;
             while ((propertyName = reader.ReadPropertyName()) != null)
+            {
                 switch (propertyName)
                 {
+
                     case "enabled":
-                        instance.enabled = reader.Read<bool>(ES3Type_bool.Instance);
+                        instance.enabled = reader.Read<System.Boolean>(ES3Type_bool.Instance);
                         break;
                     case "numTilesX":
-                        instance.numTilesX = reader.Read<int>(ES3Type_int.Instance);
+                        instance.numTilesX = reader.Read<System.Int32>(ES3Type_int.Instance);
                         break;
                     case "numTilesY":
-                        instance.numTilesY = reader.Read<int>(ES3Type_int.Instance);
+                        instance.numTilesY = reader.Read<System.Int32>(ES3Type_int.Instance);
                         break;
                     case "animation":
-                        instance.animation = reader.Read<ParticleSystemAnimationType>();
+                        instance.animation = reader.Read<UnityEngine.ParticleSystemAnimationType>();
                         break;
 #if UNITY_2019_1_OR_NEWER
                     case "rowMode":
@@ -77,25 +76,25 @@ namespace ES3Types
                         break;
 #endif
                     case "frameOverTime":
-                        instance.frameOverTime = reader.Read<ParticleSystem.MinMaxCurve>(ES3Type_MinMaxCurve.Instance);
+                        instance.frameOverTime = reader.Read<UnityEngine.ParticleSystem.MinMaxCurve>(ES3Type_MinMaxCurve.Instance);
                         break;
                     case "frameOverTimeMultiplier":
-                        instance.frameOverTimeMultiplier = reader.Read<float>(ES3Type_float.Instance);
+                        instance.frameOverTimeMultiplier = reader.Read<System.Single>(ES3Type_float.Instance);
                         break;
                     case "startFrame":
-                        instance.startFrame = reader.Read<ParticleSystem.MinMaxCurve>(ES3Type_MinMaxCurve.Instance);
+                        instance.startFrame = reader.Read<UnityEngine.ParticleSystem.MinMaxCurve>(ES3Type_MinMaxCurve.Instance);
                         break;
                     case "startFrameMultiplier":
-                        instance.startFrameMultiplier = reader.Read<float>(ES3Type_float.Instance);
+                        instance.startFrameMultiplier = reader.Read<System.Single>(ES3Type_float.Instance);
                         break;
                     case "cycleCount":
-                        instance.cycleCount = reader.Read<int>(ES3Type_int.Instance);
+                        instance.cycleCount = reader.Read<System.Int32>(ES3Type_int.Instance);
                         break;
                     case "rowIndex":
-                        instance.rowIndex = reader.Read<int>(ES3Type_int.Instance);
+                        instance.rowIndex = reader.Read<System.Int32>(ES3Type_int.Instance);
                         break;
                     case "uvChannelMask":
-                        instance.uvChannelMask = reader.Read<UVChannelFlags>();
+                        instance.uvChannelMask = reader.Read<UnityEngine.Rendering.UVChannelFlags>();
                         break;
                     /*case "flipU":
                         instance.flipU = reader.Read<System.Single>(ES3Type_float.Instance);
@@ -107,6 +106,7 @@ namespace ES3Types
                         reader.Skip();
                         break;
                 }
+            }
         }
     }
 }

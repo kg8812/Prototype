@@ -29,7 +29,7 @@ namespace Managers
                 // preUIController = GameManager.UiController;
 
                 _uiSystemCheck?.SetText(msg);
-                _systemCheckGuid = GameManager.instance.TryOnGameState(GameStateType.DefaultState);
+                _systemCheckGuid = GameManager.instance.TryOnGameState<DefaultState>();
                 // GameManager.UiController = _uiSystemCheck;
             }
         }
@@ -42,7 +42,7 @@ namespace Managers
                 workByAlert = todo;
                 // preUIController = GameManager.UiController;
                 _uiSystemAlert.SetText(msg);
-                _systemAlertGuid = GameManager.instance.TryOnGameState(GameStateType.DefaultState);
+                _systemAlertGuid = GameManager.instance.TryOnGameState<DefaultState>();
                 // GameManager.UiController = _uiSystemCheck;
             }
         }
@@ -50,7 +50,7 @@ namespace Managers
 
         public static void SystemCheckComplete(bool isYes)
         {
-            GameManager.instance.TryOffGameState(GameStateType.DefaultState, _systemCheckGuid);
+            GameManager.instance.TryOffGameState<DefaultState>(_systemCheckGuid);
             // GameManager.UiController = preUIController;
             GameManager.UI.CloseUI(_uiSystemCheck);
             workByCheck?.Invoke(isYes);
@@ -58,7 +58,7 @@ namespace Managers
 
         public static void SystemAlertComplete()
         {
-            GameManager.instance.TryOffGameState(GameStateType.DefaultState, _systemAlertGuid);
+            GameManager.instance.TryOffGameState<DefaultState>(_systemAlertGuid);
             // GameManager.UiController = preUIController;
             GameManager.UI.CloseUI(_uiSystemAlert);
             workByAlert?.Invoke();

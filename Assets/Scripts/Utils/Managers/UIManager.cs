@@ -209,7 +209,7 @@ namespace Apis
         {
             GameManager.UiController = controller;
             if (_uiControllerList.Count == 0)
-                _uiGuid = GameManager.instance.TryOnGameState(GameStateType.InteractionState);
+                _uiGuid = GameManager.instance.TryOnGameState<InteractionState>();
 
             _uiControllerList.Add(controller);
         }
@@ -304,7 +304,7 @@ namespace Apis
                     if (_uiControllerList.Count == 0)
                     {
                         GameManager.UiController = null;
-                        GameManager.instance.TryOffGameState(GameStateType.InteractionState, _uiGuid);
+                        GameManager.instance.TryOffGameState<InteractionState>(_uiGuid);
                     }
                     else if (i == _uiControllerList.Count)
                     {

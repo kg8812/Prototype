@@ -4,7 +4,7 @@ using UnityEngine;
 namespace ES3Internal
 {
     [CustomEditor(typeof(ES3GameObject))]
-    public class ES3GameObjectEditor : Editor
+    public class ES3GameObjectEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
@@ -13,15 +13,11 @@ namespace ES3Internal
 
             var es3Go = (ES3GameObject)target;
 
-            EditorGUILayout.HelpBox(
-                "This Component allows you to choose which Components are saved when this GameObject is saved using code.",
-                MessageType.Info);
+            EditorGUILayout.HelpBox("This Component allows you to choose which Components are saved when this GameObject is saved using code.", MessageType.Info);
 
             if (es3Go.GetComponent<ES3AutoSave>() != null)
             {
-                EditorGUILayout.HelpBox(
-                    "This Component cannot be used on GameObjects which are already managed by Auto Save.",
-                    MessageType.Error);
+                EditorGUILayout.HelpBox("This Component cannot be used on GameObjects which are already managed by Auto Save.", MessageType.Error);
                 return;
             }
 
@@ -30,21 +26,26 @@ namespace ES3Internal
                 var markedToBeSaved = es3Go.components.Contains(component);
                 var newMarkedToBeSaved = EditorGUILayout.Toggle(component.GetType().Name, markedToBeSaved);
 
-                if (markedToBeSaved && !newMarkedToBeSaved)
+                if(markedToBeSaved && !newMarkedToBeSaved)
                 {
                     Undo.RecordObject(es3Go, "Marked Component to save");
                     es3Go.components.Remove(component);
+                    EditorUtility.SetDirty(es3Go);
                 }
 
                 if (!markedToBeSaved && newMarkedToBeSaved)
                 {
                     Undo.RecordObject(es3Go, "Unmarked Component to save");
                     es3Go.components.Add(component);
+                    EditorUtility.SetDirty(es3Go);
                 }
             }
 
             if (es3Go.components.RemoveAll(t => t == null) > 0)
+            {
                 Undo.RecordObject(es3Go, "Removed null Component from ES3GameObject");
+                EditorUtility.SetDirty(es3Go);
+            }
         }
     }
 }

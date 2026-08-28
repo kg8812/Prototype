@@ -53,13 +53,7 @@ public partial class GameManager
             }
 
 
-            player.AddEvent(EventType.OnKill, info =>
-            {
-                if (info?.target is null or { IsDead: true }) return;
-
-                Progress.Exp += info.target.Exp;
-            });
-            // CameraManager.instance.PlayerCam.Follow = playerTrans;
+            // 경험치 적립 같은 장르 규칙은 여기 두지 않는다. GameManager.Sample.cs가 playerRegistered로 붙인다.
             player.AddEvent(EventType.OnDeath, _ => OnPlayerDie.Invoke(player));
             ChangeControllingEntity(player);
         }

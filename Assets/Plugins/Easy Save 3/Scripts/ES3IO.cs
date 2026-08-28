@@ -1,5 +1,5 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
+using System;
 using UnityEngine;
 
 namespace ES3Internal
@@ -17,17 +17,12 @@ namespace ES3Internal
         internal const string backupFileSuffix = ".bac";
         internal const string temporaryFileSuffix = ".tmp";
 
-        public enum ES3FileMode
-        {
-            Read,
-            Write,
-            Append
-        }
+        public enum ES3FileMode { Read, Write, Append }
 
         public static DateTime GetTimestamp(string filePath)
         {
             if (!FileExists(filePath))
-                return new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+                return new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
             return File.GetLastWriteTime(filePath).ToUniversalTime();
         }
 
@@ -42,55 +37,33 @@ namespace ES3Internal
                 File.Delete(filePath);
         }
 
-        public static bool FileExists(string filePath)
-        {
-            return File.Exists(filePath);
-        }
+        public static bool FileExists(string filePath) { return File.Exists(filePath); }
+        public static void MoveFile(string sourcePath, string destPath) { File.Move(sourcePath, destPath); }
+        public static void CopyFile(string sourcePath, string destPath) { File.Copy(sourcePath, destPath); }
 
-        public static void MoveFile(string sourcePath, string destPath)
-        {
-            File.Move(sourcePath, destPath);
-        }
-
-        public static void CopyFile(string sourcePath, string destPath)
-        {
-            File.Copy(sourcePath, destPath);
-        }
-
-        public static void MoveDirectory(string sourcePath, string destPath)
-        {
-            Directory.Move(sourcePath, destPath);
-        }
-
-        public static void CreateDirectory(string directoryPath)
-        {
-            Directory.CreateDirectory(directoryPath);
-        }
-
-        public static bool DirectoryExists(string directoryPath)
-        {
-            return Directory.Exists(directoryPath);
-        }
+        public static void MoveDirectory(string sourcePath, string destPath) { Directory.Move(sourcePath, destPath); }
+        public static void CreateDirectory(string directoryPath) { Directory.CreateDirectory(directoryPath); }
+        public static bool DirectoryExists(string directoryPath) { return Directory.Exists(directoryPath); }
 
         /*
-         * 	Given a path, it returns the directory that path points to.
-         * 	eg. "C:/myFolder/thisFolder/myFile.txt" will return "C:/myFolder/thisFolder".
-         */
+		 * 	Given a path, it returns the directory that path points to.
+		 * 	eg. "C:/myFolder/thisFolder/myFile.txt" will return "C:/myFolder/thisFolder".
+		 */
         public static string GetDirectoryPath(string path, char seperator = '/')
         {
             //return Path.GetDirectoryName(path);
             // Path.GetDirectoryName turns forward slashes to backslashes in some cases on Windows, which is why
             // Substring is used instead.
-            var slashChar = UsesForwardSlash(path) ? '/' : '\\';
+            char slashChar = UsesForwardSlash(path) ? '/' : '\\';
 
-            var slash = path.LastIndexOf(slashChar);
+            int slash = path.LastIndexOf(slashChar);
 
             // If this path ends in a slash it is assumed to already be a path to a Directory.
             if (slash == path.Length - 1)
                 return path;
 
             // Ignore trailing slash if necessary.
-            if (slash == path.Length - 1)
+            if (slash == (path.Length - 1))
                 slash = path.Substring(0, slash).LastIndexOf(slashChar);
             if (slash == -1)
                 ES3Debug.LogError("Path provided is not a directory path as it contains no slashes.");
@@ -115,7 +88,7 @@ namespace ES3Internal
         public static string[] GetDirectories(string path, bool getFullPaths = true)
         {
             var paths = Directory.GetDirectories(path);
-            for (var i = 0; i < paths.Length; i++)
+            for (int i = 0; i < paths.Length; i++)
             {
                 if (!getFullPaths)
                     paths[i] = Path.GetFileName(paths[i]);
@@ -123,7 +96,6 @@ namespace ES3Internal
                 // forward slashes.
                 paths[i].Replace("\\", "/");
             }
-
             return paths;
         }
 
@@ -142,8 +114,10 @@ namespace ES3Internal
 
             var paths = Directory.GetFiles(directoryPath);
             if (!getFullPaths)
-                for (var i = 0; i < paths.Length; i++)
+            {
+                for (int i = 0; i < paths.Length; i++)
                     paths[i] = Path.GetFileName(paths[i]);
+            }
             return paths;
         }
 
@@ -185,14 +159,7 @@ namespace ES3Internal
                     catch (Exception e)
                     {
                         // If any exceptions occur, restore the original save file.
-                        try
-                        {
-                            DeleteFile(settings.FullPath);
-                        }
-                        catch
-                        {
-                        }
-
+                        try { DeleteFile(settings.FullPath); } catch { }
                         MoveFile(oldFileBackup, settings.FullPath);
                         throw e;
                     }
@@ -201,15 +168,15 @@ namespace ES3Internal
                 }
                 // Else just rename the temporary file to the main file.
                 else
-                {
                     MoveFile(temporaryFilePath, settings.FullPath);
-                }
             }
             else if (settings.location == ES3.Location.PlayerPrefs)
             {
                 PlayerPrefs.SetString(settings.FullPath, PlayerPrefs.GetString(temporaryFilePath));
                 PlayerPrefs.DeleteKey(temporaryFilePath);
+#if !DONT_SAVE_PLAYERPREFS // Added to give option of deferring PlayerPrefs.Save() to a later time as this can be expensive if there is a lot of data.
                 PlayerPrefs.Save();
+#endif
             }
         }
     }

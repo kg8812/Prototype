@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 2d64f78a7beaa4246a9b304730f648e8
   m_currentHash:
     serializedVersion: 2
-    Hash: 00000000000000000000000000000000
+    Hash: 2f4853fcc3d9ba50b6d18ca0767cb7a3
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 0
   m_CatalogRequestsTimeout: 0
@@ -103,6 +103,7 @@ MonoBehaviour:
     - default
     - SFX
     - BGM
+    - Triangles
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: 5b599ee0c60b7cc4fba707668527a1e2, type: 2}
