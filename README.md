@@ -40,9 +40,9 @@
 ## 목차
 
 - [이 프로젝트에서 봐주었으면 하는 것](#이-프로젝트에서-봐주었으면-하는-것)
-  - [1. 애셋 수명 관리 — 개별 추적 대신 스코프 단위 해제](#1-애셋-수명-관리--개별-추적-대신-스코프-단위-해제)
-  - [2. 게임 상태 — 플래그 대신 티켓](#2-게임-상태--플래그-대신-티켓)
-  - [3. Actor — 기능을 상속이 아니라 이벤트로 붙인다](#3-actor--기능을-상속이-아니라-이벤트로-붙인다)
+  - [1. 리소스 레이어 — 애셋 로딩 · 수명 · 프리로드](#1-리소스-레이어--애셋-로딩--수명--프리로드)
+  - [2. 게임 상태 시스템 — 지금 무엇을 조작할 수 있는가](#2-게임-상태-시스템--지금-무엇을-조작할-수-있는가)
+  - [3. Actor — 모든 유닛의 기본 클래스](#3-actor--모든-유닛의-기본-클래스)
 - [시스템별 상세](#시스템별-상세)
   - [Actor / 전투](#sys-actor)
   - [버프 시스템](#sys-buff)
@@ -65,9 +65,41 @@
 
 <br/>
 
-## 1. 애셋 수명 관리 — 개별 추적 대신 스코프 단위 해제
+## 1. 리소스 레이어 — 애셋 로딩 · 수명 · 프리로드
 
 > `Assets/Scripts/Utils/Resource/`
+
+### 어떤 기능인가
+
+**Addressables로 애셋을 올리고 내리는 일 전부를 담당하는 레이어입니다.** 게임 코드가 `Addressables` API를 직접 부르는 곳은 한 군데도 없고, 전부 이 레이어를 거칩니다.
+
+호출부가 보는 건 `ResourceUtil` 하나입니다.
+
+```csharp
+// 로드 — 어느 스코프에 올릴지만 지정한다
+var icon   = ResourceUtil.Load<Sprite>("BuffIcon_Poison");
+var prefab = ResourceUtil.Load<GameObject>("Slime", AssetLifetime.Scene);
+
+// 인스턴스 생성
+var go = ResourceUtil.Instantiate("HitEffect");
+
+// 씬 진입 전 프리로드 (로딩 화면에서 호출)
+await ResourceUtil.PreloadSceneAsync("Stage1", progress);
+
+// 씬 이탈 시 정리 — 이 한 줄이 해제의 전부
+ResourceUtil.ReleaseSceneAssets();
+```
+
+| 구성 | 역할 |
+|---|---|
+| `ResourceUtil` | 유일한 진입점. 로드 / 생성 / 프리로드 / 정리 |
+| `AssetScope` | 수명이 같은 애셋 묶음. Addressables 핸들의 **소유자** |
+| `AssetRegistry` | 스코프 보관소 (`Global` / `Scene`) |
+| `PreloadManifest` | 미리 올릴 애셋 목록 (ScriptableObject) |
+| `SceneManifestTable` | 씬 이름 → 매니페스트 매핑 |
+| `AddressablePooling` | 주소 단위 오브젝트 풀 |
+
+이 구조가 나온 이유는 아래와 같습니다.
 
 ### 문제
 
@@ -152,9 +184,42 @@ SFX는 짧고 전역에서 쓰이므로 라벨 단위로 다 올리지만, BGM�
 
 <br/>
 
-## 2. 게임 상태 — 플래그 대신 티켓
+## 2. 게임 상태 시스템 — 지금 무엇을 조작할 수 있는가
 
 > `Assets/Scripts/Utils/Managers/GameManager.State.cs`
+
+### 어떤 기능인가
+
+**"지금 플레이어가 움직일 수 있는가, UI만 조작되는가, 아무것도 안 되는가"를 한 곳에서 관리하는 시스템입니다.**
+
+게임에는 조작 범위가 달라지는 순간이 계속 생깁니다 — 팝업이 떠 있을 때, 컷신 중일 때, 페이드 중일 때, 상호작용 UI가 열렸을 때. 이걸 각 UI와 각 오브젝트가 알아서 처리하면 금방 엉키기 때문에, `GameManager`가 **상태(GameState)** 라는 단위로 모아서 관리합니다.
+
+상태 하나는 입력 처리 방식을 정의하는 클래스입니다.
+
+```csharp
+public abstract class GameState
+{
+    public abstract int Priority { get; }   // 낮을수록 우선
+
+    public abstract void OnEnterState();
+    public abstract void OnExitState();
+
+    public virtual void KeyBoardControlling() { ... }  // 이 상태에서의 키보드 입력
+    public virtual void GamePadControlling()  { ... }  // 이 상태에서의 패드 입력
+}
+```
+
+기본 제공 상태는 셋입니다.
+
+| 상태 | 조작 범위 | 언제 |
+|---|---|---|
+| `DefaultState` | UI만 | 페이드 중, 시스템 알림, 플레이어 없는 씬 |
+| `InteractionState` | UI + 기본 조작 | 상호작용 UI가 떠 있을 때 |
+| `PlayState` | 전체 | 일반 플레이 (기본값) |
+
+게임별 상태는 `RegisterState<T>()`로 추가합니다. 매 프레임 `GameManager`가 활성 상태 하나의 `~Controlling()`만 호출하므로, **입력 분기가 상태 클래스 안에만 존재**합니다.
+
+문제는 "어느 상태를 활성으로 볼 것인가"였습니다.
 
 ### 문제
 
@@ -235,9 +300,39 @@ partial void OnSampleAwake()
 
 <br/>
 
-## 3. Actor — 기능을 상속이 아니라 이벤트로 붙인다
+## 3. Actor — 모든 유닛의 기본 클래스
 
 > `Assets/Scripts/Actor/`
+
+### 어떤 기능인가
+
+**플레이어 · 몬스터 · 보스 · 소환수가 전부 상속하는 유닛 베이스 클래스입니다.** 체력, 스탯, 방향, 이동, 피격, 사망처럼 "유닛이라면 다 갖는 것"을 담고 있습니다.
+
+```
+Actor  (추상)
+├─ Player      상태 머신 · 입력 커맨드 · 스킬
+├─ Monster     인식 · 패턴 · AI
+│  ├─ CommonMonster   경량 상태 머신
+│  └─ BossMonster     Behaviour Tree · 페이즈
+└─ Summon      소환수
+```
+
+여기에 버프·스킬·아이템·AI가 전부 붙어서 동작합니다. 즉 **이 클래스가 다른 모든 시스템이 만나는 지점**이고, 그래서 설계가 가장 조심스러웠던 부분입니다.
+
+Actor가 직접 갖는 것은 다음과 같습니다.
+
+| 파일 / 클래스 | 책임 |
+|---|---|
+| `Actor.cs` | 컨테이너, 생명주기, 방향, 체력·사망 |
+| `Actor.Event.cs` | 이벤트 등록/실행 (`ActorEvents`에 위임) |
+| `Actor.Stat.cs` | 스탯, 배리어 (`BarrierCalculator`) |
+| `Actor.Buff.cs` | 버프 보유 |
+| `Actor.Immunity.cs` | 무적/면역 (`ImmunityController`) |
+| `Actor.View.cs` | 렌더러 추상화 (`IActorRenderer` — 일반 스프라이트 / Spine 교체) |
+| `ActorCombat` | 공격·피격 흐름 |
+| `EffectSpawner` | 이펙트 생성 |
+
+핵심은 **여기에 기능을 어떻게 더하느냐**입니다.
 
 ### 문제
 
@@ -288,18 +383,7 @@ _actor.ExecuteEvent(EventType.OnAttackSuccess, eventParameters);
 
 ### 책임 분리
 
-`Actor`는 `partial class`로 관심사별 파일로 나뉘어 있고, 실제 로직은 별도 클래스가 들고 있습니다.
-
-| 파일 / 클래스 | 책임 |
-|---|---|
-| `Actor.cs` | 컨테이너, 생명주기, 방향 |
-| `Actor.Event.cs` | 이벤트 등록/실행 (`ActorEvents`에 위임) |
-| `Actor.Stat.cs` | 스탯, 배리어 (`BarrierCalculator`) |
-| `Actor.Buff.cs` | 버프 보유 |
-| `Actor.Immunity.cs` | 무적/면역 (`ImmunityController`) |
-| `Actor.View.cs` | 렌더러 추상화 (`IActorRenderer` — 일반 스프라이트 / Spine 교체 가능) |
-| `ActorCombat` | 공격·피격 흐름 |
-| `EffectSpawner` | 이펙트 생성 |
+`Actor`는 `partial class`로 관심사별 파일로 쪼개고, 실제 로직은 위 표처럼 별도 클래스가 들고 있습니다. 컨테이너가 커지지 않게 하려는 것으로, 새 관심사가 생기면 `Actor.cs`를 고치는 대신 파일과 위임 대상을 하나 늘립니다.
 
 <br/>
 
@@ -315,7 +399,7 @@ _actor.ExecuteEvent(EventType.OnAttackSuccess, eventParameters);
 
 <br/>
 
-위 [3번 항목](#3-actor--기능을-상속이-아니라-이벤트로-붙인다)에서 다룬 내용의 나머지입니다.
+위 [3번 항목](#3-actor--모든-유닛의-기본-클래스)에서 다룬 내용의 나머지입니다.
 
 ### 렌더러 추상화
 
@@ -351,6 +435,23 @@ _actor.ExecuteEvent(EventType.OnAttackSuccess, eventParameters);
 <summary><b>▶ 버프 시스템</b> — Buff / SubBuff 계층, 해제 전략, 계산 분리</summary>
 
 <br/>
+
+### 어떤 기능인가
+
+**유닛에 붙는 모든 지속 효과를 다루는 시스템입니다.** 스탯 증감, 상태이상(독·화상), 군중제어(기절·속박), 배리어, 지속 피해가 전부 여기를 통합니다.
+
+유닛마다 `BuffSystem` 컴포넌트가 붙고, 부여 경로는 둘입니다. 장비·스킬·아이템·몬스터 패턴 어디서 발생하든 형태는 같습니다.
+
+```csharp
+// ① 타입만 지정해 바로 부여
+target.BuffSystem.AddSubBuff(caster, SubBuffType.어떤_상태이상);
+
+// ② 데이터로 만든 상위 효과(Buff)가 SubBuff를 생성해 부여
+var buff = new Buff(buffData, caster);
+target.BuffSystem.AddSubBuff(caster, buff, subBuff);
+```
+
+부여·갱신·해제·스택·면역·UI 갱신을 시스템이 맡기 때문에, 새 효과를 만들 때는 **효과 내용만** 작성하면 됩니다.
 
 ### 왜 두 계층인가
 
@@ -419,6 +520,18 @@ user.BarrierCalculator.BarrierMinusEvent -= MinusBarrier;
 <summary><b>▶ 스킬 / 스킬트리</b> — 사용 방식 5종, 데코레이터 스탯 합성, Visitor 스킬트리</summary>
 
 <br/>
+
+### 어떤 기능인가
+
+**플레이어와 몬스터가 사용하는 스킬, 그리고 스킬을 성장시키는 스킬트리까지를 다룹니다.**
+
+| 구분 | 설명 |
+|---|---|
+| `ActiveSkill` | 직접 발동. 쿨다운·자원 소모·사용 방식을 가짐 |
+| `PassiveSkill` | 상시 적용. 장착 시 효과가 걸리고 해제 시 되돌아감 |
+| `SkillTree` | 레벨을 올려 스킬 성능·효과를 확장 |
+
+스킬 하나는 **스탯(`SkillStat`) + 발동 로직 + 사용 방식(`ISkillActive`)** 의 조합으로 구성되며, 세 가지를 각각 따로 바꿀 수 있습니다.
 
 ### 사용 방식을 전략으로 분리
 
@@ -732,7 +845,7 @@ BGM을 코드가 아니라 **맵 배치로** 제어합니다.
 
 ### 메모리
 
-SFX는 라벨 단위로 전역 프리로드하고, BGM은 클립 하나가 수 MB이므로 씬 매니페스트에 등록해 Scene 스코프로 관리합니다. ([1번 항목](#1-애셋-수명-관리--개별-추적-대신-스코프-단위-해제) 참고)
+SFX는 라벨 단위로 전역 프리로드하고, BGM은 클립 하나가 수 MB이므로 씬 매니페스트에 등록해 Scene 스코프로 관리합니다. ([1번 항목](#1-리소스-레이어--애셋-로딩--수명--프리로드) 참고)
 
 </details>
 
