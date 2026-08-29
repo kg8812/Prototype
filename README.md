@@ -24,7 +24,9 @@
 
 <!--
 ────────────────────────────────────────────────────────────────
-[촬영 후 아래 주석을 풀고 이미지 URL을 채워주세요]
+촬영 #1 · 대표 이미지 4컷
+아래 #2 / #4 / #6 / #9 GIF에서 대표 프레임을 뽑아 쓰면 따로 찍을 필요가 없습니다.
+URL을 채운 뒤 이 주석 기호를 지우세요.
 
 |  |  |
 |:---:|:---:|
@@ -176,7 +178,12 @@ tree.Init(actor, Repeat);
 **⑤ 실행 중인 노드를 추적합니다.**
 `BlackBoard`가 노드 간 공유 상태와 현재 실행 노드를 들고 있어서, 에디터에서 플레이 중 어느 노드가 도는지 볼 수 있습니다. AI가 의도대로 안 움직일 때 디버깅 시간이 가장 많이 줄어든 부분입니다.
 
-<!-- [촬영] 에디터에서 노드를 연결하고, 플레이 중 실행 노드가 하이라이트되는 GIF -->
+<!-- ▼ 촬영 #2 · Behaviour Tree 에디터 조작 (GIF, 8~12초)
+     담을 것: 노드를 드래그해 배치 → 포트 연결 → 플레이 진입 → 실행 중인 노드가 하이라이트되는 흐름
+     URL을 채운 뒤 이 주석 기호를 지우세요.
+
+![Behaviour Tree 에디터 조작](URL)
+-->
 
 <br/>
 
@@ -208,6 +215,14 @@ UI는 역할별로 타입이 나뉘고, `UIManager`가 타입마다 다른 생�
 | `UI_Hover` | 마우스 추종 (드래그 아이템 등) | 최상위 order |
 
 UI 프리팹은 `AddressablePooling`으로 풀링되고, 루트(`@UI_Root`)는 `DontDestroyOnLoad`로 유지됩니다.
+
+<!-- ▼ 촬영 #3 · UI 계층 (스크린샷 1장)
+     담을 것: HUD(UI_Main) + 팝업 2개가 겹친 상태(UI_Popup 스택) + 몬스터 머리 위 HP바(UI_Ingame)가
+     한 화면에 동시에 보이는 장면. 타입별로 order가 나뉘는 것이 눈으로 보이면 됩니다.
+     URL을 채운 뒤 이 주석 기호를 지우세요.
+
+![UI 계층](URL)
+-->
 
 ### 문제
 
@@ -296,7 +311,13 @@ if (Gamepad.current != null && Gamepad.current.allControls.Any(x => x.IsPressed(
 **③ 상태 변화를 잠글 수 있게 했습니다.**
 연출 중이거나 확인 대기 중일 때 상태가 바뀌면 안 되므로, `isFrozen`으로 모든 상태 변화를 막습니다.
 
-<!-- [촬영] 패드로 인벤토리 그리드를 탐색하고, 장비창↔인벤토리로 포커스가 넘어가는 GIF -->
+<!-- ▼ 촬영 #4 · UI 포커스 네비게이션 (GIF, 8~12초)
+     담을 것: 패드로 인벤토리 그리드 이동 → 끝 칸에서 순환 → 장비창으로 포커스가 넘어가는 순간
+     중간에 키보드를 한 번 눌러 키 안내 아이콘이 즉시 바뀌는 것까지 담으면 좋습니다.
+     URL을 채운 뒤 이 주석 기호를 지우세요.
+
+![UI 포커스 네비게이션](URL)
+-->
 
 <br/>
 
@@ -319,28 +340,89 @@ Actor  (추상)
 
 여기에 버프·스킬·아이템·AI가 전부 붙어서 동작합니다. 즉 **이 클래스가 다른 모든 시스템이 만나는 지점**이고, 그래서 설계가 가장 조심스러웠던 부분입니다.
 
-Actor가 직접 갖는 것은 다음과 같습니다.
+### Actor는 기능을 갖지 않고, 능력 인터페이스를 조합한다
 
-| 파일 / 클래스 | 책임 |
-|---|---|
-| `Actor.cs` | 컨테이너, 생명주기, 방향, 체력·사망 |
-| `Actor.Event.cs` | 이벤트 등록/실행 (`ActorEvents`에 위임) |
-| `Actor.Stat.cs` | 스탯, 배리어 (`BarrierCalculator`) |
-| `Actor.Buff.cs` | 버프 보유 (`BuffSystem`) |
-| `Actor.Immunity.cs` | 무적/면역 (`ImmunityController`) |
-| `Actor.View.cs` | 렌더러 추상화 (`IActorRenderer` — 일반 스프라이트 / Spine 교체) |
-| `ActorCombat` | 공격·피격 흐름 |
-| `EffectSpawner` | 이펙트 생성 |
+`Actor`가 "체력도 있고 스탯도 있고 이동도 하는 만능 클래스"인 것이 아닙니다. **능력 하나하나를 인터페이스로 쪼개 두고, Actor는 그중 유닛에 공통인 것만 골라 구현**합니다.
+
+```csharp
+public abstract partial class Actor : MonoBehaviour,
+    IOnHit, IOnHitReaction, IAttackable, IDirection, IAnimator   // Actor.cs
+public partial class Actor : IEventUser                          // Actor.Event.cs
+public partial class Actor : IStatUser, IBarrierUser             // Actor.Stat.cs
+public partial class Actor : IImmunity                           // Actor.Immunity.cs
+```
+
+| 인터페이스 | "이 대상은 …" | 구현 파일 |
+|---|---|---|
+| `IOnHit` | 맞을 수 있다 (체력 · 무적 · 사망) | `Actor.cs` |
+| `IOnHitReaction` | 맞았을 때 반응한다 (넉백) | `Actor.cs` |
+| `IAttackable` | 공격할 수 있다 | `Actor.cs` |
+| `IDirection` | 바라보는 방향이 있다 | `Actor.cs` |
+| `IAnimator` | 애니메이션을 가진다 | `Actor.cs` |
+| `IEventUser` | 이벤트를 주고받는다 | `Actor.Event.cs` |
+| `IStatUser` | 스탯을 가진다 | `Actor.Stat.cs` |
+| `IBarrierUser` | 배리어를 가진다 | `Actor.Stat.cs` |
+| `IImmunity` | 면역을 가진다 | `Actor.Immunity.cs` |
+
+**`partial` 파일을 나눈 기준이 곧 인터페이스입니다.** 파일 하나가 인터페이스 하나(또는 한 묶음)의 구현을 담당하므로, 어떤 능력이 어디 있는지 찾을 때 선언부만 보면 됩니다. 인터페이스가 없는 `Actor.Buff.cs` · `Actor.View.cs`는 각각 `BuffSystem` 컴포넌트와 렌더러로 가는 통로 역할만 합니다.
+
+파생 클래스는 여기에 자기 능력만 더 붙입니다.
+
+```csharp
+public partial class Player  : IDashUser, IMovable, IPlayer
+public partial class Monster : Actor, IRecognition, IMovable, IPoolObject
+```
+
+이동(`IMovable`)이 `Actor`가 아니라 `Player` · `Monster`에 있는 이유는, **움직이지 않는 유닛도 있기 때문**입니다. 실제로 `Summon`은 `Actor`만 상속하고 `IMovable`을 붙이지 않습니다 — 맞고 죽을 수는 있어도 스스로 이동하지는 않기 때문입니다. 이동을 `Actor`에 넣었다면 `Summon`이 쓰지 않는 코드를 떠안았을 겁니다.
 
 핵심은 **여기에 기능을 어떻게 더하느냐**입니다.
 
 ### 문제
 
-유닛에 기능을 추가할 때 상속으로 처리하면, "독 데미지를 주는 몬스터"와 "폭발하는 몬스터"와 "독 데미지를 주면서 폭발하는 몬스터"가 각각 클래스가 되면서 조합 폭발이 일어납니다.
+두 가지가 걸렸습니다.
 
-### 접근
+- **상속으로 기능을 더하면 조합이 폭발합니다.** "독 데미지를 주는 몬스터"와 "폭발하는 몬스터"와 "독 데미지를 주면서 폭발하는 몬스터"가 각각 클래스가 됩니다.
+- **다른 시스템이 `Actor`를 직접 알면 유닛이 아닌 대상을 다룰 수 없습니다.** 부술 수 있는 상자나 벽은 유닛이 아닌데도 맞고 부서져야 합니다. 공격 시스템이 `Actor`를 받도록 짜면 이런 대상을 위해 코드를 또 쓰거나, 상자를 억지로 `Actor`로 만들어야 합니다.
 
-`Actor`를 **기능 구현체가 아니라 조합 컨테이너**로 두고, 기능은 이벤트 구독으로 붙입니다.
+### 접근 ① — 시스템은 `Actor`가 아니라 능력에 의존한다
+
+공격 시스템은 대상이 무엇인지 모릅니다. **`IOnHit`, 즉 "맞을 수 있는 것"만 압니다.**
+
+```csharp
+public interface IAttackStrategy
+{
+    float Calculate(IOnHit target);   // Actor가 아니라 IOnHit
+}
+```
+
+덕분에 `Actor`를 전혀 상속하지 않는 오브젝트도 같은 전투 파이프라인에 그대로 들어옵니다.
+
+```csharp
+public class DestroyableObject : MonoBehaviour, IOnHit   // 유닛이 아닌 파괴 가능 오브젝트
+```
+
+상자를 때리는 코드와 몬스터를 때리는 코드가 같습니다. 새로운 "맞을 수 있는 것"을 추가할 때 전투 코드는 건드리지 않습니다.
+
+인터페이스 쪽에는 **기본 구현(default interface implementation)** 을 넣어서, 구현체가 컴포넌트만 물려주면 공통 동작을 그대로 얻도록 했습니다.
+
+```csharp
+public interface IMovable : IMonoBehaviour
+{
+    public UnitMoveComponent MoveComponent { get; }   // 이것만 구현하면
+
+    public void MoveOn()  => MoveComponent?.MoveOn();  // 아래는 전부 따라온다
+    public void JumpOn()  => MoveComponent?.JumpOn();
+    public void Stop()    => MoveComponent?.Stop();
+    public void KnockBack(Vector2 src, KnockBackData data, UnityAction onBegin, UnityAction onEnd)
+        => MoveComponent?.KnockBack(src, data, onBegin, onEnd);
+}
+```
+
+이동 로직은 `UnitMoveComponent` 한 곳에만 있고, `IMovable`을 붙인 쪽은 중복 구현 없이 그것을 씁니다.
+
+### 접근 ② — 기능은 이벤트로 붙인다
+
+`Actor`를 **기능 구현체가 아니라 조합 컨테이너**로 두고, 개별 기능은 이벤트 구독으로 붙입니다.
 
 ```csharp
 actor.AddEvent(EventType.OnHit, OnHitHandler);
@@ -381,9 +463,25 @@ _actor.ExecuteEvent(EventType.OnAttackSuccess, eventParameters);
 
 임시 스탯 보정은 `BonusStatEvent`에 델리게이트를 붙였다가 `finally`에서 반드시 떼어내는 방식으로, 예외가 나도 보정이 남지 않게 했습니다.
 
-### 책임 분리
+<!-- ▼ 촬영 #5 · 전투 이벤트 흐름 (GIF, 5~8초)
+     담을 것: 일반 타격 → 크리티컬 → 백어택 순으로 때려서 데미지 텍스트가 각각 다르게 뜨는 장면.
+     피격 측 반응(넉백/무적 깜빡임)까지 보이면 좋습니다.
+     URL을 채운 뒤 이 주석 기호를 지우세요.
 
-`Actor`는 `partial class`로 관심사별 파일로 쪼개고, 실제 로직은 위 표처럼 별도 클래스가 들고 있습니다. 컨테이너가 커지지 않게 하려는 것으로, 새 관심사가 생기면 `Actor.cs`를 고치는 대신 파일과 위임 대상을 하나 늘립니다.
+![전투 이벤트 흐름](URL)
+-->
+
+### 정리 — 세 겹으로 나눠져 있다
+
+| 겹 | 무엇 | 예 |
+|---|---|---|
+| **능력** | 인터페이스. "무엇을 할 수 있는가"의 계약 | `IOnHit`, `IMovable`, `IStatUser` |
+| **구현** | `partial` 파일 하나가 인터페이스 하나를 구현 | `Actor.Stat.cs` → `IStatUser`, `IBarrierUser` |
+| **실제 로직** | 구현 파일은 대부분 위임만 하고, 로직은 별도 클래스에 | `StatManager`, `BarrierCalculator`, `ImmunityController`, `ActorEvents`, `ActorCombat`, `EffectSpawner` |
+
+`Actor.cs` 자체는 컨테이너·생명주기·방향·체력만 들고 있고, 나머지는 전부 인터페이스 선언과 위임입니다. 새 능력이 생기면 **인터페이스를 하나 만들고 → `partial` 파일을 하나 늘리고 → 로직 클래스를 하나 붙이면** 되며, 기존 `Actor.cs`는 그대로 둡니다.
+
+렌더링도 같은 방식입니다. `IActorRenderer`로 추상화해서 일반 스프라이트(`ActorNormalRenderer`)와 Spine을 교체할 수 있고, `Actor`는 어느 쪽인지 모릅니다.
 
 ### Player
 
@@ -496,7 +594,20 @@ public virtual void Activate(PlayerPassiveSkill passive, int level) { ... }
 
 스킬 쪽은 `Accept(visitor, level)`만 호출하므로, **트리 노드가 늘어도 스킬 클래스는 그대로**입니다. 이름·설명은 `LanguageManager`의 문자열 테이블에서 가져와 다국어를 지원합니다.
 
-<!-- [촬영] 즉발/차지/캐스팅/토글/지속이 각각 다르게 발동되는 GIF -->
+<!-- ▼ 촬영 #6 · 스킬 사용 방식 5종 (GIF, 10~15초)
+     담을 것: 즉발 → 차지(게이지 차오름) → 캐스팅(캐스팅 바) → 토글(켜고 끄기) → 지속 순으로 하나씩 발동.
+     차징 도중 한 번 취소해서 OnChargeCancel이 도는 장면까지 넣으면 설명이 확실해집니다.
+     URL을 채운 뒤 이 주석 기호를 지우세요.
+
+![스킬 사용 방식 5종](URL)
+-->
+
+<!-- ▼ 촬영 #7 · 스킬트리 UI (스크린샷 1장)
+     담을 것: 스킬트리 창에서 노드 몇 개를 찍어 레벨이 오른 상태. 설명 텍스트가 보이면 좋습니다.
+     URL을 채운 뒤 이 주석 기호를 지우세요.
+
+![스킬트리](URL)
+-->
 
 <br/>
 
@@ -611,7 +722,12 @@ private static void ResetStatics()
 **④ BGM은 라벨 통째로 올리지 않습니다.**
 SFX는 짧고 전역에서 쓰이므로 라벨 단위로 다 올리지만, BGM은 클립 하나가 수 MB라 전부 올리면 메모리를 크게 먹습니다. 씬에서 쓰는 BGM만 씬 매니페스트에 등록해서 Scene 스코프와 함께 해제되도록 했습니다.
 
-<!-- [촬영] 프로파일러 before/after 스크린샷 — 리팩토링 이전 커밋(44ade73)과 비교한 GC Alloc / 프레임 스파이크
+<!-- ▼ 촬영 #8 · 프로파일러 before / after (스크린샷 2장)  ★ 이 문서에서 가장 설득력 있는 자료
+     찍는 법: 리팩토링 직전 커밋(44ade73)을 체크아웃해 같은 구간을 플레이하며 Profiler를 캡처하고,
+     현재 버전으로 돌아와 동일 구간을 다시 캡처합니다. GC Alloc과 프레임 스파이크가 보이도록 잡으세요.
+     비교 구간은 "전투 이펙트가 처음 등장하는 순간"이 차이가 가장 큽니다.
+     URL을 채운 뒤 이 주석 기호를 지우세요.
+
 | 리팩토링 전 | 리팩토링 후 |
 |:---:|:---:|
 | ![before](URL) | ![after](URL) |
@@ -700,7 +816,21 @@ public enum ProjectileConflictType
 
 파생 타입으로 `Boomerang`, `CircleAroundProjectile`, `Grab` 등이 있습니다.
 
-<!-- [촬영] 유도 · 관통 · 반사 · 방사가 각각 동작하는 GIF -->
+<!-- ▼ 촬영 #9 · 투사체 확장 조합 (GIF, 8~12초)
+     담을 것: 유도 → 벽 반사 → 적 관통(관통마다 크기 변화) → 파괴 시 방사체 생성 순으로.
+     같은 프리팹에서 설정만 바꿔 다르게 날아간다는 게 보이면 가장 좋습니다.
+     URL을 채운 뒤 이 주석 기호를 지우세요.
+
+![투사체 확장 조합](URL)
+-->
+
+<!-- ▼ 촬영 #10 · 판정 방식 차이 (GIF, 5~8초)
+     담을 것: Tick 장판 위에 서 있을 때 주기적으로 데미지가 들어가는 장면과,
+     Once 판정 공격이 같은 대상을 한 번만 때리는 장면 비교.
+     URL을 채운 뒤 이 주석 기호를 지우세요.
+
+![판정 방식](URL)
+-->
 
 </details>
 
@@ -784,6 +914,15 @@ public virtual void OnAdd()
 user.BarrierCalculator.BarrierAddEvent   += AddBarrier;
 user.BarrierCalculator.BarrierMinusEvent += MinusBarrier;
 ```
+
+<!-- ▼ 촬영 #11 · 버프 / 디버프 동작 (GIF, 8~12초)
+     담을 것: 적을 때려 독을 부여(Buff가 SubBuff를 생성) → 도트 데미지가 주기적으로 들어감 →
+     HUD 버프 아이콘에 스택과 남은 시간이 표시됨 → 해제되며 아이콘이 사라짐.
+     배리어가 데미지를 먼저 깎는 장면을 함께 넣으면 계산 분리를 보여줄 수 있습니다.
+     URL을 채운 뒤 이 주석 기호를 지우세요.
+
+![버프 디버프 동작](URL)
+-->
 
 </details>
 
@@ -878,6 +1017,15 @@ partial void OnSampleAwake()
 }
 ```
 
+<!-- ▼ 촬영 #12 · 상태에 따른 조작 제한 (GIF, 5~8초)
+     담을 것: 플레이 중 이동 → 팝업 열림(조작 막힘, UI만 반응) → 그 위에 알림 팝업 하나 더 → 
+     알림만 닫으면 여전히 조작이 막혀 있고, 팝업을 전부 닫아야 이동이 돌아오는 순서.
+     티켓이 하나라도 남으면 해제되지 않는다는 게 눈으로 보이는 장면입니다.
+     URL을 채운 뒤 이 주석 기호를 지우세요.
+
+![상태에 따른 조작 제한](URL)
+-->
+
 </details>
 
 <br/>
@@ -904,6 +1052,15 @@ BGM을 코드가 아니라 **맵 배치로** 제어합니다.
 |---|---|
 | `SceneMusicFadeArea` | 영역 진입 시 페이딩하며 BGM 전환 |
 | `SetSceneMusicVolumeArea` | 영역 기반 볼륨 조절 |
+
+<!-- ▼ 촬영 #13 · 영역 기반 BGM 전환 (소리 있는 영상, 10~15초)
+     담을 것: 씬 뷰에서 영역 콜라이더가 보이는 상태로 플레이어가 경계를 넘어갈 때
+     BGM이 크로스페이드되는 구간. 이건 소리가 있어야 전달되므로 GIF보다 mp4가 낫습니다.
+     GitHub는 이슈/코멘트에 mp4를 끌어다 놓으면 재생 가능한 링크를 만들어 줍니다.
+     URL을 채운 뒤 이 주석 기호를 지우세요.
+
+https://github.com/user-attachments/assets/URL
+-->
 
 ### AudioSourceUtil
 
@@ -979,6 +1136,21 @@ SceneLoad 요청
   → 페이드 인
 ```
 
+<!-- ▼ 촬영 #14 · 씬 로드 파이프라인 (GIF, 8~12초)
+     담을 것: 포털 진입 → 페이드 아웃 → 로딩 화면(진행률 바가 프리로드 진행에 따라 차오름) →
+     새 씬 페이드 인. 위 파이프라인 다이어그램과 나란히 놓이면 이해가 빨라집니다.
+     URL을 채운 뒤 이 주석 기호를 지우세요.
+
+![씬 로드 파이프라인](URL)
+-->
+
+<!-- ▼ 촬영 #15 · 세이브 슬롯 UI (스크린샷 1장)
+     담을 것: 슬롯 선택 화면에 저장된 슬롯과 빈 슬롯이 같이 보이는 장면.
+     URL을 채운 뒤 이 주석 기호를 지우세요.
+
+![세이브 슬롯](URL)
+-->
+
 `SceneData`가 씬의 성격(`SceneType`, `isPlayerMustExist`)을 들고 있어서, 플레이어가 없는 씬에서는 자동으로 메인 UI를 끄고 `DefaultState`로 전환됩니다. 타이틀 복귀도 이 정보로 판정합니다 — Init/Loading은 경유 씬이라 무시하고, `Other → Title` 전이일 때만 `WhenReturnedToTitle`을 발화해서 각 매니저가 상태를 리셋합니다.
 
 ### 데이터베이스
@@ -1020,6 +1192,14 @@ SceneLoad 요청
 | 드롭 | `DropItem`, `CollideItem`, `ItemPickUp` |
 
 상호작용은 `IOnInteract`를 구현하면 되고, 상호작용 UI가 뜨는 동안 `InteractionState`가 티켓으로 켜져 조작이 제한됩니다.
+
+<!-- ▼ 촬영 #16 · 레벨 오브젝트 (GIF, 8~12초)
+     담을 것: 움직이는 발판 → 스프링 점프 → 레버를 당겨 문이 열림 → 함정 작동 순으로 이어지는 짧은 구간.
+     한 스테이지를 쭉 달리면서 여러 오브젝트를 지나가게 찍으면 한 번에 담깁니다.
+     URL을 채운 뒤 이 주석 기호를 지우세요.
+
+![레벨 오브젝트](URL)
+-->
 
 </details>
 
@@ -1070,3 +1250,39 @@ Assets/
 
 <sub>이 저장소는 게임 완성품이 아니라 **구조를 검증하고 재사용하기 위한 템플릿**입니다.
 `Practice/`, `_Recovery/`, `GameManager.Sample.cs`, `GameState/Sample/`은 예시·실험용 코드로, 템플릿 사용 시 삭제 가능합니다.</sub>
+
+
+<!--
+════════════════════════════════════════════════════════════════
+촬영 체크리스트 (작성자용 메모 — 페이지에는 보이지 않습니다)
+
+  #    자리                    형식        내용                                     우선순위
+  ──────────────────────────────────────────────────────────────
+  1    최상단 히어로           이미지 4    #2/#4/#6/#9에서 대표 프레임 추출         높음
+  2    Behaviour Tree          GIF         노드 배치·연결 + 실행 노드 하이라이트     높음
+  3    UI 어떤기능인가         스크린샷    HUD + 팝업 스택 + 월드 HP바 동시 표시     보통
+  4    UI 마지막               GIF         패드 그리드 탐색 + 창 간 포커스 이동      높음
+  5    Actor 전투 흐름         GIF         일반 → 크리 → 백어택 데미지 차이          보통
+  6    스킬 마지막             GIF         즉발/차지/캐스팅/토글/지속 + 차징 취소    높음
+  7    스킬 마지막             스크린샷    스킬트리 창                               낮음
+  8    리소스 마지막           스크린샷 2  프로파일러 before / after (44ade73 비교)  ★최우선
+  9    AttackObject            GIF         유도 → 반사 → 관통 → 방사                 보통
+  10   AttackObject            GIF         Tick 장판 vs Once 판정 비교               낮음
+  11   버프 마지막             GIF         독 부여 → 도트뎀 → 아이콘 스택 → 해제     보통
+  12   게임 상태 마지막        GIF         팝업 2겹 → 하나만 닫아도 조작 막힘        보통
+  13   Sound 영역 BGM          영상(mp4)   영역 경계 통과 시 BGM 크로스페이드        보통
+  14   Save/Scene              GIF         페이드 → 로딩바 → 새 씬 진입              보통
+  15   Save/Scene              스크린샷    세이브 슬롯 선택 화면                     낮음
+  16   Stage 마지막            GIF         발판 → 스프링 → 레버·문 → 함정            낮음
+
+업로드 방법
+  GitHub 이슈 작성창(또는 PR 코멘트창)에 파일을 끌어다 놓으면
+  https://github.com/user-attachments/assets/... 링크가 생성됩니다.
+  그 링크를 각 자리의 URL에 넣고 주석 기호를 지우면 됩니다. 이슈는 저장하지 않아도 됩니다.
+
+권장 사양
+  GIF  : 가로 800px 내외, 15fps, 10MB 이하 (GitHub 렌더링 한계 고려)
+  영상 : mp4, 10MB 이하. 소리가 필요한 #13에만 사용
+  캡처 : ScreenToGif, ShareX 등
+════════════════════════════════════════════════════════════════
+-->
