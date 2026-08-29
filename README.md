@@ -17,6 +17,7 @@
 | **엔진** | Unity 6000.3 / URP (2D) |
 | **핵심 패키지** | Addressables, Input System, Cinemachine, 2D Feature Set |
 | **외부 라이브러리** | Odin Inspector, DOTween, Easy Save 3, Spine, Newtonsoft.Json |
+| **규모** | 스크립트 490개 / 약 39,500줄 (외부 라이브러리 제외) |
 | **에디터 툴** | Behaviour Tree 비주얼 에디터 (UI Toolkit / GraphView) |
 
 <br/>
@@ -38,17 +39,16 @@
 
 ## 목차
 
-- [이 프로젝트에서 봐주었으면 하는 것](#이-프로젝트에서-봐주었으면-하는-것)
-  - [1. 리소스 레이어 — 애셋 로딩 · 수명 · 프리로드](#1-리소스-레이어--애셋-로딩--수명--프리로드)
-  - [2. 게임 상태 시스템 — 지금 무엇을 조작할 수 있는가](#2-게임-상태-시스템--지금-무엇을-조작할-수-있는가)
+- [핵심 시스템](#핵심-시스템)
+  - [1. Behaviour Tree — AI를 노드로 조립하는 에디터](#1-behaviour-tree--ai를-노드로-조립하는-에디터)
+  - [2. UI — 패드로 다룰 수 있는 UI 프레임워크](#2-ui--패드로-다룰-수-있는-ui-프레임워크)
   - [3. Actor — 모든 유닛의 기본 클래스](#3-actor--모든-유닛의-기본-클래스)
-- [시스템별 상세](#시스템별-상세)
-  - [Actor / 전투](#sys-actor)
-  - [버프 시스템](#sys-buff)
-  - [스킬 / 스킬트리](#sys-skill)
-  - [Behaviour Tree (AI)](#sys-bt)
+  - [4. 스킬 — 사용 방식과 스탯을 따로 갈아끼우는 구조](#4-스킬--사용-방식과-스탯을-따로-갈아끼우는-구조)
+  - [5. 리소스 레이어 — 애셋 로딩 · 수명 · 프리로드](#5-리소스-레이어--애셋-로딩--수명--프리로드)
+- [그 외 시스템](#그-외-시스템)
   - [AttackObject / Projectile](#sys-attackobject)
-  - [UI](#sys-ui)
+  - [버프 시스템](#sys-buff)
+  - [게임 상태 관리](#sys-gamestate)
   - [Sound](#sys-sound)
   - [Save / Scene / Database](#sys-save)
   - [Stage / 레벨 오브젝트](#sys-stage)
@@ -58,13 +58,449 @@
 
 ---
 
-# 이 프로젝트에서 봐주었으면 하는 것
+# 핵심 시스템
 
-전체를 다 보실 필요는 없습니다. 아래 세 가지가 **설계 판단이 가장 많이 들어간 부분**입니다.
+전체를 다 보실 필요는 없습니다. 아래 다섯 개가 **설계 판단이 가장 많이 들어간 부분**입니다.
 
 <br/>
 
-## 1. 리소스 레이어 — 애셋 로딩 · 수명 · 프리로드
+## 1. Behaviour Tree — AI를 노드로 조립하는 에디터
+
+> `Assets/BehaviourTree/`
+
+### 어떤 기능인가
+
+**몬스터와 보스의 AI를 코드가 아니라 노드 그래프로 만드는 시스템입니다.** 런타임과 **비주얼 에디터를 직접 제작**했습니다.
+
+<img width="1919" height="1000" alt="Behaviour Tree 에디터" src="https://github.com/user-attachments/assets/673cba93-0ca7-491f-b5b7-8c17376fd8d8" />
+
+<br/><br/>
+
+사용법은 두 단계입니다.
+
+1. 에디터에서 노드를 놓고 연결해 트리 애셋(ScriptableObject)을 만든다
+2. 몬스터 프리팹에 `BehaviourTreeRunner`를 붙이고 그 트리를 지정한다
+
+```csharp
+public class BehaviourTreeRunner : MonoBehaviour
+{
+    public BehaviourTree tree;
+    public StartType startType;    // OnStart / ByScript
+    public UpdateType updateType;  // Normal / Fixed
+    public bool Repeat;
+}
+```
+
+노드는 세 종류뿐이고, AI 로직은 전부 이 조합으로 표현됩니다.
+
+| 종류 | 역할 | 구현 예 |
+|---|---|---|
+| `ActionNode` | 실제 행동 | `MoveNode`, `DashToPos`, `JumpNode`, `SetAnimation`, `TeleportToPos`, `BossAtk` |
+| `DecoratorNode` | 조건 · 흐름 제어 | `HpCheck`, `IfPlayerDistance`, `CoolDownCheck`, `RaycastCheck`, `RepeatNode`, `CheckPhase` |
+| `CompositeNode` | 자식 노드 조합 | `SequenceNode`, `SelectNode`, `ExcuteAll`, `ProbSelect`(확률 선택) |
+
+### 문제
+
+보스 패턴을 상태 머신으로 짜면 두 가지가 걸렸습니다.
+
+- **상태 전이 폭발** — 패턴이 늘어날 때마다 상태가 늘고, 전이 조건은 상태 수의 제곱으로 늘어납니다. "체력 50% 아래에서 거리가 멀면 돌진, 가까우면 광역"처럼 조건이 겹치기 시작하면 코드에서 흐름이 안 보입니다.
+- **기획 이터레이션이 프로그래머를 거침** — 패턴 순서나 확률을 바꾸는 사소한 조정에도 코드 수정·컴파일이 필요해서, 밸런싱 속도가 코드 수정 속도에 묶였습니다.
+
+### 접근
+
+**행동의 흐름을 트리 구조로 옮기고, 그 트리를 데이터(ScriptableObject)로 만들었습니다.** 조건은 데코레이터로, 순서·선택은 컴포지트로 표현되므로 흐름이 그래프 모양 그대로 읽힙니다.
+
+노드 하나는 세 개의 훅만 구현하면 됩니다.
+
+```csharp
+public abstract class TreeNode : ScriptableObject
+{
+    public enum State { Running, Failure, Success, Null }
+
+    public abstract void  OnStart();
+    public abstract void  OnStop();
+    public abstract State OnUpdate();   // Running을 반환하는 동안 계속 유지된다
+}
+```
+
+베이스가 `Update()`에서 시작/종료 시점을 관리하므로, 구현체는 "이번 프레임에 무엇을 할지"만 쓰면 됩니다.
+
+```csharp
+public virtual State Update()
+{
+    if (!isStarted) { OnStart(); isStarted = true; }
+
+    state = OnUpdate();
+    if (state is State.Failure or State.Success) { OnStop(); isStarted = false; }
+
+    return state;
+}
+```
+
+### 이 구조에서 신경 쓴 지점
+
+**① 새 노드는 상속만 하면 에디터 메뉴에 자동으로 뜹니다.**
+노드를 추가할 때 에디터 코드를 건드리지 않도록, `TypeCache`로 파생 타입을 훑어 컨텍스트 메뉴를 구성합니다.
+
+```csharp
+var types = TypeCache.GetTypesDerivedFrom<ActionNode>();
+// ...
+evt.menu.AppendAction($"Action/{type.Name}/{t.Name}", _ => CreateNode(t, nodePosition));
+```
+
+베이스가 `CommonActionNode` / `BossActionNode` / `PlayerActionNode`로 나뉘어 있어서 메뉴도 그 계층대로 묶여 나옵니다.
+
+**② 새 노드 스크립트를 에디터에서 바로 만듭니다.**
+그래프 우클릭 메뉴의 `Create New Script`를 누르면 템플릿을 기반으로 `.cs` 파일이 생성되고, `Create New Type`은 새 카테고리 폴더와 추상 베이스까지 함께 만듭니다.
+
+```csharp
+var template = File.ReadAllText("Assets/BehaviourTree/Templates/ActionNodeTemplate.txt");
+template = template.Replace("#Name#", scriptName).Replace("#Name2#", classOriginalName);
+File.WriteAllText(scriptPath, template);
+AssetDatabase.Refresh();
+```
+
+생성된 파일은 `OnStart` / `OnStop` / `OnUpdate` 뼈대만 있는 상태라, 바로 내용만 채우면 됩니다. 노드를 하나 늘리는 데 드는 작업이 "파일 만들고 → 폴더 정하고 → 베이스 상속하고"에서 **버튼 하나**로 줄었습니다.
+
+**③ 트리 애셋 원본이 런타임에 오염되지 않게 했습니다.**
+노드가 `ScriptableObject`이므로 여러 몬스터가 같은 트리를 참조하면 실행 상태(`isStarted`, `state`)를 공유해 버립니다. 그래서 인스턴스마다 트리를 통째로 복제합니다.
+
+```csharp
+tree = tree.Clone();          // SO 원본 보호
+tree.Init(actor, Repeat);
+```
+
+**④ 물리 기반 AI를 위해 갱신 시점을 선택할 수 있게 했습니다.**
+돌진·점프처럼 `Rigidbody2D`를 다루는 노드는 `Update`에서 돌면 물리와 어긋납니다. `UpdateType`으로 `Update` / `FixedUpdate` 중 하나에서 트리가 돌도록 했습니다.
+
+**⑤ 실행 중인 노드를 추적합니다.**
+`BlackBoard`가 노드 간 공유 상태와 현재 실행 노드를 들고 있어서, 에디터에서 플레이 중 어느 노드가 도는지 볼 수 있습니다. AI가 의도대로 안 움직일 때 디버깅 시간이 가장 많이 줄어든 부분입니다.
+
+<!-- [촬영] 에디터에서 노드를 연결하고, 플레이 중 실행 노드가 하이라이트되는 GIF -->
+
+<br/>
+
+## 2. UI — 패드로 다룰 수 있는 UI 프레임워크
+
+> `Assets/Scripts/UI/`, `Assets/Scripts/Utils/Managers/UIManager.cs`
+
+### 어떤 기능인가
+
+**UI를 여닫는 계층 관리부터, 버튼·슬라이더 같은 공용 요소, 키보드/패드 포커스 이동까지를 묶은 프레임워크입니다.** 프로젝트에서 가장 큰 부분(약 10,000줄)입니다.
+
+네 층으로 나뉘어 있습니다.
+
+| 층 | 담당 | 대표 클래스 |
+|---|---|---|
+| 계층 | UI를 열고 닫고, 정렬 순서를 관리 | `UIManager`, `UI_Base` |
+| 요소 | 버튼·슬라이더 등 개별 컨트롤의 상태와 입력 | `UIElement` |
+| 그룹 포커스 | 한 창 안에서의 포커스 이동 | `FocusParent` |
+| 창 간 이동 | 창과 창 사이의 포커스 이동 | `UI_NavigationController` |
+
+UI는 역할별로 타입이 나뉘고, `UIManager`가 타입마다 다른 생명주기와 정렬 순서를 적용합니다.
+
+| 타입 | 역할 | 관리 방식 |
+|---|---|---|
+| `UI_Main` | 항상 유지 (HUD) | 리스트, 활성화와 무관 |
+| `UI_Scene` | 씬 단위 고정 창 | 단일 |
+| `UI_Popup` | 팝업 | 스택 (겹칠수록 order 증가) |
+| `UI_Ingame` | 월드 좌표 추종 (몬스터 HP바 등) | 리스트 |
+| `UI_Hover` | 마우스 추종 (드래그 아이템 등) | 최상위 order |
+
+UI 프리팹은 `AddressablePooling`으로 풀링되고, 루트(`@UI_Root`)는 `DontDestroyOnLoad`로 유지됩니다.
+
+### 문제
+
+Unity 기본 UI는 **마우스를 전제로 만들어져 있습니다.** 게임패드를 지원하려 하니 기본 제공되는 것으로는 부족했습니다.
+
+- **`Selectable`의 자동 내비게이션은 인접 요소만 봅니다.** 인벤토리 그리드에서 끝 칸에 도달했을 때 반대편으로 순환시키거나, 장비창 맨 아래에서 아래를 누르면 인벤토리창으로 넘어가게 하는 처리를 표현할 수 없었습니다.
+- **포커스가 개별 요소 단위입니다.** 실제로 필요한 건 "지금 포커스가 장비창 그룹에 있다"는 그룹 단위 개념인데, 이게 없으니 창 단위 처리를 매번 손으로 짜야 했습니다.
+- **요소마다 상태 처리가 제각각이었습니다.** hover / select / pressed / disable을 버튼과 슬라이더가 각자 구현하면서 연출과 동작이 서로 달라졌습니다.
+
+### 접근
+
+**포커스를 "요소"가 아니라 "그룹"의 문제로 다시 정의하고, 입력을 각 UI가 아니라 컨트롤러가 쥐도록 뒤집었습니다.**
+
+**요소 — 상태를 하나로 통일**
+Button / Slider / Toggle / Carousel / InvenSlot을 전부 `UIElement` 하나에서 파생시켰습니다.
+
+```csharp
+[Flags]
+public enum UIElementState
+{
+    Default = 1 << 0,
+    Hover   = 1 << 1,
+    Select  = 1 << 2,
+    Disable = 1 << 3,
+    Pressed = 1 << 4
+}
+```
+
+`[Flags]`라 "선택 + 호버" 같은 복합 상태를 그대로 표현합니다. 연출은 `WillStateChange` / `StateChanged` 이벤트로 분리해서(`UIEffector`), 상태 로직과 애니메이션이 섞이지 않게 했습니다.
+
+**그룹 포커스 — 경계에서의 동작을 데이터로**
+`FocusParent`가 자식 요소들의 포커스를 그룹 단위로 관리합니다.
+
+```csharp
+public enum NavigationMode { Horizontal, Vertical, Inventory }
+```
+
+`Inventory` 모드는 그리드 탐색용이고, **끝에 도달했을 때의 동작을 방향별로 지정**할 수 있습니다.
+
+```csharp
+public struct TableNavigationData
+{
+    public int x, y;                                            // 그리드 크기
+    public bool isLeftLoop, isRightLoop, isUpLoop, isDownLoop;  // 방향별 순환 여부
+
+    // 순환하는 대신 호출할 외부 함수
+    // (예: 장비창에서 아래로 누르면 인벤토리창으로 포커스를 넘김)
+    public MoveEvent moveLeft, moveRight, moveUp, moveDown;
+}
+```
+
+이 델리게이트 덕분에 **창과 창 사이 포커스 이동을 UI 코드 수정 없이 인스펙터에서 연결**할 수 있습니다.
+
+**창 간 이동 — 규칙을 한 곳에 모음**
+`UI_NavigationController`가 창 사이 이동 규칙을 리스트로 받아 내부에서 맵으로 변환합니다.
+
+```csharp
+public struct NavigationRule
+{
+    public MonoBehaviour origin;
+    public NavigationDirection direction;
+    public MonoBehaviour destination;
+}
+```
+
+입력을 각 UI가 알아서 처리하는 대신 컨트롤러가 전체 흐름을 쥐고 있어서, **포커스가 지금 어디에 있고 다음에 어디로 갈지가 한 곳에서 파악**됩니다.
+
+### 이 구조에서 신경 쓴 지점
+
+**① 입력 장치가 바뀌면 UI가 즉시 따라갑니다.**
+`GameManager`가 매 프레임 입력 장치를 감지해서, 패드가 눌리면 **UI의 키 안내 이미지가 그 자리에서 패드 아이콘으로 바뀌고** 커서가 잠깁니다.
+
+```csharp
+if (Gamepad.current != null && Gamepad.current.allControls.Any(x => x.IsPressed()))
+{
+    DataAccess.Settings.Data.LoadGamePadImages();
+    // ... OnKeyChange 발화, 커서 숨김
+}
+```
+
+키 리매핑(`KeySettingManager`) 결과도 이 경로로 UI에 반영되고 영구 저장됩니다.
+
+**② 포커스 방식을 요소별로 고를 수 있게 했습니다.**
+마우스만 올려도 포커스가 가야 하는 UI가 있고, 클릭해야만 가야 하는 UI가 있습니다. `isFocusSelect` 한 값으로 요소·그룹 단위 전환이 됩니다.
+
+**③ 상태 변화를 잠글 수 있게 했습니다.**
+연출 중이거나 확인 대기 중일 때 상태가 바뀌면 안 되므로, `isFrozen`으로 모든 상태 변화를 막습니다.
+
+<!-- [촬영] 패드로 인벤토리 그리드를 탐색하고, 장비창↔인벤토리로 포커스가 넘어가는 GIF -->
+
+<br/>
+
+## 3. Actor — 모든 유닛의 기본 클래스
+
+> `Assets/Scripts/Actor/`
+
+### 어떤 기능인가
+
+**플레이어 · 몬스터 · 보스 · 소환수가 전부 상속하는 유닛 베이스 클래스입니다.** 체력, 스탯, 방향, 이동, 피격, 사망처럼 "유닛이라면 다 갖는 것"을 담고 있습니다.
+
+```
+Actor  (추상)
+├─ Player      상태 머신 · 입력 커맨드 · 스킬
+├─ Monster     인식 · 패턴 · AI
+│  ├─ CommonMonster   경량 상태 머신
+│  └─ BossMonster     Behaviour Tree · 페이즈
+└─ Summon      소환수
+```
+
+여기에 버프·스킬·아이템·AI가 전부 붙어서 동작합니다. 즉 **이 클래스가 다른 모든 시스템이 만나는 지점**이고, 그래서 설계가 가장 조심스러웠던 부분입니다.
+
+Actor가 직접 갖는 것은 다음과 같습니다.
+
+| 파일 / 클래스 | 책임 |
+|---|---|
+| `Actor.cs` | 컨테이너, 생명주기, 방향, 체력·사망 |
+| `Actor.Event.cs` | 이벤트 등록/실행 (`ActorEvents`에 위임) |
+| `Actor.Stat.cs` | 스탯, 배리어 (`BarrierCalculator`) |
+| `Actor.Buff.cs` | 버프 보유 (`BuffSystem`) |
+| `Actor.Immunity.cs` | 무적/면역 (`ImmunityController`) |
+| `Actor.View.cs` | 렌더러 추상화 (`IActorRenderer` — 일반 스프라이트 / Spine 교체) |
+| `ActorCombat` | 공격·피격 흐름 |
+| `EffectSpawner` | 이펙트 생성 |
+
+핵심은 **여기에 기능을 어떻게 더하느냐**입니다.
+
+### 문제
+
+유닛에 기능을 추가할 때 상속으로 처리하면, "독 데미지를 주는 몬스터"와 "폭발하는 몬스터"와 "독 데미지를 주면서 폭발하는 몬스터"가 각각 클래스가 되면서 조합 폭발이 일어납니다.
+
+### 접근
+
+`Actor`를 **기능 구현체가 아니라 조합 컨테이너**로 두고, 기능은 이벤트 구독으로 붙입니다.
+
+```csharp
+actor.AddEvent(EventType.OnHit, OnHitHandler);
+```
+
+전투는 하나의 함수가 아니라 **62개의 이벤트 단계**로 쪼개져 있어서, 어느 지점에든 기능을 끼워 넣을 수 있습니다. 버프·스킬·아이템·AI가 전부 이 이벤트에만 의존하므로 서로를 직접 참조하지 않습니다.
+
+### 실제 전투 흐름
+
+`ActorCombat`이 공격 측과 피격 측 흐름을 각각 담당합니다.
+
+```
+[공격 측] ActorCombat.Attack()
+  OnAttackSuccess     → 데미지 증가, 크리 확률 증가 등 효과 적용
+  OnBasicAttack       → 기본 공격 한정 효과
+  ─────────────────── 여기서 데미지 계산 (IAttackStrategy)
+  OnCrit              → 크리티컬 발생 시
+  OnBackAttack        → 뒤에서 때렸을 때 (Vector2.Dot으로 판정)
+  ─────────────────── target.OnHit() 호출
+  OnAfterAtk          → 최종 입힌 데미지 확인
+
+[피격 측] ActorCombat.ReceiveHit()
+  OnBeforeHit         → 무적/방어/회피. hitDisable을 켜면 여기서 중단
+  ─────────────────── 방어력 공식 적용
+  OnHit               → 피격 처리
+  OnCritHit           → 크리티컬로 맞았을 때
+  ─────────────────── CurHp 차감
+  OnAfterHit          → 증감이 전부 적용된 후
+```
+
+**이벤트 실행 순서가 계산 순서보다 앞선다**는 점이 중요합니다. 데미지 증가·크리 확률 증가 효과가 계산에 반영되려면 계산 전에 이벤트가 돌아야 하기 때문입니다.
+
+```csharp
+// 이벤트 실행을 데미지 계산 전에 호출해야함
+// 데미지 증가, 크리티컬 확률 증가 등 효과들이 적용되어야 하기 때문
+_actor.ExecuteEvent(EventType.OnAttackSuccess, eventParameters);
+```
+
+임시 스탯 보정은 `BonusStatEvent`에 델리게이트를 붙였다가 `finally`에서 반드시 떼어내는 방식으로, 예외가 나도 보정이 남지 않게 했습니다.
+
+### 책임 분리
+
+`Actor`는 `partial class`로 관심사별 파일로 쪼개고, 실제 로직은 위 표처럼 별도 클래스가 들고 있습니다. 컨테이너가 커지지 않게 하려는 것으로, 새 관심사가 생기면 `Actor.cs`를 고치는 대신 파일과 위임 대상을 하나 늘립니다.
+
+### Player
+
+| 구성 | 설명 |
+|---|---|
+| `PlayerStateMachine` | Idle / Move / Jump / Dash / Attack / Skill 상태 전이. `NextState` 테이블로 전이 가능 여부 정의 |
+| `IInterruptable` | 상태별로 어떤 입력에 끊길 수 있는지를 인터페이스로 분리 |
+| `InputBuffer` | 선입력 버퍼. `PriorityQueue` 기반이라 버퍼가 찼을 때 낮은 우선순위 입력이 밀려남 |
+| `IPlayerAttack` / `IPlayerDash` | 공격·대시 구현을 인터페이스로 분리해 캐릭터별 교체 가능 |
+| `PlayerCooldown` | 쿨다운 통합 관리 |
+| `Command` 패턴 | `PlayerCommand` 파생 클래스로 입력→행동 매핑 (Move / Jump / Dash / Interact / UseActiveSkill …) |
+
+### Monster
+
+| 구성 | 설명 |
+|---|---|
+| `Monster` | Actor 상속. `partial`로 OnOff / Interaction / Util 분리 |
+| `Recognition` | 플레이어 인식 범위 · 인식 상태 진입/이탈 이벤트 (`OnRecognitionEnter` / `OnRecognitionExit`) |
+| `PatternGroup` | 공격/이동 패턴을 그룹으로 묶어 조합 |
+| `CommonMonster/State` | 일반 몬스터용 경량 상태 머신 |
+| `BossMonster` | Behaviour Tree + `AnimBehaviour` 기반 페이즈 제어 |
+
+<br/>
+
+## 4. 스킬 — 사용 방식과 스탯을 따로 갈아끼우는 구조
+
+> `Assets/Scripts/Skill/`
+
+### 어떤 기능인가
+
+**플레이어와 몬스터가 쓰는 스킬, 그리고 스킬을 성장시키는 스킬트리까지를 다룹니다.**
+
+| 구분 | 설명 |
+|---|---|
+| `ActiveSkill` | 직접 발동. 쿨다운·자원 소모·사용 방식을 가짐 |
+| `PassiveSkill` | 상시 적용. 장착 시 효과가 걸리고 해제 시 되돌아감 |
+| `SkillTree` | 레벨을 올려 스킬 성능·효과를 확장 |
+
+스킬 하나는 세 조각의 조합입니다.
+
+```
+스킬 = 스탯(SkillStat)  +  발동 로직(Active)  +  사용 방식(ISkillActive)
+        └ 데미지·쿨타임      └ 무엇이 일어나는가    └ 어떻게 발동되는가
+```
+
+세 조각을 **각각 독립적으로** 바꿀 수 있게 한 것이 이 시스템의 전부입니다.
+
+### 문제
+
+스킬 수가 늘면서 두 가지가 걸렸습니다.
+
+- **사용 방식이 클래스로 굳었습니다.** "즉발 파이어볼"과 "차지 파이어볼"은 발동 결과가 같은데도 별도 클래스가 됐습니다. 차징 중 취소, 캐스팅 중 피격 같은 처리가 스킬마다 중복 구현됐습니다.
+- **강화 수치를 더할 자리가 없었습니다.** 스킬 레벨·룬·장비 효과가 겹칠 때 원본 스탯을 직접 수정하면 해제할 때 되돌릴 수가 없고, 적용 순서에 따라 결과가 달라졌습니다.
+
+### 접근
+
+**① 사용 방식을 전략으로 분리**
+
+스킬을 "발동한다"가 아니라 **"어떻게 발동되는가"를 교체 가능한 축**으로 뒀습니다. `ISkillActive` 구현체만 바꾸면 같은 스킬이 즉발형에서 차지형이 됩니다.
+
+```csharp
+public interface ISkillActive
+{
+    bool  durationUse { get; }     // 지속시간 사용 여부
+    bool  CheckUsable { get; }     // 사용 가능 여부
+    void  Activate(ActiveSkill skill);
+    void  DeActivate(ActiveSkill skill);
+    float CalculateDmg(float dmg);
+    void  OnCancel();              // 캔슬 처리를 한 곳에 모음
+    void  OnUnEquip(ActiveSkill skill);
+}
+```
+
+| 구현체 | 동작 |
+|---|---|
+| `InstantSkill` | 즉발 |
+| `ChargeSkill` | 누르는 동안 차징 → 뗄 때 발동 (`OnChargeEnd` / `OnChargeCancel`) |
+| `CastingSkill` | 캐스팅 시간 후 발동 (`OnCastingEnd` / `OnCastingCancel`) |
+| `ToggleSkill` | 켜고 끄기 |
+| `ContinuousSkill` | 누르는 동안 지속 |
+
+`CalculateDmg`가 인터페이스에 있는 이유는, 차지형처럼 **사용 방식 자체가 데미지에 관여**하는 경우가 있기 때문입니다. 차징 정도에 따른 배율을 스킬 로직이 아니라 사용 방식이 계산합니다.
+
+차징 완료·취소 같은 순간은 Actor 이벤트(`OnChargeEnd`, `OnCastingCancel` 등)로 발화되므로, UI 게이지나 이펙트가 스킬을 직접 참조하지 않고 붙습니다.
+
+**② 스탯 합성을 데코레이터로**
+
+원본을 수정하는 대신 감쌉니다.
+
+```csharp
+public class SkillDecorator : ISkill
+{
+    private readonly ISkill config;      // 원본
+    private readonly ISkill attachment;  // 덧붙는 효과
+
+    public SkillStat Stat => config.Stat + attachment.Stat;
+}
+```
+
+중첩이 가능하므로 강화가 몇 겹이든 같은 방식으로 처리되고, **해제는 감싼 것을 벗기기만 하면 됩니다.** 적용 순서에 따라 결과가 달라지는 문제도 사라집니다.
+
+### 스킬트리 (Visitor)
+
+`SkillTree`는 `SerializedScriptableObject`이고 `ISkillVisitor`를 구현합니다. 액티브/패시브에 각각 다른 처리를 하도록 오버로드로 분기시켰습니다.
+
+```csharp
+public virtual void Activate(PlayerActiveSkill active, int level)   { ... }
+public virtual void Activate(PlayerPassiveSkill passive, int level) { ... }
+```
+
+스킬 쪽은 `Accept(visitor, level)`만 호출하므로, **트리 노드가 늘어도 스킬 클래스는 그대로**입니다. 이름·설명은 `LanguageManager`의 문자열 테이블에서 가져와 다국어를 지원합니다.
+
+<!-- [촬영] 즉발/차지/캐스팅/토글/지속이 각각 다르게 발동되는 GIF -->
+
+<br/>
+
+## 5. 리소스 레이어 — 애셋 로딩 · 수명 · 프리로드
 
 > `Assets/Scripts/Utils/Resource/`
 
@@ -137,8 +573,8 @@ public static void ReleaseScene()
 [CreateAssetMenu(menuName = "Config/Preload Manifest")]
 public class PreloadManifest : ScriptableObject
 {
-    public string[] labels;      // Addressables 라벨 단위로 통째로 로드
-    public string[] addresses;   // 개별 주소 지정
+    public string[] labels;         // Addressables 라벨 단위로 통째로 로드
+    public string[] addresses;      // 개별 주소 지정
     public PrewarmEntry[] prewarm;  // 풀에 미리 생성해 둘 오브젝트
 }
 ```
@@ -183,447 +619,9 @@ SFX는 짧고 전역에서 쓰이므로 라벨 단위로 다 올리지만, BGM�
 
 <br/>
 
-## 2. 게임 상태 시스템 — 지금 무엇을 조작할 수 있는가
-
-> `Assets/Scripts/Utils/Managers/GameManager.State.cs`
-
-### 어떤 기능인가
-
-**"지금 플레이어가 움직일 수 있는가, UI만 조작되는가, 아무것도 안 되는가"를 한 곳에서 관리하는 시스템입니다.**
-
-게임에는 조작 범위가 달라지는 순간이 계속 생깁니다 — 팝업이 떠 있을 때, 컷신 중일 때, 페이드 중일 때, 상호작용 UI가 열렸을 때. 이걸 각 UI와 각 오브젝트가 알아서 처리하면 금방 엉키기 때문에, `GameManager`가 **상태(GameState)** 라는 단위로 모아서 관리합니다.
-
-상태 하나는 입력 처리 방식을 정의하는 클래스입니다.
-
-```csharp
-public abstract class GameState
-{
-    public abstract int Priority { get; }   // 낮을수록 우선
-
-    public abstract void OnEnterState();
-    public abstract void OnExitState();
-
-    public virtual void KeyBoardControlling() { ... }  // 이 상태에서의 키보드 입력
-    public virtual void GamePadControlling()  { ... }  // 이 상태에서의 패드 입력
-}
-```
-
-기본 제공 상태는 셋입니다.
-
-| 상태 | 조작 범위 | 언제 |
-|---|---|---|
-| `DefaultState` | UI만 | 페이드 중, 시스템 알림, 플레이어 없는 씬 |
-| `InteractionState` | UI + 기본 조작 | 상호작용 UI가 떠 있을 때 |
-| `PlayState` | 전체 | 일반 플레이 (기본값) |
-
-게임별 상태는 `RegisterState<T>()`로 추가합니다. 매 프레임 `GameManager`가 활성 상태 하나의 `~Controlling()`만 호출하므로, **입력 분기가 상태 클래스 안에만 존재**합니다.
-
-문제는 "어느 상태를 활성으로 볼 것인가"였습니다.
-
-### 문제
-
-"지금 조작이 가능한가"를 bool 플래그로 관리하면, **여러 주체가 동시에 같은 상태를 요구할 때** 무너집니다.
-
-컷신이 조작을 막고, 그 위에 팝업이 떠서 또 조작을 막고, 팝업이 먼저 닫히면서 플래그를 풀어버리면 — 컷신 중인데 플레이어가 움직입니다. 반대로 어느 한쪽이 해제를 빠뜨리면 게임이 영원히 멈춥니다.
-
-### 접근
-
-상태를 켠 사람마다 **Guid 티켓**을 발급하고, 티켓이 하나도 남지 않아야 실제로 해제되도록 했습니다.
-
-```csharp
-// 상태를 켠다 → 티켓을 받는다
-var guid = GameManager.instance.TryOnGameState<InteractionState>();
-
-// 자기가 받은 티켓으로만 끈다
-GameManager.instance.TryOffGameState<InteractionState>(guid);
-```
-
-```csharp
-/// <summary>
-///     상태별로 "이 상태를 켜 둔 사람들"의 티켓. 개수가 0보다 크면 켜진 것이다.
-///     on/off 플래그를 따로 두지 않는 이유: 장부가 둘이면 서로 어긋날 수 있기 때문.
-/// </summary>
-private readonly Dictionary<GameState, HashSet<Guid>> _stateGuids = new();
-```
-
-**우선순위로 활성 상태를 결정합니다.** 동시에 여러 상태가 켜져 있을 수 있고, 그중 `Priority`가 가장 작은 것이 현재 상태가 됩니다.
-
-```csharp
-public static class StatePriority
-{
-    public const int Default     = 0;    // UI만 조작 가능. 페이드 중, 플레이어 없는 씬
-    public const int Interaction = 10;   // UI + 기본 조작. 상호작용 UI가 떠 있는 상태
-    public const int Play        = 100;  // 일반 플레이. 가장 낮으므로 기본 상태가 된다
-}
-```
-
-상태 전환 함수는 `private`입니다. **외부에서 상태를 직접 바꿀 수 없고, 오직 티켓을 통해서만** 바뀝니다. 이게 "누가 상태를 바꿨는지 모르겠는" 상황을 원천적으로 막습니다.
-
-### 이 구조에서 신경 쓴 지점
-
-**티켓 보유자가 사라지는 경우를 처리했습니다.**
-씬이 전환되면 티켓을 들고 있던 UI가 통째로 사라집니다. 그러면 아무도 해제할 수 없는 티켓이 영구히 남아 게임이 멈춥니다.
-
-```csharp
-// 씬이 바뀌면 일시정지 guid 보유자(UI 등)가 통째로 사라지므로 남은 일시정지를 먼저 푼다.
-// WhenSceneLoaded가 아니라 Begin에 거는 이유: 새 씬의 UI가 등록한 일시정지까지 지우면 안 되기 때문.
-Scene.WhenSceneLoadBegin.AddListener(_ => ClearAllPauses());
-```
-
-일시정지(`RegisterPause` / `RemovePause`)도 같은 티켓 방식이며, 정리 시점을 `WhenSceneLoaded`가 아니라 `WhenSceneLoadBegin`으로 잡은 것이 핵심입니다.
-
-### 템플릿과 게임 코드의 분리
-
-이 프로젝트는 템플릿이므로, **게임별 코드가 템플릿을 오염시키지 않아야** 합니다. `partial void` 훅으로 처리했습니다.
-
-```csharp
-// GameManager.cs (템플릿)
-partial void OnSampleAwake();   // 선언만
-
-protected override void Awake()
-{
-    // ... 템플릿 초기화 ...
-    OnSampleAwake();  // GameManager.Sample.cs가 없으면 이 호출은 컴파일 단계에서 사라진다
-}
-```
-
-```csharp
-// GameManager.Sample.cs (게임별 — 지워도 컴파일된다)
-partial void OnSampleAwake()
-{
-    RegisterState(new BattleState());  // 게임 고유 상태 등록
-}
-```
-
-게임별 상태는 `RegisterState<T>()`로 추가하고, `StatePriority` 사이 값을 골라 우선순위를 정합니다. `GameManager.Sample.cs`와 `GameState/Sample/` 폴더만 지우면 순수 템플릿이 됩니다.
-
-<br/>
-
-## 3. Actor — 모든 유닛의 기본 클래스
-
-> `Assets/Scripts/Actor/`
-
-### 어떤 기능인가
-
-**플레이어 · 몬스터 · 보스 · 소환수가 전부 상속하는 유닛 베이스 클래스입니다.** 체력, 스탯, 방향, 이동, 피격, 사망처럼 "유닛이라면 다 갖는 것"을 담고 있습니다.
-
-```
-Actor  (추상)
-├─ Player      상태 머신 · 입력 커맨드 · 스킬
-├─ Monster     인식 · 패턴 · AI
-│  ├─ CommonMonster   경량 상태 머신
-│  └─ BossMonster     Behaviour Tree · 페이즈
-└─ Summon      소환수
-```
-
-여기에 버프·스킬·아이템·AI가 전부 붙어서 동작합니다. 즉 **이 클래스가 다른 모든 시스템이 만나는 지점**이고, 그래서 설계가 가장 조심스러웠던 부분입니다.
-
-Actor가 직접 갖는 것은 다음과 같습니다.
-
-| 파일 / 클래스 | 책임 |
-|---|---|
-| `Actor.cs` | 컨테이너, 생명주기, 방향, 체력·사망 |
-| `Actor.Event.cs` | 이벤트 등록/실행 (`ActorEvents`에 위임) |
-| `Actor.Stat.cs` | 스탯, 배리어 (`BarrierCalculator`) |
-| `Actor.Buff.cs` | 버프 보유 |
-| `Actor.Immunity.cs` | 무적/면역 (`ImmunityController`) |
-| `Actor.View.cs` | 렌더러 추상화 (`IActorRenderer` — 일반 스프라이트 / Spine 교체) |
-| `ActorCombat` | 공격·피격 흐름 |
-| `EffectSpawner` | 이펙트 생성 |
-
-핵심은 **여기에 기능을 어떻게 더하느냐**입니다.
-
-### 문제
-
-유닛에 기능을 추가할 때 상속으로 처리하면, "독 데미지를 주는 몬스터"와 "폭발하는 몬스터"와 "독 데미지를 주면서 폭발하는 몬스터"가 각각 클래스가 되면서 조합 폭발이 일어납니다.
-
-### 접근
-
-`Actor`를 **기능 구현체가 아니라 조합 컨테이너**로 두고, 기능은 이벤트 구독으로 붙입니다.
-
-```csharp
-actor.AddEvent(EventType.OnHit, OnHitHandler);
-```
-
-전투는 하나의 함수가 아니라 **62개의 이벤트 단계**로 쪼개져 있어서, 어느 지점에든 기능을 끼워 넣을 수 있습니다. 버프·스킬·아이템·AI가 전부 이 이벤트에만 의존하므로 서로를 직접 참조하지 않습니다.
-
-### 실제 전투 흐름
-
-`ActorCombat`이 공격 측과 피격 측 흐름을 각각 담당합니다.
-
-```
-[공격 측] ActorCombat.Attack()
-  OnAttackSuccess     → 데미지 증가, 크리 확률 증가 등 효과 적용
-  OnBasicAttack       → 기본 공격 한정 효과
-  ─────────────────── 여기서 데미지 계산 (IAttackStrategy)
-  OnCrit              → 크리티컬 발생 시
-  OnBackAttack        → 뒤에서 때렸을 때 (Vector2.Dot으로 판정)
-  ─────────────────── target.OnHit() 호출
-  OnAfterAtk          → 최종 입힌 데미지 확인
-
-[피격 측] ActorCombat.ReceiveHit()
-  OnBeforeHit         → 무적/방어/회피. hitDisable을 켜면 여기서 중단
-  ─────────────────── 방어력 공식 적용
-  OnHit               → 피격 처리
-  OnCritHit           → 크리티컬로 맞았을 때
-  ─────────────────── CurHp 차감
-  OnAfterHit          → 증감이 전부 적용된 후
-```
-
-**이벤트 실행 순서가 계산 순서보다 앞선다**는 점이 중요합니다. 데미지 증가·크리 확률 증가 효과가 계산에 반영되려면 계산 전에 이벤트가 돌아야 하기 때문입니다.
-
-```csharp
-// 이벤트 실행을 데미지 계산 전에 호출해야함
-// 데미지 증가, 크리티컬 확률 증가 등 효과들이 적용되어야 하기 때문
-_actor.ExecuteEvent(EventType.OnAttackSuccess, eventParameters);
-```
-
-임시 스탯 보정은 `BonusStatEvent`에 델리게이트를 붙였다가 `finally`에서 반드시 떼어내는 방식으로, 예외가 나도 보정이 남지 않게 했습니다.
-
-### 책임 분리
-
-`Actor`는 `partial class`로 관심사별 파일로 쪼개고, 실제 로직은 위 표처럼 별도 클래스가 들고 있습니다. 컨테이너가 커지지 않게 하려는 것으로, 새 관심사가 생기면 `Actor.cs`를 고치는 대신 파일과 위임 대상을 하나 늘립니다.
-
-<br/>
-
 ---
 
-# 시스템별 상세
-
-<br/>
-
-<a id="sys-actor"></a>
-<details>
-<summary><b>▶ Actor / 전투</b> — 유닛 기본 클래스, 이벤트 파이프라인, 렌더러 추상화</summary>
-
-<br/>
-
-위 [3번 항목](#3-actor--모든-유닛의-기본-클래스)에서 다룬 내용의 나머지입니다.
-
-### 렌더러 추상화
-
-`IActorRenderer`로 일반 스프라이트와 Spine을 같은 인터페이스 뒤에 두었습니다. Spine 유닛은 `SpineRootMotionHelper`가 루트 모션을 물리와 연동합니다.
-
-### Player
-
-| 구성 | 설명 |
-|---|---|
-| `PlayerStateMachine` | Idle / Move / Jump / Dash / Attack / Skill 상태 전이. `NextState` 테이블로 전이 가능 여부 정의 |
-| `IInterruptable` | 상태별로 어떤 입력에 끊길 수 있는지를 인터페이스로 분리 |
-| `InputBuffer` | 선입력 버퍼. `PriorityQueue` 기반이라 버퍼가 찼을 때 낮은 우선순위 입력이 밀려남 |
-| `IPlayerAttack` / `IPlayerDash` | 공격·대시 구현을 인터페이스로 분리해 캐릭터별 교체 가능 |
-| `PlayerCooldown` | 쿨다운 통합 관리 |
-| `Command` 패턴 | `PlayerCommand` 파생 클래스로 입력→행동 매핑 (Move / Jump / Dash / Interact / UseActiveSkill …) |
-
-### Monster
-
-| 구성 | 설명 |
-|---|---|
-| `Monster` | Actor 상속. `partial`로 OnOff / Interaction / Util 분리 |
-| `Recognition` | 플레이어 인식 범위 · 인식 상태 진입/이탈 이벤트 (`OnRecognitionEnter` / `OnRecognitionExit`) |
-| `PatternGroup` | 공격/이동 패턴을 그룹으로 묶어 조합 |
-| `CommonMonster/State` | 일반 몬스터용 경량 상태 머신 |
-| `BossMonster` | Behaviour Tree + `AnimBehaviour` 기반 페이즈 제어 |
-
-</details>
-
-<br/>
-
-<a id="sys-buff"></a>
-<details>
-<summary><b>▶ 버프 시스템</b> — Buff / SubBuff 계층, 해제 전략, 계산 분리</summary>
-
-<br/>
-
-### 어떤 기능인가
-
-**유닛에 붙는 모든 지속 효과를 다루는 시스템입니다.** 스탯 증감, 상태이상(독·화상), 군중제어(기절·속박), 배리어, 지속 피해가 전부 여기를 통합니다.
-
-유닛마다 `BuffSystem` 컴포넌트가 붙고, 부여 경로는 둘입니다. 장비·스킬·아이템·몬스터 패턴 어디서 발생하든 형태는 같습니다.
-
-```csharp
-// ① 타입만 지정해 바로 부여
-target.BuffSystem.AddSubBuff(caster, SubBuffType.어떤_상태이상);
-
-// ② 데이터로 만든 상위 효과(Buff)가 SubBuff를 생성해 부여
-var buff = new Buff(buffData, caster);
-target.BuffSystem.AddSubBuff(caster, buff, subBuff);
-```
-
-부여·갱신·해제·스택·면역·UI 갱신을 시스템이 맡기 때문에, 새 효과를 만들 때는 **효과 내용만** 작성하면 됩니다.
-
-### 왜 두 계층인가
-
-버프를 단일 리스트로 관리하면 "적을 공격하면 독을 부여한다" 같은 효과를 표현할 수 없습니다. **효과를 부여하는 주체**와 **실제로 붙는 상태이상**이 다른 대상에 붙기 때문입니다.
-
-| 계층 | 역할 | 예시 |
-|---|---|---|
-| `Buff` | 상위 효과. 조건과 부여 규칙을 가짐 | "적을 공격 시 독 부여" |
-| `SubBuff` | 실제로 대상에 붙는 상태이상 | 대상에게 붙은 독 디버프 |
-
-하나의 `Buff`가 여러 `SubBuff`를 생성·관리하며, 서로 다른 대상에 붙일 수 있습니다.
-
-### 적용 방식 (Strategy)
-
-```csharp
-_applyStrategy = ApplyType switch
-{
-    0 => new NormalApply(this),      // 조건 충족 시 적용
-    1 => new PermanentApply(this),   // 영구 적용
-    2 => new TempApply(this),        // 일시 적용
-};
-```
-
-### SubBuff 계층
-
-```
-SubBuff
-├─ Buff_Base        ─ Buff_Stat        (스탯 증가)
-├─ Debuff_base      ─ Debuff_Stat      (스탯 감소)
-│                   ├─ Debuff_CC       (군중제어)
-│                   └─ Debuff_DotDmg   (지속 피해)
-└─ BarrierBase                          (배리어)
-```
-
-### 부가 전략
-
-- **`DispellStrategy`** — 해제 조건 분리 (시간 경과 / 특정 이벤트 / 영구)
-- **`IBuffUpdate`** — 갱신 방식 분리 (`DotDmgUpdate` 등)
-- **`IBuffCollectionUpdate`** — 스택 처리 방식 분리
-- **타입 기반 제거·면역** — `SubBuffType`으로 "독 계열 전부 해제", "화상 면역" 같은 처리
-- **`SubBuffCollector`** — 같은 타입이 몇 개 붙어 있는지로 최초 적용/최종 해제 시점 판정
-
-```csharp
-public virtual void OnAdd()
-{
-    if (_user.SubBuffCount(Type) == 1) OnTypeAdd();  // 이 타입의 첫 스택일 때만
-    OnBuffAdd.Invoke(this);
-}
-```
-
-### 계산 로직 분리
-
-배리어처럼 상태 변경과 계산이 얽히는 것은 별도 계산기로 뺐습니다.
-
-```csharp
-user.BarrierCalculator.BarrierAddEvent   += AddBarrier;
-user.BarrierCalculator.BarrierMinusEvent -= MinusBarrier;
-```
-
-</details>
-
-<br/>
-
-<a id="sys-skill"></a>
-<details>
-<summary><b>▶ 스킬 / 스킬트리</b> — 사용 방식 5종, 데코레이터 스탯 합성, Visitor 스킬트리</summary>
-
-<br/>
-
-### 어떤 기능인가
-
-**플레이어와 몬스터가 사용하는 스킬, 그리고 스킬을 성장시키는 스킬트리까지를 다룹니다.**
-
-| 구분 | 설명 |
-|---|---|
-| `ActiveSkill` | 직접 발동. 쿨다운·자원 소모·사용 방식을 가짐 |
-| `PassiveSkill` | 상시 적용. 장착 시 효과가 걸리고 해제 시 되돌아감 |
-| `SkillTree` | 레벨을 올려 스킬 성능·효과를 확장 |
-
-스킬 하나는 **스탯(`SkillStat`) + 발동 로직 + 사용 방식(`ISkillActive`)** 의 조합으로 구성되며, 세 가지를 각각 따로 바꿀 수 있습니다.
-
-### 사용 방식을 전략으로 분리
-
-스킬을 "발동한다"가 아니라 **"어떻게 발동되는가"를 교체 가능한 축**으로 뒀습니다. `ISkillActive` 구현체를 바꾸면 같은 스킬이 즉발형에서 차지형이 됩니다.
-
-| 구현체 | 동작 |
-|---|---|
-| `InstantSkill` | 즉발 |
-| `ChargeSkill` | 누르는 동안 차징 → 뗄 때 발동 (`OnChargeEnd` / `OnChargeCancel`) |
-| `CastingSkill` | 캐스팅 시간 후 발동 (`OnCastingEnd` / `OnCastingCancel`) |
-| `ToggleSkill` | 켜고 끄기 |
-| `ContinuousSkill` | 누르는 동안 지속 |
-
-```csharp
-public interface ISkillActive
-{
-    bool durationUse { get; }     // 지속시간 사용 여부
-    bool CheckUsable { get; }     // 사용 가능 여부
-    void Activate(ActiveSkill skill);
-    void DeActivate(ActiveSkill skill);
-    float CalculateDmg(float dmg);
-    void OnCancel();
-    void OnUnEquip(ActiveSkill skill);
-}
-```
-
-### 스탯 합성 (Decorator)
-
-기본 스킬 스탯 위에 강화·룬·장비 효과를 겹칠 때, 원본을 수정하지 않고 감쌉니다.
-
-```csharp
-public class SkillDecorator : ISkill
-{
-    private readonly ISkill config;      // 원본
-    private readonly ISkill attachment;  // 덧붙는 효과
-
-    public SkillStat Stat => config.Stat + attachment.Stat;
-}
-```
-
-중첩이 가능하므로 강화가 몇 겹이든 같은 방식으로 처리됩니다.
-
-### 스킬트리 (Visitor)
-
-`SkillTree`는 `SerializedScriptableObject`이고 `ISkillVisitor`를 구현합니다. 액티브/패시브 각각에 대해 다른 처리를 하도록 오버로드로 분기시켰습니다.
-
-```csharp
-public virtual void Activate(PlayerActiveSkill active, int level)  { ... }
-public virtual void Activate(PlayerPassiveSkill passive, int level) { ... }
-```
-
-이름·설명은 `LanguageManager`의 문자열 테이블에서 가져와 다국어를 지원합니다.
-
-</details>
-
-<br/>
-
-<a id="sys-bt"></a>
-<details>
-<summary><b>▶ Behaviour Tree (AI)</b> — 비주얼 에디터 + 3종 노드 확장</summary>
-
-<br/>
-
-<img width="1919" height="1000" alt="Behaviour Tree 에디터" src="https://github.com/user-attachments/assets/673cba93-0ca7-491f-b5b7-8c17376fd8d8" />
-
-<br/><br/>
-
-UI Toolkit / GraphView 기반 **비주얼 에디터를 직접 제작**해서, 기획자가 코드 없이 노드를 조립해 AI를 구성할 수 있게 했습니다.
-
-<!-- [촬영] 에디터에서 노드를 연결하고 플레이 중 실행 노드가 하이라이트되는 GIF -->
-
-### 노드 구조
-
-| 종류 | 역할 | 구현 예 |
-|---|---|---|
-| `ActionNode` | 실제 행동 | `MoveNode`, `DashToPos`, `JumpNode`, `SetAnimation`, `TeleportToPos`, `BossAtk` |
-| `DecoratorNode` | 조건 · 흐름 제어 | `HpCheck`, `IfPlayerDistance`, `CoolDownCheck`, `RaycastCheck`, `RepeatNode`, `CheckPhase` |
-| `CompositeNode` | 자식 노드 조합 | `SequenceNode`, `SelectNode`, `ExcuteAll`, `ProbSelect` (확률 선택) |
-
-새 노드는 세 베이스 중 하나를 상속하면 에디터 메뉴에 자동으로 노출됩니다. 공용(`Common`) / 몬스터 / 보스 / 플레이어로 네임스페이스가 나뉘어 있어 목적별로 골라 쓸 수 있습니다.
-
-### 런타임
-
-```csharp
-tree = tree.Clone();          // 인스턴스마다 트리 복제 — SO 원본 오염 방지
-tree.Init(actor, Repeat);
-```
-
-- **`StartType`** — `OnStart` / `ByScript`로 시작 시점 제어
-- **`UpdateType`** — `Normal` / `Fixed`로 물리 기반 AI 대응
-- **`BlackBoard`** — 노드 간 상태 공유 및 현재 실행 노드 추적 (에디터 하이라이트용)
-
-</details>
+# 그 외 시스템
 
 <br/>
 
@@ -633,7 +631,7 @@ tree.Init(actor, Repeat);
 
 <br/>
 
-공격 오브젝트를 **"얼마를 때리는가" / "어떻게 판정하는가" / "어떻게 날아가는가"** 세 축으로 나눠서, 각각 독립적으로 교체할 수 있게 했습니다.
+근접 판정, 장판, 투사체 등 **"때리는 것" 전부를 담당하는 오브젝트**입니다. **"얼마를 때리는가" / "어떻게 판정하는가" / "어떻게 날아가는가"** 세 축으로 나눠서, 각각 독립적으로 교체할 수 있게 했습니다.
 
 ### 축 1 — 데미지 계산 (`IAttackStrategy`)
 
@@ -708,103 +706,177 @@ public enum ProjectileConflictType
 
 <br/>
 
-<a id="sys-ui"></a>
+<a id="sys-buff"></a>
 <details>
-<summary><b>▶ UI</b> — 계층 · 상태 요소 · 그룹 포커스 · 패드 대응</summary>
+<summary><b>▶ 버프 시스템</b> — Buff / SubBuff 계층, 해제 전략, 계산 분리</summary>
 
 <br/>
 
-Unity 기본 UI를 그대로 쓰지 않고, **계층 / 요소 / 입력 내비게이션 / 포커스**를 각각 분리해 재설계했습니다. 게임패드 대응이 목적입니다.
+**유닛에 붙는 모든 지속 효과를 다루는 시스템입니다.** 스탯 증감, 상태이상(독·화상), 군중제어(기절·속박), 배리어, 지속 피해가 전부 여기를 통합니다.
 
-### 계층
+유닛마다 `BuffSystem` 컴포넌트가 붙고, 부여 경로는 둘입니다.
 
-`UIManager`가 타입별로 다른 정렬 순서와 생명주기를 관리합니다.
+```csharp
+// ① 타입만 지정해 바로 부여
+target.BuffSystem.AddSubBuff(caster, SubBuffType.어떤_상태이상);
 
-| 타입 | 역할 | 관리 방식 |
+// ② 데이터로 만든 상위 효과(Buff)가 SubBuff를 생성해 부여
+var buff = new Buff(buffData, caster);
+target.BuffSystem.AddSubBuff(caster, buff, subBuff);
+```
+
+부여·갱신·해제·스택·면역·UI 갱신을 시스템이 맡기 때문에, 새 효과를 만들 때는 **효과 내용만** 작성하면 됩니다.
+
+### 왜 두 계층인가
+
+버프를 단일 리스트로 관리하면 "적을 공격하면 독을 부여한다" 같은 효과를 표현할 수 없습니다. **효과를 부여하는 주체**와 **실제로 붙는 상태이상**이 다른 대상에 붙기 때문입니다.
+
+| 계층 | 역할 | 예시 |
 |---|---|---|
-| `UI_Main` | 항상 유지 (HUD) | 리스트, 활성화와 무관 |
-| `UI_Scene` | 씬 단위 고정 창 | 단일 |
-| `UI_Popup` | 팝업 | 스택 (겹칠수록 order 증가) |
-| `UI_Ingame` | 월드 좌표 추종 (몬스터 HP바 등) | 리스트 |
-| `UI_Hover` | 마우스 추종 (드래그 아이템 등) | 최상위 order |
+| `Buff` | 상위 효과. 조건과 부여 규칙을 가짐 | "적을 공격 시 독 부여" |
+| `SubBuff` | 실제로 대상에 붙는 상태이상 | 대상에게 붙은 독 디버프 |
 
-UI 프리팹은 `AddressablePooling` 기반으로 풀링되며, 루트(`@UI_Root`)는 `DontDestroyOnLoad`로 유지됩니다.
+하나의 `Buff`가 여러 `SubBuff`를 생성·관리하며, 서로 다른 대상에 붙일 수 있습니다.
 
-### 요소 (`UIElement`)
-
-Button / Slider / Toggle / Carousel / InvenSlot을 전부 `UIElement` 하나에서 파생시켜, **상태와 입력 처리를 공통화**했습니다.
+### 적용 방식 (Strategy)
 
 ```csharp
-[Flags]
-public enum UIElementState
+_applyStrategy = ApplyType switch
 {
-    Default = 1 << 0,
-    Hover   = 1 << 1,
-    Select  = 1 << 2,
-    Disable = 1 << 3,
-    Pressed = 1 << 4
+    0 => new NormalApply(this),      // 조건 충족 시 적용
+    1 => new PermanentApply(this),   // 영구 적용
+    2 => new TempApply(this),        // 일시 적용
+};
+```
+
+### SubBuff 계층
+
+```
+SubBuff
+├─ Buff_Base        ─ Buff_Stat        (스탯 증가)
+├─ Debuff_base      ─ Debuff_Stat      (스탯 감소)
+│                   ├─ Debuff_CC       (군중제어)
+│                   └─ Debuff_DotDmg   (지속 피해)
+└─ BarrierBase                          (배리어)
+```
+
+### 부가 전략
+
+- **`DispellStrategy`** — 해제 조건 분리 (시간 경과 / 특정 이벤트 / 영구)
+- **`IBuffUpdate`** — 갱신 방식 분리 (`DotDmgUpdate` 등)
+- **`IBuffCollectionUpdate`** — 스택 처리 방식 분리
+- **타입 기반 제거·면역** — `SubBuffType`으로 "독 계열 전부 해제", "화상 면역" 같은 처리
+- **`SubBuffCollector`** — 같은 타입이 몇 개 붙어 있는지로 최초 적용/최종 해제 시점 판정
+
+```csharp
+public virtual void OnAdd()
+{
+    if (_user.SubBuffCount(Type) == 1) OnTypeAdd();  // 이 타입의 첫 스택일 때만
+    OnBuffAdd.Invoke(this);
 }
 ```
 
-- `[Flags]`라 "선택 + 호버" 같은 복합 상태를 표현합니다
-- `WillStateChange` / `StateChanged` 이벤트로 연출(`UIEffector`)을 상태 로직에서 분리
-- `isFrozen`으로 상태 변화를 일시적으로 잠금
-- `isFocusSelect`로 "클릭해야 포커스" / "호버만으로 포커스"를 요소별로 전환
+### 계산 로직 분리
 
-### 그룹 포커스 (`FocusParent`)
-
-포커스를 개별 요소가 아니라 **그룹 단위**로 관리합니다.
+배리어처럼 상태 변경과 계산이 얽히는 것은 별도 계산기로 뺐습니다.
 
 ```csharp
-public enum NavigationMode { Horizontal, Vertical, Inventory }
+user.BarrierCalculator.BarrierAddEvent   += AddBarrier;
+user.BarrierCalculator.BarrierMinusEvent += MinusBarrier;
 ```
 
-`Inventory` 모드는 그리드 탐색용으로, 끝에 도달했을 때의 동작을 방향별로 지정할 수 있습니다.
+</details>
+
+<br/>
+
+<a id="sys-gamestate"></a>
+<details>
+<summary><b>▶ 게임 상태 관리</b> — 티켓 기반 상태 전환과 일시정지</summary>
+
+<br/>
+
+**"지금 플레이어가 움직일 수 있는가, UI만 조작되는가, 아무것도 안 되는가"를 한 곳에서 관리합니다.** 팝업·컷신·페이드·상호작용마다 조작 범위가 달라지는 것을 `GameManager`가 상태 단위로 모아서 처리합니다.
 
 ```csharp
-public struct TableNavigationData
+public abstract class GameState
 {
-    public int x, y;                                            // 그리드 크기
-    public bool isLeftLoop, isRightLoop, isUpLoop, isDownLoop;  // 방향별 순환 여부
+    public abstract int Priority { get; }   // 낮을수록 우선
 
-    // 순환하는 대신 호출할 외부 함수
-    // (예: 장비창에서 아래로 누르면 인벤토리창으로 포커스를 넘김)
-    public MoveEvent moveLeft, moveRight, moveUp, moveDown;
+    public abstract void OnEnterState();
+    public abstract void OnExitState();
+
+    public virtual void KeyBoardControlling() { ... }
+    public virtual void GamePadControlling()  { ... }
 }
 ```
 
-이 델리게이트 덕분에 **창과 창 사이 포커스 이동**을 UI 코드 수정 없이 인스펙터에서 연결할 수 있습니다.
+| 상태 | 조작 범위 | 언제 |
+|---|---|---|
+| `DefaultState` | UI만 | 페이드 중, 시스템 알림, 플레이어 없는 씬 |
+| `InteractionState` | UI + 기본 조작 | 상호작용 UI가 떠 있을 때 |
+| `PlayState` | 전체 | 일반 플레이 (기본값) |
 
-### 창 간 내비게이션 (`UI_NavigationController`)
+매 프레임 활성 상태 하나의 `~Controlling()`만 호출되므로 **입력 분기가 상태 클래스 안에만 존재**합니다.
 
-창 사이 이동 규칙을 리스트로 정의하고 내부에서 맵으로 변환합니다.
+### 플래그 대신 티켓
+
+조작 가능 여부를 bool로 관리하면 **여러 주체가 동시에 같은 상태를 요구할 때** 무너집니다. 컷신이 조작을 막고 그 위에 팝업이 또 막았는데 팝업이 먼저 닫히면서 플래그를 풀어버리면, 컷신 중인데 플레이어가 움직입니다.
+
+그래서 상태를 켠 사람마다 **Guid 티켓**을 발급하고, 티켓이 하나도 남지 않아야 실제로 해제되도록 했습니다.
 
 ```csharp
-public struct NavigationRule
+var guid = GameManager.instance.TryOnGameState<InteractionState>();
+// ...
+GameManager.instance.TryOffGameState<InteractionState>(guid);
+```
+
+```csharp
+/// <summary>
+///     상태별로 "이 상태를 켜 둔 사람들"의 티켓. 개수가 0보다 크면 켜진 것이다.
+///     on/off 플래그를 따로 두지 않는 이유: 장부가 둘이면 서로 어긋날 수 있기 때문.
+/// </summary>
+private readonly Dictionary<GameState, HashSet<Guid>> _stateGuids = new();
+```
+
+동시에 여러 상태가 켜져 있을 수 있고, 그중 `Priority`가 가장 작은 것이 활성 상태가 됩니다. 상태 전환 함수는 `private`이라 **외부에서 직접 바꿀 수 없고 오직 티켓을 통해서만** 바뀝니다.
+
+```csharp
+public static class StatePriority
 {
-    public MonoBehaviour origin;
-    public NavigationDirection direction;
-    public MonoBehaviour destination;
+    public const int Default     = 0;
+    public const int Interaction = 10;
+    public const int Play        = 100;  // 가장 낮으므로 기본 상태가 된다
 }
 ```
 
-입력을 각 UI가 알아서 처리하는 대신 컨트롤러가 전체 흐름을 쥐고 있어서, 포커스가 어디로 갈지 한 곳에서 파악됩니다.
+### 티켓 보유자가 사라지는 경우
 
-### 입력 장치 자동 전환
-
-`GameManager`가 매 프레임 입력 장치를 감지해서, 패드 입력이 들어오면 **UI의 키 안내 이미지가 즉시 패드 아이콘으로 바뀌고** 커서가 잠깁니다.
+씬이 전환되면 티켓을 들고 있던 UI가 통째로 사라져서, 아무도 해제할 수 없는 티켓이 영구히 남습니다.
 
 ```csharp
-if (Gamepad.current != null && Gamepad.current.allControls.Any(x => x.IsPressed()))
-{
-    DataAccess.Settings.Data.LoadGamePadImages();
-    // ... OnKeyChange 발화, 커서 숨김
-}
+// 씬이 바뀌면 일시정지 guid 보유자(UI 등)가 통째로 사라지므로 남은 일시정지를 먼저 푼다.
+// WhenSceneLoaded가 아니라 Begin에 거는 이유: 새 씬의 UI가 등록한 일시정지까지 지우면 안 되기 때문.
+Scene.WhenSceneLoadBegin.AddListener(_ => ClearAllPauses());
 ```
 
-키 리매핑은 `KeySettingManager`가 담당하며 설정은 영구 저장됩니다.
+일시정지(`RegisterPause` / `RemovePause`)도 같은 티켓 방식이며, 정리 시점을 `WhenSceneLoaded`가 아니라 `WhenSceneLoadBegin`으로 잡은 것이 핵심입니다.
 
-<!-- [촬영] 패드로 인벤토리 그리드를 탐색하고 장비창↔인벤토리로 포커스가 넘어가는 GIF -->
+### 템플릿과 게임 코드의 분리
+
+게임별 코드가 템플릿을 오염시키지 않도록 `partial void` 훅을 썼습니다.
+
+```csharp
+// GameManager.cs (템플릿)
+partial void OnSampleAwake();   // 선언만 — 구현이 없으면 호출은 컴파일 단계에서 사라진다
+```
+
+```csharp
+// GameManager.Sample.cs (게임별 — 지워도 컴파일된다)
+partial void OnSampleAwake()
+{
+    RegisterState(new BattleState());  // 게임 고유 상태 등록
+}
+```
 
 </details>
 
@@ -844,7 +916,7 @@ BGM을 코드가 아니라 **맵 배치로** 제어합니다.
 
 ### 메모리
 
-SFX는 라벨 단위로 전역 프리로드하고, BGM은 클립 하나가 수 MB이므로 씬 매니페스트에 등록해 Scene 스코프로 관리합니다. ([1번 항목](#1-리소스-레이어--애셋-로딩--수명--프리로드) 참고)
+SFX는 라벨 단위로 전역 프리로드하고, BGM은 클립 하나가 수 MB이므로 씬 매니페스트에 등록해 Scene 스코프로 관리합니다. ([5번 항목](#5-리소스-레이어--애셋-로딩--수명--프리로드) 참고)
 
 </details>
 
@@ -961,7 +1033,8 @@ SceneLoad 요청
 Assets/
 ├─ BehaviourTree/          Behaviour Tree 시스템
 │  ├─ Editor/              비주얼 에디터 (UI Toolkit / GraphView)
-│  └─ Scripts/             런타임 노드 (Action / Decorator / Composite)
+│  ├─ Scripts/             런타임 노드 (Action / Decorator / Composite)
+│  └─ Templates/           노드 스크립트 생성용 템플릿
 │
 ├─ Editor/                 에디터 확장 (애셋 생성기, 빈 폴더 정리 등)
 │
