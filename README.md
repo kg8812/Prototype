@@ -1,6 +1,6 @@
 # Prototype
 
-**Unity 2D 액션 게임을 위한 베이스 템플릿 프로젝트.**
+**Unity 게임을 위한 베이스 템플릿 프로젝트.**
 
 새 프로젝트마다 반복해서 다시 만들게 되는 시스템 — 애셋 로딩, 게임 상태, 전투, 버프, 스킬, UI, 사운드, 세이브 — 을 하나의 재사용 가능한 구조로 정리했습니다.
 실제 게임 프로젝트에서 쓰면서 문제가 드러난 부분을 계속 리팩토링하며 다듬고 있습니다.
@@ -17,7 +17,6 @@
 | **엔진** | Unity 6000.3 / URP (2D) |
 | **핵심 패키지** | Addressables, Input System, Cinemachine, 2D Feature Set |
 | **외부 라이브러리** | Odin Inspector, DOTween, Easy Save 3, Spine, Newtonsoft.Json |
-| **규모** | 스크립트 490개 / 약 39,500줄 (외부 라이브러리 제외) |
 | **에디터 툴** | Behaviour Tree 비주얼 에디터 (UI Toolkit / GraphView) |
 
 <br/>
