@@ -282,8 +282,8 @@ public partial class GameManager : Singleton<GameManager>
     }
 
     /// <summary>
-    ///     강제로 상태를 바꾼다.
-    ///     대상보다 우선순위가 높은(Priority가 작은) 상태들은 켜져 있어도 티켓을 전부 버린다.
+    ///     실제 상태 전환. 티켓 상황을 보고 <see cref="CheckGameState" />만 호출한다.
+    ///     외부에서 직접 부를 수 없다 — 상태 전환은 반드시 티켓(TryOn/TryOff)을 통해서만 일어난다.
     /// </summary>
     private void ChangeGameState(GameState toState)
     {
@@ -293,11 +293,6 @@ public partial class GameManager : Singleton<GameManager>
         CurState = toState;
         CurState.OnEnterState();
         GameStateChangedTo.Invoke(CurState);
-    }
-
-    private void ChangeGameState<T>() where T : GameState
-    {
-        ChangeGameState(GetState<T>());
     }
 
     #endregion
