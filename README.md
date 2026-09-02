@@ -42,11 +42,11 @@ URL을 채운 뒤 이 주석 기호를 지우세요.
 ## 목차
 
 - [핵심 시스템](#핵심-시스템)
-  - [1. Behaviour Tree — AI를 노드로 조립하는 에디터](#1-behaviour-tree--ai를-노드로-조립하는-에디터)
-  - [2. UI — 패드로 다룰 수 있는 UI 프레임워크](#2-ui--패드로-다룰-수-있는-ui-프레임워크)
-  - [3. Actor — 모든 유닛의 기본 클래스](#3-actor--모든-유닛의-기본-클래스)
-  - [4. 스킬 — 사용 방식과 스탯을 따로 갈아끼우는 구조](#4-스킬--사용-방식과-스탯을-따로-갈아끼우는-구조)
-  - [5. 리소스 레이어 — 애셋 로딩 · 수명 · 프리로드](#5-리소스-레이어--애셋-로딩--수명--프리로드)
+  - [1. 리소스 레이어 — 애셋 로딩 · 수명 · 프리로드](#1-리소스-레이어--애셋-로딩--수명--프리로드)
+  - [2. Behaviour Tree — AI를 노드로 조립하는 에디터](#2-behaviour-tree--ai를-노드로-조립하는-에디터)
+  - [3. UI — 패드로 다룰 수 있는 UI 프레임워크](#3-ui--패드로-다룰-수-있는-ui-프레임워크)
+  - [4. Actor — 모든 유닛의 기본 클래스](#4-actor--모든-유닛의-기본-클래스)
+  - [5. 스킬 — 사용 방식과 스탯을 따로 갈아끼우는 구조](#5-스킬--사용-방식과-스탯을-따로-갈아끼우는-구조)
 - [그 외 시스템](#그-외-시스템)
   - [AttackObject / Projectile](#sys-attackobject)
   - [버프 시스템](#sys-buff)
@@ -66,7 +66,141 @@ URL을 채운 뒤 이 주석 기호를 지우세요.
 
 <br/>
 
-## 1. Behaviour Tree — AI를 노드로 조립하는 에디터
+## 1. 리소스 레이어 — 애셋 로딩 · 수명 · 프리로드
+
+> `Assets/Scripts/Utils/Resource/`
+
+### 어떤 기능인가
+
+**Addressables로 애셋을 올리고 내리는 일 전부를 담당하는 레이어입니다.** 게임 코드가 `Addressables` API를 직접 부르는 곳은 한 군데도 없고, 전부 이 레이어를 거칩니다.
+
+호출부가 보는 건 `ResourceUtil` 하나입니다.
+
+```csharp
+// 로드 — 어느 스코프에 올릴지만 지정한다
+var icon   = ResourceUtil.Load<Sprite>("BuffIcon_Poison");
+var prefab = ResourceUtil.Load<GameObject>("Slime", AssetLifetime.Scene);
+
+// 인스턴스 생성
+var go = ResourceUtil.Instantiate("HitEffect");
+
+// 씬 진입 전 프리로드 (로딩 화면에서 호출)
+await ResourceUtil.PreloadSceneAsync("Stage1", progress);
+
+// 씬 이탈 시 정리 — 이 한 줄이 해제의 전부
+ResourceUtil.ReleaseSceneAssets();
+```
+
+| 구성 | 역할 |
+|---|---|
+| `ResourceUtil` | 유일한 진입점. 로드 / 생성 / 프리로드 / 정리 |
+| `AssetScope` | 수명이 같은 애셋 묶음. Addressables 핸들의 **소유자** |
+| `AssetRegistry` | 스코프 보관소 (`Global` / `Scene`) |
+| `PreloadManifest` | 미리 올릴 애셋 목록 (ScriptableObject) |
+| `SceneManifestTable` | 씬 이름 → 매니페스트 매핑 |
+| `AddressablePooling` | 주소 단위 오브젝트 풀 |
+
+### 문제
+
+초기 구조는 `Addressables.LoadAssetAsync`를 필요한 곳에서 그때그때 호출하고, 호출부가 각자 `Release`를 책임지는 방식이었습니다. 두 가지가 문제였습니다.
+
+- **해제 책임이 흩어짐** — 누가 언제 해제해야 하는지 코드마다 달라서, 핸들 누수와 이중 해제가 동시에 생겼습니다.
+- **런타임 동기 로드** — 전투 중 처음 등장하는 이펙트·사운드가 그 자리에서 로드되면서 프레임 스파이크와 GC 스파이크가 발생했습니다.
+
+### 접근
+
+애셋을 **개별로 추적하지 않고, 수명이 같은 것끼리 묶어 통째로 해제**하는 구조로 바꿨습니다.
+
+```csharp
+public enum AssetLifetime
+{
+    Global,  // 게임 종료까지 유지. 공용 UI 프리팹, 사운드 믹서, 공용 데이터
+    Scene    // 씬을 벗어날 때 일괄 해제. 스테이지 전용 몬스터/배경/BGM
+}
+```
+
+**`AssetScope`** — 수명 단위 하나. 로드한 `AsyncOperationHandle`의 소유권은 전적으로 이 클래스에 있고, 해제 경로는 `Dispose` 하나뿐입니다. 그래서 호출부는 `Addressables.Release`를 부를 일이 아예 없습니다.
+
+**`AssetRegistry`** — 스코프 보관소. 씬 전환 시 `ReleaseScene()` 한 번으로 그 씬이 올린 애셋이 전부 반납됩니다.
+
+**프리로드를 데이터로 분리** — 무엇을 미리 올릴지는 코드가 아니라 ScriptableObject가 들고 있습니다.
+
+```csharp
+[CreateAssetMenu(menuName = "Config/Preload Manifest")]
+public class PreloadManifest : ScriptableObject
+{
+    public string[] labels;         // Addressables 라벨 단위로 통째로 로드
+    public string[] addresses;      // 개별 주소 지정
+    public PrewarmEntry[] prewarm;  // 풀에 미리 생성해 둘 오브젝트
+}
+```
+
+`SceneManifestTable`이 씬 이름 → 매니페스트를 매핑하고, 로딩 화면이 씬 활성화 직전에 `PreloadSceneAsync(sceneName)`을 부릅니다. **오브젝트 풀 prewarm까지 이 단계에 넣어서**, 게임플레이 중에는 로드도 인스턴스 생성도 일어나지 않습니다.
+
+### 이 구조에서 신경 쓴 지점
+
+**① 프리로드 누락을 사람이 찾지 않게 했습니다.**
+매니페스트에서 빠진 애셋은 런타임 동기 로드로 이어지는데, 이건 눈으로 못 찾습니다. `AssetScope`가 동기 로드된 주소를 기록해두고 `ResourceUtil.LogPreloadReport()`로 뽑습니다. 한 바퀴 플레이한 뒤 그 로그를 매니페스트에 그대로 옮기면 됩니다.
+
+**② 프리팹 인스턴스가 핸들을 갖지 않게 했습니다.**
+`Addressables.InstantiateAsync`는 인스턴스마다 핸들을 만들어 풀링과 충돌합니다. **프리팹은 스코프가 핸들 하나로 붙잡고, 인스턴스는 `Object.Instantiate`로** 만듭니다. 파기는 `Destroy` 하나로 끝납니다.
+
+**③ 도메인 리로드를 꺼도 깨지지 않게 했습니다.**
+도메인 리로드를 끄면 static이 살아남아 이전 플레이 세션의 죽은 핸들이 남습니다. `RuntimeInitializeOnLoadMethod(SubsystemRegistration)`으로 스코프를 다시 만듭니다.
+
+**④ BGM은 라벨 통째로 올리지 않습니다.**
+SFX는 짧아서 라벨 단위로 다 올리지만, BGM은 클립 하나가 수 MB라 전부 올리면 메모리를 크게 먹습니다. 씬에서 쓰는 것만 씬 매니페스트에 등록합니다.
+
+### 검증 — 성능 이득이 실제로 있는지 실험했습니다
+
+리팩토링 직전 커밋(`44ade73`)과 현재 버전으로 **같은 벤치마크 씬을 돌렸습니다.** 실제 게임 프로젝트에서 가져온 보스 이펙트 32종(31.8MB)을 스폰하면서 프레임 시간과 GC Alloc을 기록합니다.
+
+리팩토링 전에는 **프리로드가 없었습니다.** 게임플레이 도중 처음 등장하는 이펙트를 그 자리에서 로드했고, 그때 프레임이 크게 튀었습니다. 프리로드는 이 리팩토링으로 들어온 것이므로 그 이득도 리팩토링의 몫입니다.
+
+**첫 스폰 최악 프레임 256.5 ms → 91.3 ms (−64%)**
+
+이 이득이 어디서 왔는지 분해하려고 대조군 두 행을 넣었습니다. 특히 2행은 **옛 구조에 프리로드만 억지로 붙인 것**입니다. 옛 코드에는 무엇을 언제 올릴지 정할 구조가 없어서, 주소를 직접 순회해 로드하는 방식으로 흉내 냈습니다.
+
+| 조건 | 첫 스폰 최악 프레임 | GC | 640회 스폰 | GC |
+|---|---:|---:|---:|---:|
+| **리팩토링 전** — 프리로드 없음 (실제 상태) | 256.5 ms | 4.59 MB | 58.0 ms | 1.42 MB |
+| 리팩토링 전 + 프리로드 (대조군) | 106.8 ms | 4.44 MB | 65.9 ms | 1.53 MB |
+| 현재 − 프리로드 (대조군) | 255.0 ms | 4.65 MB | 62.1 ms | 1.13 MB |
+| **현재** — 프리로드 사용 (실제 상태) | **91.3 ms** | 4.28 MB | 62.3 ms | 1.36 MB |
+
+<sub>Unity 6000.3 에디터 · 프로파일러 활성 상태 기준.</sub>
+
+**① 이득의 대부분은 프리로드입니다.** 256.5 → 106.8 ms. 로드 비용이 게임플레이에서 로딩 단계로 옮겨간 몫입니다.
+
+**② 나머지는 스코프 캐시가 가져갑니다.** 106.8 → 91.3 ms. 옛 구조는 미리 올려둬도 스폰할 때 Addressables를 다시 거치지만, 지금은 캐시에 바로 적중합니다.
+
+**③ 구조 변경 자체는 GC 할당에서 드러났습니다.** 640회 스폰 구간에서 1.42 → 1.13 MB, 1.53 → 1.36 MB로 **두 조건 모두 같은 방향으로 11~20% 줄었습니다.** 인스턴스마다 Addressables 핸들을 만들지 않게 한 결과이고, 시간이 아니라 할당량으로 나타났습니다.
+
+<!-- ▼ 촬영 #8 · 프로파일러 before / after (스크린샷 2장)
+     표의 1행과 4행(= 실제 상태 두 개)을 찍습니다. 워밍업 120프레임 직후,
+     첫 소환이 일어나는 121프레임의 Hierarchy에서 "Bench.ColdSpawn" 행이 보이게 캡처.
+       리팩토링 전(프리로드 없음)  약 256ms
+       현재(프리로드 사용)         약  91ms
+     주의: CPU Usage 그래프는 Y축이 자동 스케일이라 봉우리 높이가 둘 다 비슷해 보입니다.
+     왼쪽 ms 눈금이 같이 들어가게 잡으세요.
+     URL을 채운 뒤 이 주석 기호를 지우세요.
+
+| 리팩토링 전 | 리팩토링 후 |
+|:---:|:---:|
+| ![before](URL) | ![after](URL) |
+-->
+
+### 재보고 나서야 안 것
+
+재기 전에는 인스턴스당 핸들을 없앤 효과가 **반복 스폰 시간**에서 크게 나올 거라고 봤습니다. 그런데 풀링 때문에 두 번째 라운드부터는 인스턴스 생성이 아예 일어나지 않아서, 시간으로는 잴 수가 없는 구조였습니다. 같은 변경이 GC 할당에서는 일관되게 드러났고요. 재보지 않았으면 엉뚱한 것을 성과로 적었을 겁니다.
+
+프리로드 없이 비교하면 첫 스폰 비용이 두 버전에서 똑같습니다(256.5 vs 255.0). Addressables 그룹이 `Pack Together`(단일 번들)이라, 어느 이펙트를 먼저 건드리든 그 순간 번들 전체가 올라오기 때문입니다. 같은 이유로 `ReleaseSceneAssets()`로 Scene 스코프를 버려도 **번들 참조가 남아 메모리가 반납되지 않습니다.**
+
+수명을 코드로 나누는 것과, 번들을 물리적으로 나누는 것은 별개였습니다. 그룹 분할은 다음 작업입니다.
+
+<br/>
+
+## 2. Behaviour Tree — AI를 노드로 조립하는 에디터
 
 > `Assets/BehaviourTree/`
 
@@ -187,7 +321,7 @@ tree.Init(actor, Repeat);
 
 <br/>
 
-## 2. UI — 패드로 다룰 수 있는 UI 프레임워크
+## 3. UI — 패드로 다룰 수 있는 UI 프레임워크
 
 > `Assets/Scripts/UI/`, `Assets/Scripts/Utils/Managers/UIManager.cs`
 
@@ -228,8 +362,8 @@ UI 프리팹은 `AddressablePooling`으로 풀링되고, 루트(`@UI_Root`)는 `
 
 Unity 기본 UI는 **마우스를 전제로 만들어져 있습니다.** 게임패드를 지원하려 하니 기본 제공되는 것으로는 부족했습니다.
 
-- **`Selectable`의 자동 내비게이션은 인접 요소만 봅니다.** 인벤토리 그리드에서 끝 칸에 도달했을 때 반대편으로 순환시키거나, 장비창 맨 아래에서 아래를 누르면 인벤토리창으로 넘어가게 하는 처리를 표현할 수 없었습니다.
-- **포커스가 개별 요소 단위입니다.** 실제로 필요한 건 "지금 포커스가 장비창 그룹에 있다"는 그룹 단위 개념인데, 이게 없으니 창 단위 처리를 매번 손으로 짜야 했습니다.
+- **`Selectable`의 자동 내비게이션은 인접 요소만 봅니다.** 인벤토리 그리드 끝 칸에서 반대편으로 순환하거나, 장비창 맨 아래에서 인벤토리창으로 넘어가는 처리를 표현할 수 없었습니다.
+- **포커스가 개별 요소 단위입니다.** 실제로 필요한 건 "지금 포커스가 장비창 그룹에 있다"는 그룹 단위 개념인데, 없으니 창 단위 처리를 매번 손으로 짜야 했습니다.
 - **요소마다 상태 처리가 제각각이었습니다.** hover / select / pressed / disable을 버튼과 슬라이더가 각자 구현하면서 연출과 동작이 서로 달라졌습니다.
 
 ### 접근
@@ -254,13 +388,7 @@ public enum UIElementState
 `[Flags]`라 "선택 + 호버" 같은 복합 상태를 그대로 표현합니다. 연출은 `WillStateChange` / `StateChanged` 이벤트로 분리해서(`UIEffector`), 상태 로직과 애니메이션이 섞이지 않게 했습니다.
 
 **그룹 포커스 — 경계에서의 동작을 데이터로**
-`FocusParent`가 자식 요소들의 포커스를 그룹 단위로 관리합니다.
-
-```csharp
-public enum NavigationMode { Horizontal, Vertical, Inventory }
-```
-
-`Inventory` 모드는 그리드 탐색용이고, **끝에 도달했을 때의 동작을 방향별로 지정**할 수 있습니다.
+`FocusParent`가 자식 요소들의 포커스를 그룹 단위로 관리합니다. 탐색 방식은 `Horizontal / Vertical / Inventory` 셋이고, 그리드용인 `Inventory` 모드는 **끝에 도달했을 때의 동작을 방향별로 지정**할 수 있습니다.
 
 ```csharp
 public struct TableNavigationData
@@ -277,33 +405,12 @@ public struct TableNavigationData
 이 델리게이트 덕분에 **창과 창 사이 포커스 이동을 UI 코드 수정 없이 인스펙터에서 연결**할 수 있습니다.
 
 **창 간 이동 — 규칙을 한 곳에 모음**
-`UI_NavigationController`가 창 사이 이동 규칙을 리스트로 받아 내부에서 맵으로 변환합니다.
-
-```csharp
-public struct NavigationRule
-{
-    public MonoBehaviour origin;
-    public NavigationDirection direction;
-    public MonoBehaviour destination;
-}
-```
-
-입력을 각 UI가 알아서 처리하는 대신 컨트롤러가 전체 흐름을 쥐고 있어서, **포커스가 지금 어디에 있고 다음에 어디로 갈지가 한 곳에서 파악**됩니다.
+`UI_NavigationController`가 `출발 UI · 방향 · 도착 UI` 규칙을 리스트로 받아 내부에서 맵으로 변환합니다. 입력을 각 UI가 알아서 처리하는 대신 컨트롤러가 전체 흐름을 쥐고 있어서, **포커스가 지금 어디에 있고 다음에 어디로 갈지가 한 곳에서 파악**됩니다.
 
 ### 이 구조에서 신경 쓴 지점
 
 **① 입력 장치가 바뀌면 UI가 즉시 따라갑니다.**
-`GameManager`가 매 프레임 입력 장치를 감지해서, 패드가 눌리면 **UI의 키 안내 이미지가 그 자리에서 패드 아이콘으로 바뀌고** 커서가 잠깁니다.
-
-```csharp
-if (Gamepad.current != null && Gamepad.current.allControls.Any(x => x.IsPressed()))
-{
-    DataAccess.Settings.Data.LoadGamePadImages();
-    // ... OnKeyChange 발화, 커서 숨김
-}
-```
-
-키 리매핑(`KeySettingManager`) 결과도 이 경로로 UI에 반영되고 영구 저장됩니다.
+`GameManager`가 매 프레임 입력 장치를 감지해서, 패드가 눌리면 **UI의 키 안내 이미지가 그 자리에서 패드 아이콘으로 바뀌고** 커서가 잠깁니다. 키 리매핑(`KeySettingManager`) 결과도 같은 경로로 반영되고 영구 저장됩니다.
 
 **② 포커스 방식을 요소별로 고를 수 있게 했습니다.**
 마우스만 올려도 포커스가 가야 하는 UI가 있고, 클릭해야만 가야 하는 UI가 있습니다. `isFocusSelect` 한 값으로 요소·그룹 단위 전환이 됩니다.
@@ -321,7 +428,7 @@ if (Gamepad.current != null && Gamepad.current.allControls.Any(x => x.IsPressed(
 
 <br/>
 
-## 3. Actor — 모든 유닛의 기본 클래스
+## 4. Actor — 모든 유닛의 기본 클래스
 
 > `Assets/Scripts/Actor/`
 
@@ -344,14 +451,6 @@ Actor  (추상)
 
 `Actor`가 "체력도 있고 스탯도 있고 이동도 하는 만능 클래스"인 것이 아닙니다. **능력 하나하나를 인터페이스로 쪼개 두고, Actor는 그중 유닛에 공통인 것만 골라 구현**합니다.
 
-```csharp
-public abstract partial class Actor : MonoBehaviour,
-    IOnHit, IOnHitReaction, IAttackable, IDirection, IAnimator   // Actor.cs
-public partial class Actor : IEventUser                          // Actor.Event.cs
-public partial class Actor : IStatUser, IBarrierUser             // Actor.Stat.cs
-public partial class Actor : IImmunity                           // Actor.Immunity.cs
-```
-
 | 인터페이스 | "이 대상은 …" | 구현 파일 |
 |---|---|---|
 | `IOnHit` | 맞을 수 있다 (체력 · 무적 · 사망) | `Actor.cs` |
@@ -364,7 +463,7 @@ public partial class Actor : IImmunity                           // Actor.Immuni
 | `IBarrierUser` | 배리어를 가진다 | `Actor.Stat.cs` |
 | `IImmunity` | 면역을 가진다 | `Actor.Immunity.cs` |
 
-**`partial` 파일을 나눈 기준이 곧 인터페이스입니다.** 파일 하나가 인터페이스 하나(또는 한 묶음)의 구현을 담당하므로, 어떤 능력이 어디 있는지 찾을 때 선언부만 보면 됩니다. 인터페이스가 없는 `Actor.Buff.cs` · `Actor.View.cs`는 각각 `BuffSystem` 컴포넌트와 렌더러로 가는 통로 역할만 합니다.
+**`partial` 파일을 나눈 기준이 곧 인터페이스입니다.** 어떤 능력이 어디 있는지 찾을 때 선언부만 보면 됩니다.
 
 파생 클래스는 여기에 자기 능력만 더 붙입니다.
 
@@ -373,9 +472,7 @@ public partial class Player  : IDashUser, IMovable, IPlayer
 public partial class Monster : Actor, IRecognition, IMovable, IPoolObject
 ```
 
-이동(`IMovable`)이 `Actor`가 아니라 `Player` · `Monster`에 있는 이유는, **움직이지 않는 유닛도 있기 때문**입니다. 실제로 `Summon`은 `Actor`만 상속하고 `IMovable`을 붙이지 않습니다 — 맞고 죽을 수는 있어도 스스로 이동하지는 않기 때문입니다. 이동을 `Actor`에 넣었다면 `Summon`이 쓰지 않는 코드를 떠안았을 겁니다.
-
-핵심은 **여기에 기능을 어떻게 더하느냐**입니다.
+이동(`IMovable`)이 `Actor`가 아니라 `Player` · `Monster`에 있는 이유는 **움직이지 않는 유닛도 있기 때문**입니다. `Summon`은 맞고 죽을 수는 있어도 스스로 이동하지 않아서 `IMovable`을 붙이지 않습니다.
 
 ### 문제
 
@@ -395,7 +492,7 @@ public interface IAttackStrategy
 }
 ```
 
-덕분에 `Actor`를 전혀 상속하지 않는 오브젝트도 같은 전투 파이프라인에 그대로 들어옵니다.
+덕분에 `Actor`를 상속하지 않는 오브젝트도 같은 전투 파이프라인에 들어옵니다.
 
 ```csharp
 public class DestroyableObject : MonoBehaviour, IOnHit   // 유닛이 아닌 파괴 가능 오브젝트
@@ -408,13 +505,10 @@ public class DestroyableObject : MonoBehaviour, IOnHit   // 유닛이 아닌 파
 ```csharp
 public interface IMovable : IMonoBehaviour
 {
-    public UnitMoveComponent MoveComponent { get; }   // 이것만 구현하면
-
-    public void MoveOn()  => MoveComponent?.MoveOn();  // 아래는 전부 따라온다
-    public void JumpOn()  => MoveComponent?.JumpOn();
-    public void Stop()    => MoveComponent?.Stop();
-    public void KnockBack(Vector2 src, KnockBackData data, UnityAction onBegin, UnityAction onEnd)
-        => MoveComponent?.KnockBack(src, data, onBegin, onEnd);
+    public UnitMoveComponent MoveComponent { get; }    // 이것만 구현하면
+    public void MoveOn() => MoveComponent?.MoveOn();   // 아래는 전부 따라온다
+    public void JumpOn() => MoveComponent?.JumpOn();
+    public void Stop()   => MoveComponent?.Stop();
 }
 ```
 
@@ -455,12 +549,6 @@ actor.AddEvent(EventType.OnHit, OnHitHandler);
 
 **이벤트 실행 순서가 계산 순서보다 앞선다**는 점이 중요합니다. 데미지 증가·크리 확률 증가 효과가 계산에 반영되려면 계산 전에 이벤트가 돌아야 하기 때문입니다.
 
-```csharp
-// 이벤트 실행을 데미지 계산 전에 호출해야함
-// 데미지 증가, 크리티컬 확률 증가 등 효과들이 적용되어야 하기 때문
-_actor.ExecuteEvent(EventType.OnAttackSuccess, eventParameters);
-```
-
 임시 스탯 보정은 `BonusStatEvent`에 델리게이트를 붙였다가 `finally`에서 반드시 떼어내는 방식으로, 예외가 나도 보정이 남지 않게 했습니다.
 
 <!-- ▼ 촬영 #5 · 전투 이벤트 흐름 (GIF, 5~8초)
@@ -479,7 +567,7 @@ _actor.ExecuteEvent(EventType.OnAttackSuccess, eventParameters);
 | **구현** | `partial` 파일 하나가 인터페이스 하나를 구현 | `Actor.Stat.cs` → `IStatUser`, `IBarrierUser` |
 | **실제 로직** | 구현 파일은 대부분 위임만 하고, 로직은 별도 클래스에 | `StatManager`, `BarrierCalculator`, `ImmunityController`, `ActorEvents`, `ActorCombat`, `EffectSpawner` |
 
-`Actor.cs` 자체는 컨테이너·생명주기·방향·체력만 들고 있고, 나머지는 전부 인터페이스 선언과 위임입니다. 새 능력이 생기면 **인터페이스를 하나 만들고 → `partial` 파일을 하나 늘리고 → 로직 클래스를 하나 붙이면** 되며, 기존 `Actor.cs`는 그대로 둡니다.
+`Actor.cs`는 컨테이너·생명주기·방향·체력만 들고 있고 나머지는 전부 위임입니다. 새 능력이 생기면 **인터페이스 하나 + `partial` 파일 하나 + 로직 클래스 하나**를 더하면 되고, 기존 `Actor.cs`는 그대로 둡니다.
 
 렌더링도 같은 방식입니다. `IActorRenderer`로 추상화해서 일반 스프라이트(`ActorNormalRenderer`)와 Spine을 교체할 수 있고, `Actor`는 어느 쪽인지 모릅니다.
 
@@ -506,7 +594,7 @@ _actor.ExecuteEvent(EventType.OnAttackSuccess, eventParameters);
 
 <br/>
 
-## 4. 스킬 — 사용 방식과 스탯을 따로 갈아끼우는 구조
+## 5. 스킬 — 사용 방식과 스탯을 따로 갈아끼우는 구조
 
 > `Assets/Scripts/Skill/`
 
@@ -607,130 +695,6 @@ public virtual void Activate(PlayerPassiveSkill passive, int level) { ... }
      URL을 채운 뒤 이 주석 기호를 지우세요.
 
 ![스킬트리](URL)
--->
-
-<br/>
-
-## 5. 리소스 레이어 — 애셋 로딩 · 수명 · 프리로드
-
-> `Assets/Scripts/Utils/Resource/`
-
-### 어떤 기능인가
-
-**Addressables로 애셋을 올리고 내리는 일 전부를 담당하는 레이어입니다.** 게임 코드가 `Addressables` API를 직접 부르는 곳은 한 군데도 없고, 전부 이 레이어를 거칩니다.
-
-호출부가 보는 건 `ResourceUtil` 하나입니다.
-
-```csharp
-// 로드 — 어느 스코프에 올릴지만 지정한다
-var icon   = ResourceUtil.Load<Sprite>("BuffIcon_Poison");
-var prefab = ResourceUtil.Load<GameObject>("Slime", AssetLifetime.Scene);
-
-// 인스턴스 생성
-var go = ResourceUtil.Instantiate("HitEffect");
-
-// 씬 진입 전 프리로드 (로딩 화면에서 호출)
-await ResourceUtil.PreloadSceneAsync("Stage1", progress);
-
-// 씬 이탈 시 정리 — 이 한 줄이 해제의 전부
-ResourceUtil.ReleaseSceneAssets();
-```
-
-| 구성 | 역할 |
-|---|---|
-| `ResourceUtil` | 유일한 진입점. 로드 / 생성 / 프리로드 / 정리 |
-| `AssetScope` | 수명이 같은 애셋 묶음. Addressables 핸들의 **소유자** |
-| `AssetRegistry` | 스코프 보관소 (`Global` / `Scene`) |
-| `PreloadManifest` | 미리 올릴 애셋 목록 (ScriptableObject) |
-| `SceneManifestTable` | 씬 이름 → 매니페스트 매핑 |
-| `AddressablePooling` | 주소 단위 오브젝트 풀 |
-
-이 구조가 나온 이유는 아래와 같습니다.
-
-### 문제
-
-초기 구조는 `Addressables.LoadAssetAsync`를 필요한 곳에서 그때그때 호출하고, 호출부가 각자 `Release`를 책임지는 방식이었습니다. 두 가지가 문제였습니다.
-
-- **해제 책임이 흩어짐** — 누가 언제 해제해야 하는지 코드마다 달라서, 핸들 누수와 이중 해제가 동시에 생겼습니다.
-- **런타임 동기 로드** — 전투 중 처음 등장하는 이펙트·사운드가 그 자리에서 로드되면서 프레임 스파이크와 GC 스파이크가 발생했습니다.
-
-### 접근
-
-애셋을 **개별로 추적하지 않고, 수명이 같은 것끼리 묶어 통째로 해제**하는 구조로 바꿨습니다.
-
-```csharp
-public enum AssetLifetime
-{
-    Global,  // 게임 종료까지 유지. 공용 UI 프리팹, 사운드 믹서, 공용 데이터
-    Scene    // 씬을 벗어날 때 일괄 해제. 스테이지 전용 몬스터/배경/BGM
-}
-```
-
-**`AssetScope`** — 수명 단위 하나. 로드한 `AsyncOperationHandle`의 소유권은 전적으로 이 클래스에 있고, 해제 경로는 `Dispose` 하나뿐입니다. 그래서 호출부는 `Addressables.Release`를 부를 일이 아예 없습니다.
-
-**`AssetRegistry`** — 스코프 보관소. 씬 전환 시 `ReleaseScene()` 한 번으로 그 씬이 올린 애셋이 전부 반납됩니다.
-
-```csharp
-public static void ReleaseScene()
-{
-    Scene.Dispose();
-    Scene = new AssetScope("Scene");
-}
-```
-
-**프리로드를 데이터로 분리** — 무엇을 미리 올릴지는 코드가 아니라 ScriptableObject가 들고 있습니다.
-
-```csharp
-[CreateAssetMenu(menuName = "Config/Preload Manifest")]
-public class PreloadManifest : ScriptableObject
-{
-    public string[] labels;         // Addressables 라벨 단위로 통째로 로드
-    public string[] addresses;      // 개별 주소 지정
-    public PrewarmEntry[] prewarm;  // 풀에 미리 생성해 둘 오브젝트
-}
-```
-
-`SceneManifestTable`이 씬 이름 → 매니페스트를 매핑하고, 로딩 화면이 씬을 활성화하기 직전에 `PreloadSceneAsync(sceneName)`을 호출합니다. **오브젝트 풀 prewarm까지 이 단계에 포함**시켜서, 게임플레이 중에는 로드도 인스턴스 생성도 일어나지 않습니다.
-
-### 이 구조에서 신경 쓴 지점
-
-**① 프리로드 누락을 사람이 찾지 않게 했습니다.**
-매니페스트에 빠진 애셋은 결국 런타임 동기 로드로 이어지는데, 이건 눈으로 찾을 수가 없습니다. 그래서 `AssetScope`가 동기 로드된 주소를 기록하고, 진단 API로 뽑아볼 수 있게 했습니다.
-
-```csharp
-/// <summary>프리로드되지 않아 동기 로드된 주소 목록을 출력한다. 매니페스트 작성용.</summary>
-public static void LogPreloadReport() => AssetScope.LogSyncLoadReport();
-```
-
-한 바퀴 플레이하고 이 로그를 그대로 매니페스트에 옮기면 됩니다.
-
-**② 프리팹 인스턴스가 핸들을 갖지 않게 했습니다.**
-`Addressables.InstantiateAsync`는 인스턴스마다 핸들을 만들어서 풀링과 충돌합니다. 그래서 **프리팹은 스코프가 핸들 하나로 붙잡고, 인스턴스는 순수 `Object.Instantiate`로** 만듭니다. 인스턴스 파기는 `Destroy`만으로 충분해집니다.
-
-**③ 도메인 리로드를 꺼도 깨지지 않게 했습니다.**
-Enter Play Mode Options로 도메인 리로드를 끄면 static이 유지되어 이전 플레이 세션의 죽은 핸들이 남습니다.
-
-```csharp
-[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-private static void ResetStatics()
-{
-    Global = new AssetScope("Global");
-    Scene  = new AssetScope("Scene");
-}
-```
-
-**④ BGM은 라벨 통째로 올리지 않습니다.**
-SFX는 짧고 전역에서 쓰이므로 라벨 단위로 다 올리지만, BGM은 클립 하나가 수 MB라 전부 올리면 메모리를 크게 먹습니다. 씬에서 쓰는 BGM만 씬 매니페스트에 등록해서 Scene 스코프와 함께 해제되도록 했습니다.
-
-<!-- ▼ 촬영 #8 · 프로파일러 before / after (스크린샷 2장)  ★ 이 문서에서 가장 설득력 있는 자료
-     찍는 법: 리팩토링 직전 커밋(44ade73)을 체크아웃해 같은 구간을 플레이하며 Profiler를 캡처하고,
-     현재 버전으로 돌아와 동일 구간을 다시 캡처합니다. GC Alloc과 프레임 스파이크가 보이도록 잡으세요.
-     비교 구간은 "전투 이펙트가 처음 등장하는 순간"이 차이가 가장 큽니다.
-     URL을 채운 뒤 이 주석 기호를 지우세요.
-
-| 리팩토링 전 | 리팩토링 후 |
-|:---:|:---:|
-| ![before](URL) | ![after](URL) |
 -->
 
 <br/>
@@ -1073,7 +1037,7 @@ https://github.com/user-attachments/assets/URL
 
 ### 메모리
 
-SFX는 라벨 단위로 전역 프리로드하고, BGM은 클립 하나가 수 MB이므로 씬 매니페스트에 등록해 Scene 스코프로 관리합니다. ([5번 항목](#5-리소스-레이어--애셋-로딩--수명--프리로드) 참고)
+SFX는 라벨 단위로 전역 프리로드하고, BGM은 클립 하나가 수 MB이므로 씬 매니페스트에 등록해 Scene 스코프로 관리합니다. ([1번 항목](#1-리소스-레이어--애셋-로딩--수명--프리로드) 참고)
 
 </details>
 
