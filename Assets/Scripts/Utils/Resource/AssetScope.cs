@@ -27,10 +27,9 @@ namespace Default
         // 프리로드가 채워두면 이후 Load<T>가 타입 키로 못 찾아도 여기서 찾아 재로드를 피한다.
         private readonly Dictionary<string, Object> _byAddress = new();
 
-        // 위 두 개의 라벨 버전. 키가 주소가 아니라 (라벨,타입)이고, 값이 애셋 하나가 아니라 배열이다.
-        // 라벨 로드는 핸들 하나가 여러 애셋을 통째로 붙잡으므로 개별 애셋 캐시와 섞을 수 없어 따로 둔다.
+        // 라벨 조회 결과 캐시. 같은 라벨을 다시 요청했을 때 주소 전개를 반복하지 않기 위한 것이며,
+        // 애셋의 소유권은 개별 주소 핸들(_assetHandles)이 갖는다.
         private readonly Dictionary<AssetKey, Array> _labelAssets = new();
-        private readonly Dictionary<AssetKey, AsyncOperationHandle> _labelHandles = new();
 
         // 로그 식별용 이름("Global" / "Scene"). 동작에는 관여하지 않는다.
         private readonly string _name;
@@ -40,8 +39,8 @@ namespace Default
             _name = name;
         }
 
-        /// <summary>이 스코프가 붙잡고 있는 핸들 수(개별 + 라벨). 진단용.</summary>
-        public int LoadedCount => _assetHandles.Count + _labelHandles.Count;
+        /// <summary>이 스코프가 붙잡고 있는 핸들 수. 진단용.</summary>
+        public int LoadedCount => _assetHandles.Count;
 
         /// <summary>보유한 핸들을 전부 Addressables에 반납하고 캐시를 비운다. 이 스코프의 유일한 해제 경로.</summary>
         public void Dispose()
@@ -50,14 +49,9 @@ namespace Default
                 if (handle.IsValid())
                     Addressables.Release(handle);
 
-            foreach (var handle in _labelHandles.Values)
-                if (handle.IsValid())
-                    Addressables.Release(handle);
-
             _assetHandles.Clear();
             _assets.Clear();
             _byAddress.Clear();
-            _labelHandles.Clear();
             _labelAssets.Clear();
         }
 
@@ -133,11 +127,12 @@ namespace Default
         }
 
         /// <summary>동기 로드 본체. 캐시 조회 → (없으면) 로드 후 완료까지 대기 → 등록. Load/LoadAsync가 공유하는 흐름의 동기 버전.</summary>
-        private TAsset LoadAsset<TAsset>(string address) where TAsset : Object
+        /// <param name="report">라벨 전개로 불린 경우 false. 라벨 단위로 이미 한 번 보고했으므로 주소마다 또 경고하지 않는다.</param>
+        private TAsset LoadAsset<TAsset>(string address, bool report = true) where TAsset : Object
         {
             if (TryGetCached<TAsset>(address, out var hit)) return hit;
 
-            ReportSyncLoad(address, typeof(TAsset));
+            if (report) ReportSyncLoad(address, typeof(TAsset));
 
             var handle = Addressables.LoadAssetAsync<TAsset>(address);
             handle.WaitForCompletion();
@@ -145,7 +140,12 @@ namespace Default
             return Register<TAsset>(address, handle);
         }
 
-        /// <summary>라벨 동기 로드 본체. 핸들 1개가 배열 전체를 붙잡으므로 _labelHandles/_labelAssets에 등록한다.</summary>
+        /// <summary>
+        ///     라벨 동기 로드 본체. 라벨을 주소 목록으로 펼친 뒤 하나씩 로드한다.
+        ///     Addressables.LoadAssetsAsync는 핸들 하나로 배열 전체를 붙잡지만 어느 애셋이 어느 주소인지
+        ///     남기지 않아서, 이후 Load(주소) 호출이 캐시(_byAddress)에 적중하지 못한다.
+        ///     비동기 프리로드(PreloadLabelsAsync)가 이미 쓰는 방식에 맞춘다.
+        /// </summary>
         private TAsset[] LoadAssets<TAsset>(string label) where TAsset : Object
         {
             var key = new AssetKey(label, typeof(TAsset));
@@ -154,18 +154,21 @@ namespace Default
 
             ReportSyncLoad($"[label] {label}", typeof(TAsset));
 
-            var handle = Addressables.LoadAssetsAsync<TAsset>(label, null);
-            handle.WaitForCompletion();
-
-            if (handle.Status != AsyncOperationStatus.Succeeded || handle.Result == null)
+            var addresses = ResolveAddresses(new[] { label });
+            if (addresses.Count == 0)
             {
-                Debug.LogError($"[AssetScope:{_name}] Failed to load label '{label}' as {typeof(TAsset).Name}.");
-                if (handle.IsValid()) Addressables.Release(handle);
+                Debug.LogError($"[AssetScope:{_name}] Label '{label}' resolved to no addresses.");
                 return null;
             }
 
-            var result = handle.Result.ToArray();
-            _labelHandles[key] = handle;
+            var loaded = new List<TAsset>(addresses.Count);
+            foreach (var address in addresses)
+            {
+                var asset = LoadAsset<TAsset>(address, false);
+                if (asset != null) loaded.Add(asset);
+            }
+
+            var result = loaded.ToArray();
             _labelAssets[key] = result;
             return result;
         }
@@ -230,6 +233,36 @@ namespace Default
                 await LoadAssetAsync<Object>(addresses[i], ct);
                 progress?.Report((i + 1) / (float)addresses.Count);
             }
+        }
+
+        /// <summary>ResolveAddressesAsync의 동기 버전. 동기 라벨 로드 경로가 쓴다.</summary>
+        private List<string> ResolveAddresses(IReadOnlyList<string> labels)
+        {
+            var addresses = new List<string>();
+            if (labels == null || labels.Count == 0) return addresses;
+
+            var valid = labels.Where(x => !string.IsNullOrEmpty(x)).ToArray();
+            if (valid.Length == 0) return addresses;
+
+            var handle = Addressables.LoadResourceLocationsAsync(valid, Addressables.MergeMode.Union);
+            handle.WaitForCompletion();
+
+            if (handle.Status == AsyncOperationStatus.Succeeded && handle.Result != null)
+            {
+                var seen = new HashSet<string>();
+                foreach (var location in handle.Result)
+                    if (seen.Add(location.PrimaryKey))
+                        addresses.Add(location.PrimaryKey);
+            }
+            else
+            {
+                Debug.LogError($"[AssetScope:{_name}] Failed to resolve labels: {string.Join(", ", valid)}");
+            }
+
+            // 위치 목록 핸들은 애셋을 붙잡지 않으므로 즉시 해제해도 된다.
+            if (handle.IsValid()) Addressables.Release(handle);
+
+            return addresses;
         }
 
         /// <summary>라벨 목록 → 그 라벨이 가리키는 주소 목록으로 펼친다. 애셋을 로드하지는 않는다(위치 조회만).</summary>
