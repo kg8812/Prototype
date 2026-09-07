@@ -335,7 +335,10 @@ UI는 역할별로 타입이 나뉘고, `UIManager`가 타입마다 다른 생�
 | `UI_Ingame` | 월드 좌표 추종 (몬스터 HP바 등) | 리스트 |
 | `UI_Hover` | 마우스 추종 (드래그 아이템 등) | 최상위 order |
 
-UI 프리팹은 `AddressablePooling`으로 풀링되고, 루트(`@UI_Root`)는 `DontDestroyOnLoad`로 유지됩니다.
+UI 프리팹은 `AddressablePooling`으로 풀링되고, 활성화 시 루트(`@UI_Root`)로, 비활성화 시 풀링으로 자동으로 들어갑니다.
+
+<img width="255" height="100" alt="Image" src="https://github.com/user-attachments/assets/51c206b7-ffc3-4954-9c65-7dc7736e89e2" />
+<img width="262" height="342" alt="image" src="https://github.com/user-attachments/assets/582e7f52-0664-4804-a757-a86c3112eb97" />
 
 HUD 캐릭터 UI (Main) , 몬스터 HP바 (Ingame) , 알림 메시지 (Popup) 세가지 유형이 오더에 따라 표시되는 모습
 <img width="1516" height="862" alt="Image" src="https://github.com/user-attachments/assets/557969b7-eefd-4759-b44e-9bfc73761e6a" />
