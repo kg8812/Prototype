@@ -17,7 +17,7 @@
 | **엔진** | Unity 6000.3 / URP (2D) |
 | **핵심 패키지** | Addressables, Input System, Cinemachine, 2D Feature Set |
 | **외부 라이브러리** | Odin Inspector, DOTween, Easy Save 3, Spine, Newtonsoft.Json |
-| **규모** | 스크립트 490개 / 약 39,500줄 (외부 라이브러리 제외) |
+| **규모** | 스크립트 약 500개 (외부 라이브러리 제외) |
 | **에디터 툴** | Behaviour Tree 비주얼 에디터 (UI Toolkit / GraphView) |
 
 <br/>
