@@ -316,7 +316,9 @@ tree.Init(actor, Repeat);
 
 **UI를 여닫는 계층 관리부터, 버튼·슬라이더 같은 공용 요소, 키보드/패드 포커스 이동까지를 묶은 프레임워크입니다.** 프로젝트에서 가장 큰 부분입니다.
 
-네 층으로 나뉘어 있습니다.
+유니티 기본 UI 기능만으로는 패드 조작을 지원하기 어려워서, UI 시스템 전체를 직접 스크립트로 새로 만들었습니다.
+
+스크립트는 네 층으로 나뉘어 있습니다.
 
 | 층 | 담당 | 대표 클래스 |
 |---|---|---|
@@ -340,10 +342,15 @@ UI 프리팹은 `AddressablePooling`으로 풀링되고, 활성화 시 루트(`@
 <img width="255" height="100" alt="Image" src="https://github.com/user-attachments/assets/51c206b7-ffc3-4954-9c65-7dc7736e89e2" />
 <img width="262" height="342" alt="image" src="https://github.com/user-attachments/assets/582e7f52-0664-4804-a757-a86c3112eb97" />
 
-HUD 캐릭터 UI (Main) , 몬스터 HP바 (Ingame) , 알림 메시지 (Popup) 세가지 유형이 오더에 따라 표시되는 모습
-<img width="1516" height="862" alt="Image" src="https://github.com/user-attachments/assets/557969b7-eefd-4759-b44e-9bfc73761e6a" />
+<br/><br/>
 
-<img width="810" height="465" alt="Image" src="https://github.com/user-attachments/assets/27bd2432-04e4-42ab-b7ab-4cf4a18ff534" />
+**HUD 캐릭터 UI (Main) , 몬스터 HP바 (Ingame) , 알림 메시지 (Popup) 세가지 유형이 레이어에 따라 화면에 표시되는 모습**
+
+<br/>
+
+<img width="600" height="360" alt="Image" src="https://github.com/user-attachments/assets/557969b7-eefd-4759-b44e-9bfc73761e6a" />
+
+<img width="600" height="360" alt="Image" src="https://github.com/user-attachments/assets/27bd2432-04e4-42ab-b7ab-4cf4a18ff534" />
 
 
 ### 문제
@@ -405,6 +412,8 @@ public struct TableNavigationData
 
 **③ 상태 변화를 잠글 수 있게 했습니다.**
 연출 중이거나 확인 대기 중일 때 상태가 바뀌면 안 되므로, `isFrozen`으로 모든 상태 변화를 막습니다.
+
+<br/>
 
 [해당 시스템으로 만들어진 UI 조작 예시]
 
