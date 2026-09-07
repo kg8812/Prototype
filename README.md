@@ -113,7 +113,7 @@ ResourceUtil.ReleaseSceneAssets();
 
 ### 접근
 
-애셋을 **개별로 추적하지 않고, 수명이 같은 것끼리 묶어 통째로 해제**하는 구조로 바꿨습니다.
+애셋을 **개별로 추적하지 않고, 수명이 같은 것끼리 묶어 한곳에서 통째로 관리하고 해제**하는 구조로 바꿨습니다.
 
 ```csharp
 public enum AssetLifetime
@@ -139,7 +139,7 @@ public class PreloadManifest : ScriptableObject
 }
 ```
 
-`SceneManifestTable`이 씬 이름 → 매니페스트를 매핑하고, 로딩 화면이 씬 활성화 직전에 `PreloadSceneAsync(sceneName)`을 부릅니다. **오브젝트 풀 prewarm까지 이 단계에 넣어서**, 게임플레이 중에는 로드도 인스턴스 생성도 일어나지 않습니다.
+`SceneManifestTable`이 씬 이름 → 매니페스트를 매핑하고, 로딩 화면이 씬 활성화 직전에 `PreloadSceneAsync(sceneName)`을 부릅니다. **오브젝트 풀 prewarm까지 이 단계에 넣어서**, 로딩화면에서 필요한 리소스를 미리 생성해 게임플레이 중에는 로드도 인스턴스 생성도 일어나지 않습니다.
 
 ### 이 구조에서 신경 쓴 지점
 
@@ -147,17 +147,16 @@ public class PreloadManifest : ScriptableObject
 매니페스트에서 빠진 애셋은 런타임 동기 로드로 이어지는데, 이건 눈으로 못 찾습니다. `AssetScope`가 동기 로드된 주소를 기록해두고 `ResourceUtil.LogPreloadReport()`로 뽑습니다. 한 바퀴 플레이한 뒤 그 로그를 매니페스트에 그대로 옮기면 됩니다.
 
 **② 프리팹 인스턴스가 핸들을 갖지 않게 했습니다.**
-`Addressables.InstantiateAsync`는 인스턴스마다 핸들을 만들어 풀링과 충돌합니다. **프리팹은 스코프가 핸들 하나로 붙잡고, 인스턴스는 `Object.Instantiate`로** 만듭니다. 파기는 `Destroy` 하나로 끝납니다.
-
-**③ 도메인 리로드를 꺼도 깨지지 않게 했습니다.**
-도메인 리로드를 끄면 static이 살아남아 이전 플레이 세션의 죽은 핸들이 남습니다. `RuntimeInitializeOnLoadMethod(SubsystemRegistration)`으로 스코프를 다시 만듭니다.
+`Addressables.InstantiateAsync`는 인스턴스마다 핸들을 만들어 풀링과 충돌합니다. **프리팹은 스코프가 핸들 하나로 붙잡고, 인스턴스는 `Object.Instantiate`로** 만듭니다. 미리 로드를 해두었기 때문에 instantiate를 해도 성능 저하가 일어나지 않습니다. 파기는 `Destroy` 하나로 끝납니다.
 
 **④ BGM은 라벨 통째로 올리지 않습니다.**
 SFX는 짧아서 라벨 단위로 다 올리지만, BGM은 클립 하나가 수 MB라 전부 올리면 메모리를 크게 먹습니다. 씬에서 쓰는 것만 씬 매니페스트에 등록합니다.
 
 ### 검증 — 성능 이득이 실제로 있는지 실험했습니다
 
-리팩토링 직전 커밋(`44ade73`)과 현재 버전으로 **같은 벤치마크 씬을 돌렸습니다.** 실제 게임 프로젝트에서 가져온 보스 이펙트 32종(31.8MB)을 스폰하면서 프레임 시간과 GC Alloc을 기록합니다.
+동기 로딩을 사용했던 리팩토링 직전 커밋과 현재 버전으로 **같은 벤치마크 씬을 돌렸습니다.** 실제 게임 프로젝트에서 가져온 보스 이펙트 32종(31.8MB)을 스폰하면서 프레임 시간과 GC Alloc을 기록합니다.
+
+실제 게임 프로젝트가 아니기 때문에 테스트 환경이 제한되었던 점 양해 부탁 드립니다.
 
 리팩토링 전에는 **프리로드가 없었습니다.** 게임플레이 도중 처음 등장하는 이펙트를 그 자리에서 로드했고, 그때 프레임이 크게 튀었습니다. 
 
@@ -174,16 +173,16 @@ SFX는 짧아서 라벨 단위로 다 올리지만, BGM은 클립 하나가 수 
 
 <sub>Unity 6000.3 에디터 · 프로파일러 활성 상태 기준.</sub>
 
+| 리팩토링 전 | 리팩토링 후 |
+|:---:|:---:|
+| <img width="1203" height="822" alt="Image" src="https://github.com/user-attachments/assets/be35076a-73a9-4ae8-ba8d-a92cf27ce125" /> | <img width="1237" height="830" alt="Image" src="https://github.com/user-attachments/assets/847a80a2-284a-4974-9662-3f3218f3c9ae" /> |
+
+
 **① 이득의 대부분은 프리로드입니다.** 256.5 → 106.8 ms. 로드 비용이 게임플레이에서 로딩 단계로 옮겨간 몫입니다.
 
 **② 나머지는 스코프 캐시가 가져갑니다.** 106.8 → 91.3 ms. 옛 구조는 미리 올려둬도 스폰할 때 Addressables를 다시 거치지만, 지금은 캐시에 바로 적중합니다.
 
 **③ 구조 변경 자체는 GC 할당에서 드러났습니다.** 640회 스폰 구간에서 1.42 → 1.28 MB, 1.53 → 1.29 MB로 **두 조건 모두 같은 방향으로 11~16% 줄었습니다.** 인스턴스마다 Addressables 핸들을 만들지 않게 한 결과이고, 시간이 아니라 할당량으로 나타났습니다.
-
-
-| 리팩토링 전 | 리팩토링 후 |
-|:---:|:---:|
-| <img width="1203" height="822" alt="Image" src="https://github.com/user-attachments/assets/be35076a-73a9-4ae8-ba8d-a92cf27ce125" /> | <img width="1237" height="830" alt="Image" src="https://github.com/user-attachments/assets/847a80a2-284a-4974-9662-3f3218f3c9ae" /> |
 
 
 <br/>
