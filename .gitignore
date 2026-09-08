@@ -97,3 +97,15 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Claude Code - 로컬 작업 산출물 (워크트리 사본, 머신별 설정, MCP 스크린샷)
+.claude/worktrees/
+.claude/settings.local.json
+
+# Unity 크래시 복구 잔여물
+/[Aa]ssets/_Recovery/
+/[Aa]ssets/_Recovery.meta
+
+# MCP 스크린샷 임시 출력
+/[Aa]ssets/[Ss]creenshots/
+/[Aa]ssets/[Ss]creenshots.meta
