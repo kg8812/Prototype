@@ -24,7 +24,7 @@ namespace Apis.BehaviourTreeTool
                 return State.Success;
             }
 
-            if (startTime + time > Time.time) return State.Success;
+            if (startTime + time < Time.time) return State.Success;
 
             mover?.ActorMovement.Move(_actor.Direction, 1);
 

@@ -47,6 +47,23 @@ namespace Apis.BehaviourTreeTool
             return state;
         }
 
+        /// <summary>
+        ///     실행 중이던 노드를 중단하고, 다음 진입 때 OnStart부터 다시 시작하도록 자신과 하위 노드를 되돌린다.
+        ///     state만 덮어쓰면 isStarted가 true로 남아 OnStart가 건너뛰어지므로 반드시 이 경로로 중단할 것.
+        /// </summary>
+        public void Abort()
+        {
+            if (isStarted)
+            {
+                OnStop();
+                isStarted = false;
+            }
+
+            state = State.Failure;
+
+            BehaviourTree.GetChildren(this).ForEach(child => child.Abort());
+        }
+
         public virtual void Init()
         {
         }
