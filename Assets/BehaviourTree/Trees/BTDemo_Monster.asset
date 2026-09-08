@@ -69,7 +69,7 @@ MonoBehaviour:
   state: 0
   isStarted: 0
   guid: 4c5080c4ebfa9f94dbcea3cce8eed44c
-  position: {x: 580.36597, y: 334.5925}
+  position: {x: 608, y: 328.00006}
   description: 
   blackBoard:
     currentNodeName: 
@@ -80,7 +80,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   children:
-  - {fileID: -167650032214591892}
+  - {fileID: 4981797450394831654}
   - {fileID: 7539295376916108920}
   - {fileID: 1486368394691920594}
 --- !u!114 &-3179649380596605321
@@ -182,7 +182,7 @@ MonoBehaviour:
   state: 0
   isStarted: 0
   guid: 818b20e7e0f22a641b1a555d802fd3d6
-  position: {x: 502.01517, y: 474.40002}
+  position: {x: 539.7401, y: 697.126}
   description: 
   blackBoard:
     currentNodeName: 
@@ -223,6 +223,8 @@ MonoBehaviour:
   - {fileID: -167650032214591892}
   - {fileID: 7539295376916108920}
   - {fileID: 1486368394691920594}
+  - {fileID: 3240991912169395703}
+  - {fileID: 4981797450394831654}
   blackboard:
     currentNodeName: 
     currentNode: {fileID: 0}
@@ -298,7 +300,7 @@ MonoBehaviour:
   state: 0
   isStarted: 0
   guid: 3fec0c1b71f365740a3a109f02e6fdf2
-  position: {x: 813.7653, y: 482.40002}
+  position: {x: 850.9401, y: 685.126}
   description: 
   blackBoard:
     currentNodeName: 
@@ -363,10 +365,70 @@ MonoBehaviour:
   OnAlert:
     m_PersistentCalls:
       m_Calls: []
-  child: {fileID: 5434518984481123560}
+  child: {fileID: 3240991912169395703}
   distanceType: 1
   Method: 0
   distance: 3
+  objectName: Player
+--- !u!114 &3240991912169395703
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b69911b9be6f40d49bfeaf068ef776e7, type: 3}
+  m_Name: IfXDistance
+  m_EditorClassIdentifier: Assembly-CSharp::Apis.BehaviourTreeTool.IfXDistance
+  state: 0
+  isStarted: 0
+  guid: ffa04453a7e83e546a6a207601ae017e
+  position: {x: 293.29196, y: 454.4}
+  description: 
+  blackBoard:
+    currentNodeName: 
+    currentNode: {fileID: 0}
+  _actor: {fileID: 0}
+  tree: {fileID: 0}
+  OnAlert:
+    m_PersistentCalls:
+      m_Calls: []
+  child: {fileID: 5434518984481123560}
+  distanceType: 0
+  Method: 0
+  distance: 1.5
+  objectName: Player
+--- !u!114 &4981797450394831654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b69911b9be6f40d49bfeaf068ef776e7, type: 3}
+  m_Name: IfXDistance
+  m_EditorClassIdentifier: Assembly-CSharp::Apis.BehaviourTreeTool.IfXDistance
+  state: 0
+  isStarted: 0
+  guid: 88bc6aeb0e6284144b3548bba38c9d49
+  position: {x: 528.1801, y: 457.60007}
+  description: 
+  blackBoard:
+    currentNodeName: 
+    currentNode: {fileID: 0}
+  _actor: {fileID: 0}
+  tree: {fileID: 0}
+  OnAlert:
+    m_PersistentCalls:
+      m_Calls: []
+  child: {fileID: -167650032214591892}
+  distanceType: 0
+  Method: 0
+  distance: 1.5
   objectName: Player
 --- !u!114 &5434518984481123560
 MonoBehaviour:
@@ -383,7 +445,7 @@ MonoBehaviour:
   state: 0
   isStarted: 0
   guid: 05196b4e871ce3a47ad85992eb579489
-  position: {x: 304.80017, y: 466}
+  position: {x: 304.80005, y: 561.6}
   description: 
   blackBoard:
     currentNodeName: 
@@ -434,7 +496,7 @@ MonoBehaviour:
   state: 0
   isStarted: 0
   guid: 52d5a0fd38f936544aa04e18e367e8bf
-  position: {x: 648, y: 482.40002}
+  position: {x: 687.7401, y: 689.126}
   description: 
   blackBoard:
     currentNodeName: 
