@@ -25,7 +25,7 @@ namespace Apis.BehaviourTreeTool
 
         public override void OnStart()
         {
-            target = GameObject.Find(objectName).transform;
+            TryResolveTarget();
         }
 
         public override void OnStop()
@@ -34,91 +34,50 @@ namespace Apis.BehaviourTreeTool
 
         public override State OnUpdate()
         {
-            if (target == null) return State.Failure;
+            if (child == null) return State.Failure;
 
-            var x = target.TryGetComponent(out Actor act) ? act.Position.x : target.position.x;
+            if (IsSatisfied()) return child.Update();
 
-            switch (Method)
-            {
-                case Way.Front:
-                    switch (distanceType)
-                    {
-                        case UpOrDown.Up:
-                            if ((_actor.Direction == EActorDirection.Left && _actor.Position.x - x >= distance &&
-                                 _actor.Position.x - x >= 0) ||
-                                (_actor.Direction == EActorDirection.Right && x - _actor.Position.x >= distance &&
-                                 x - _actor.Position.x >= 0))
-                                return child.Update();
-                            if (child.state == State.Running) return child.Update();
-                            break;
-                        case UpOrDown.Down:
-                            if ((_actor.Direction == EActorDirection.Left && _actor.Position.x - x <= distance &&
-                                 _actor.Position.x - x >= 0) ||
-                                (_actor.Direction == EActorDirection.Right && x - _actor.Position.x <= distance &&
-                                 x - _actor.Position.x >= 0))
-                                return child.Update();
+            // 조건을 벗어나도 이미 실행 중이던 자식은 끝까지 돌려준다
+            if (child.state == State.Running) return child.Update();
 
-                            if (child.state == State.Running) return child.Update();
-                            break;
-                    }
-
-                    child.state = State.Failure;
-                    break;
-                case Way.Back:
-                    switch (distanceType)
-                    {
-                        case UpOrDown.Up:
-                            if ((_actor.Direction == EActorDirection.Right && _actor.Position.x - x >= distance &&
-                                 _actor.Position.x - x >= 0) ||
-                                (_actor.Direction == EActorDirection.Left && x - _actor.Position.x >= distance &&
-                                 x - _actor.Position.x >= 0))
-                                return child.Update();
-
-                            if (child.state == State.Running) return child.Update();
-                            break;
-                        case UpOrDown.Down:
-                            if ((_actor.Direction == EActorDirection.Right && _actor.Position.x - x <= distance &&
-                                 _actor.Position.x - x >= 0) ||
-                                (_actor.Direction == EActorDirection.Left && x - _actor.Position.x <= distance &&
-                                 x - _actor.Position.x >= 0))
-                                return child.Update();
-
-                            if (child.state == State.Running) return child.Update();
-                            break;
-                    }
-
-                    child.state = State.Failure;
-                    break;
-            }
-
+            child.Abort();
             return State.Failure;
         }
 
         public override bool Check()
         {
-            target = GameObject.Find(objectName).transform;
-            if (target == null) return false;
-            var x = target.TryGetComponent(out Actor act) ? act.Position.x : target.position.x;
+            return IsSatisfied() && CheckChild;
+        }
 
-            switch (Method)
-            {
-                case Way.Front:
-                    if ((_actor.Direction == EActorDirection.Left && _actor.Position.x - x <= distance &&
-                         _actor.Position.x - x >= 0) ||
-                        (_actor.Direction == EActorDirection.Right && x - _actor.Position.x <= distance &&
-                         x - _actor.Position.x >= 0))
-                        return CheckChild;
-                    break;
-                case Way.Back:
-                    if ((_actor.Direction == EActorDirection.Right && _actor.Position.x - x <= distance &&
-                         _actor.Position.x - x >= 0) ||
-                        (_actor.Direction == EActorDirection.Left && x - _actor.Position.x <= distance &&
-                         x - _actor.Position.x >= 0))
-                        return CheckChild;
-                    break;
-            }
+        /// <summary>
+        ///     거리 조건 판정. OnUpdate와 Check가 갈라지지 않도록 반드시 이 함수만 사용할 것.
+        /// </summary>
+        private bool IsSatisfied()
+        {
+            if (!TryResolveTarget()) return false;
 
-            return false;
+            var targetX = target.TryGetComponent(out Actor act) ? act.Position.x : target.position.x;
+
+            // 액터가 바라보는 방향을 +로 둔 거리. Left = -1, Right = 1 이므로 부호만 곱하면 된다
+            var gap = (targetX - _actor.Position.x) * (int)_actor.Direction;
+            if (Method == Way.Back) gap = -gap;
+
+            if (gap < 0) return false; // 지정한 쪽(앞/뒤)에 없음
+
+            return distanceType == UpOrDown.Up ? gap >= distance : gap <= distance;
+        }
+
+        private bool TryResolveTarget()
+        {
+            if (target != null) return true;
+            if (string.IsNullOrEmpty(objectName)) return false;
+
+            // 파괴됐거나 아직 없는 경우 다음 프레임에 다시 시도한다
+            var found = GameObject.Find(objectName);
+            target = found == null ? null : found.transform;
+
+            return target != null;
         }
     }
 }

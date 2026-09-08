@@ -1,0 +1,24 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Assets/BehaviourTree/Editor/BehaviourTreeEditor.uss?fileID=7433441132597879392&amp;guid=37ab677388eae3344a75d1d93ddf5b07&amp;type=3#BehaviourTreeEditor" />
+    <uie:Toolbar name="Toolbar">
+        <uie:ToolbarMenu display-tooltip-when-elided="true" text="Assets" />
+    </uie:Toolbar>
+    <SplitView fixed-pane-initial-dimension="300">
+        <ui:VisualElement name="LeftPanel" style="width: auto; min-width: auto; min-height: auto;">
+            <SplitView orientation="Vertical" fixed-pane-initial-dimension="277">
+                <ui:VisualElement name="Inspector-container" style="height: auto; max-width: none; max-height: none; width: auto;">
+                    <ui:Label text="Inspector" display-tooltip-when-elided="true" style="background-color: rgb(38, 38, 38);" />
+                    <InspectorView />
+                </ui:VisualElement>
+                <ui:VisualElement name="blackboard-container" style="background-color: rgb(56, 56, 56);">
+                    <ui:Label text="BlackBoard" display-tooltip-when-elided="true" style="background-color: rgb(38, 38, 38);" />
+                    <ui:IMGUIContainer />
+                </ui:VisualElement>
+            </SplitView>
+        </ui:VisualElement>
+        <ui:VisualElement name="RightPanel">
+            <ui:Label text="Tree View" display-tooltip-when-elided="true" />
+            <BehaviourTreeView focusable="true" style="flex-grow: 1; width: auto;" />
+        </ui:VisualElement>
+    </SplitView>
+</ui:UXML>
