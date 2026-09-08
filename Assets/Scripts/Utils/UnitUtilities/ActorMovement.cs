@@ -81,17 +81,9 @@ public class ActorMovement // 유닛 이동관련 기능 클래스 (이동, 점�
         isSlope = UpdateIsSlope();
     }
 
-    /// <summary>
-    ///     Move()가 접지 상태를 유지하려고 중력을 0으로 만들어 둔 상태인지.
-    ///     이동이 끝난 뒤 공중에 뜨면 이 값을 보고 중력을 되돌린다.
-    ///     명시적으로 중력을 조작한 경우(SetGravityToZero/SetGravity)는 호출한 쪽이 소유권을 가지므로 해제한다.
-    /// </summary>
-    private bool stickGravityApplied;
-
     public void SetGravityToZero()
     {
         _mover.Rb.gravityScale = 0;
-        stickGravityApplied = false;
     }
 
     public void SetGravityScale(float value)
@@ -108,7 +100,6 @@ public class ActorMovement // 유닛 이동관련 기능 클래스 (이동, 점�
     public void SetGravity()
     {
         _mover.Rb.gravityScale = GravityScale;
-        stickGravityApplied = false;
     }
 
     public void ResetGravity()
@@ -187,14 +178,6 @@ public class ActorMovement // 유닛 이동관련 기능 클래스 (이동, 점�
         else
         {
             AirHoldingTime += Time.fixedDeltaTime;
-
-            /* Move()가 접지용으로 꺼둔 중력이 남은 채 공중에 뜨면 그대로 떠 있게 된다.
-               이동이 멈춘 뒤(행동트리가 공격/대기 노드로 넘어간 경우 등) 발판이 사라지는 상황이 이에 해당한다. */
-            if (stickGravityApplied)
-            {
-                _mover.Rb.gravityScale = GravityScale;
-                stickGravityApplied = false;
-            }
         }
     }
 
@@ -343,12 +326,10 @@ public class ActorMovement // 유닛 이동관련 기능 클래스 (이동, 점�
             if (!isStick)
             {
                 _mover.Rb.gravityScale = GravityScale;
-                stickGravityApplied = false;
             }
             else
             {
                 _mover.Rb.gravityScale = 0;
-                stickGravityApplied = true;
             }
 
             // MoveSpeed 100 = 1unit/s
