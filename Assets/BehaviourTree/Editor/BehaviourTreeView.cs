@@ -128,7 +128,12 @@ public class BehaviourTreeView : GraphView
                 types = TypeCache.GetTypesDerivedFrom(type);
 
                 foreach (var t in types)
+                {
+                    // 추상 중간 클래스(MovementActionNode 등)는 인스턴스를 만들 수 없으므로 메뉴에서 뺀다
+                    if (t.IsAbstract) continue;
+
                     evt.menu.AppendAction($"Action/{type.Name}/{t.Name}", _ => { CreateNode(t, nodePosition); });
+                }
 
                 evt.menu.AppendAction($"Action/{type.Name}/Create New Script", _ =>
                     {
@@ -153,7 +158,11 @@ public class BehaviourTreeView : GraphView
                 types = TypeCache.GetTypesDerivedFrom(type);
 
                 foreach (var t in types)
+                {
+                    if (t.IsAbstract) continue;
+
                     evt.menu.AppendAction($"Composite/{type.Name}/{t.Name}", _ => { CreateNode(t, nodePosition); });
+                }
 
                 evt.menu.AppendAction($"Composite/{type.Name}/Create New Script", _ =>
                     {
@@ -179,7 +188,11 @@ public class BehaviourTreeView : GraphView
                 types = TypeCache.GetTypesDerivedFrom(type);
 
                 foreach (var t in types)
+                {
+                    if (t.IsAbstract) continue;
+
                     evt.menu.AppendAction($"Decorator/{type.Name}/{t.Name}", _ => { CreateNode(t, nodePosition); });
+                }
 
                 evt.menu.AppendAction($"Decorator/{type.Name}/Create New Script", _ =>
                     {

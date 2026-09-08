@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Apis.BehaviourTreeTool
 {
-    public class MoveNode : CommonActionNode
+    public class MoveNode : MovementActionNode
     {
         public float time;
         private IMovable mover;
