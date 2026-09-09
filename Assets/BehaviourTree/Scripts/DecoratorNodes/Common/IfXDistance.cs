@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Apis.BehaviourTreeTool
 {
@@ -13,7 +13,10 @@ namespace Apis.BehaviourTreeTool
         public enum Way
         {
             Front,
-            Back
+            Back,
+
+            /// <summary>액터가 어느 쪽을 보든 상관없이 절대 거리로만 판정한다.</summary>
+            Any
         }
 
         public UpOrDown distanceType;
@@ -58,10 +61,22 @@ namespace Apis.BehaviourTreeTool
             if (!TryResolveTarget()) return false;
 
             var targetX = target.TryGetComponent(out Actor act) ? act.Position.x : target.position.x;
+            var gap = targetX - _actor.Position.x;
 
-            // 액터가 바라보는 방향을 +로 둔 거리. Left = -1, Right = 1 이므로 부호만 곱하면 된다
-            var gap = (targetX - _actor.Position.x) * (int)_actor.Direction;
-            if (Method == Way.Back) gap = -gap;
+            // 액터가 바라보는 방향을 +로 둔다. Left = -1, Right = 1 이므로 부호만 곱하면 된다
+            switch (Method)
+            {
+                case Way.Front:
+                    gap *= (int)_actor.Direction;
+                    break;
+                case Way.Back:
+                    gap *= -(int)_actor.Direction;
+                    break;
+                case Way.Any:
+                    // 방향을 보지 않으므로 몸을 돌려도 판정이 뒤집히지 않는다
+                    gap = Mathf.Abs(gap);
+                    break;
+            }
 
             if (gap < 0) return false; // 지정한 쪽(앞/뒤)에 없음
 
