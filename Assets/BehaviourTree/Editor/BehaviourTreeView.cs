@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Apis.BehaviourTreeTool;
@@ -123,11 +123,11 @@ public class BehaviourTreeView : GraphView
                 if (type.BaseType == typeof(ActionNode))
                     baseTypes.Add(type);
 
-            foreach (var type in baseTypes)
+            foreach (var type in SortedByName(baseTypes))
             {
                 types = TypeCache.GetTypesDerivedFrom(type);
 
-                foreach (var t in types)
+                foreach (var t in SortedByName(types))
                 {
                     // 추상 중간 클래스(MovementActionNode 등)는 인스턴스를 만들 수 없으므로 메뉴에서 뺀다
                     if (t.IsAbstract) continue;
@@ -153,11 +153,11 @@ public class BehaviourTreeView : GraphView
                 if (type.BaseType == typeof(CompositeNode))
                     baseTypes.Add(type);
 
-            foreach (var type in baseTypes)
+            foreach (var type in SortedByName(baseTypes))
             {
                 types = TypeCache.GetTypesDerivedFrom(type);
 
-                foreach (var t in types)
+                foreach (var t in SortedByName(types))
                 {
                     if (t.IsAbstract) continue;
 
@@ -183,11 +183,11 @@ public class BehaviourTreeView : GraphView
                 if (type.BaseType == typeof(DecoratorNode))
                     baseTypes.Add(type);
 
-            foreach (var type in baseTypes)
+            foreach (var type in SortedByName(baseTypes))
             {
                 types = TypeCache.GetTypesDerivedFrom(type);
 
-                foreach (var t in types)
+                foreach (var t in SortedByName(types))
                 {
                     if (t.IsAbstract) continue;
 
@@ -205,6 +205,12 @@ public class BehaviourTreeView : GraphView
             evt.menu.AppendAction("Decorator/Create New Type",
                 _ => { EditorWindow.GetWindow(typeof(DecoratorTypeWindow)); });
         }
+    }
+
+    // 메뉴 항목이 추가된 순서대로 표시되므로, 이름순으로 정렬해서 넣는다
+    private static IEnumerable<Type> SortedByName(IEnumerable<Type> types)
+    {
+        return types.OrderBy(type => type.Name, StringComparer.OrdinalIgnoreCase);
     }
 
     private void CreateNode(Type type, Vector2 pos)
