@@ -637,10 +637,16 @@ actor.AddEvent(EventType.OnHit, OnHitHandler);
 - **강화 수치를 더할 자리가 없었습니다.** 스킬 레벨·룬·장비 효과가 겹칠 때 원본 스탯을 직접 수정하면 해제할 때 되돌릴 수가 없고, 적용 순서에 따라 결과가 달라졌습니다.
 
 ### 접근
+**스킬을 ScriptableObject로 데이터화**
 
-**① 사용 방식을 전략으로 분리**
+<img width="227" height="327" alt="image" src="https://github.com/user-attachments/assets/d2b403dd-038c-42d7-8518-71de3068c6e0" />
+<img width="225" height="513" alt="image" src="https://github.com/user-attachments/assets/6ab933f5-1249-4646-972c-4db925c5e015" />
 
-스킬을 "발동한다"가 아니라 **"어떻게 발동되는가"를 교체 가능한 축**으로 뒀습니다. `ISkillActive` 구현체만 바꾸면 같은 스킬이 즉발형에서 차지형이 됩니다.
+<br>
+
+**① 사용 방식을 전략패턴으로 분리**
+
+스킬의 쿨타임,발동 조건들을 전략패턴으로 **"교체 가능한 축**으로 뒀습니다. `ISkillActive` 구현체만 바꾸면 같은 스킬이 즉발형에서 차지형이 됩니다.
 
 ```csharp
 public interface ISkillActive
@@ -667,6 +673,20 @@ public interface ISkillActive
 
 차징 완료·취소 같은 순간은 Actor 이벤트(`OnChargeEnd`, `OnCastingCancel` 등)로 발화되므로, UI 게이지나 이펙트가 스킬을 직접 참조하지 않고 붙습니다.
 
+즉발형 스킬
+
+https://github.com/user-attachments/assets/8df994fa-3651-4e97-84a1-227d4b99dcc5
+
+차징형 스킬
+
+https://github.com/user-attachments/assets/9f6923f3-172e-4361-9823-345d56060bc1
+
+토글형 스킬
+
+https://github.com/user-attachments/assets/15e15b02-5453-4b1a-889a-65f836c4d6f7
+
+<br>
+
 **② 스탯 합성을 데코레이터로**
 
 원본을 수정하는 대신 감쌉니다.
@@ -687,6 +707,9 @@ public class SkillDecorator : ISkill
 
 `SkillTree`는 `SerializedScriptableObject`이고 `ISkillVisitor`를 구현합니다. 액티브/패시브에 각각 다른 처리를 하도록 오버로드로 분기시켰습니다.
 
+<img width="227" height="340" alt="image" src="https://github.com/user-attachments/assets/379d7577-9d8d-4614-83db-793172d97e80" />
+<img width="447" height="298" alt="image" src="https://github.com/user-attachments/assets/bc6c1cfa-51ae-411f-8af5-d920cc7db89c" />
+
 ```csharp
 public virtual void Activate(PlayerActiveSkill active, int level)   { ... }
 public virtual void Activate(PlayerPassiveSkill passive, int level) { ... }
@@ -694,20 +717,20 @@ public virtual void Activate(PlayerPassiveSkill passive, int level) { ... }
 
 스킬 쪽은 `Accept(visitor, level)`만 호출하므로, **트리 노드가 늘어도 스킬 클래스는 그대로**입니다. 이름·설명은 `LanguageManager`의 문자열 테이블에서 가져와 다국어를 지원합니다.
 
-<!-- ▼ 촬영 #6 · 스킬 사용 방식 5종 (GIF, 10~15초)
-     담을 것: 즉발 → 차지(게이지 차오름) → 캐스팅(캐스팅 바) → 토글(켜고 끄기) → 지속 순으로 하나씩 발동.
-     차징 도중 한 번 취소해서 OnChargeCancel이 도는 장면까지 넣으면 설명이 확실해집니다.
-     URL을 채운 뒤 이 주석 기호를 지우세요.
+**스킬트리 적용 예시 영상**
 
-![스킬 사용 방식 5종](URL)
--->
+<br>
 
-<!-- ▼ 촬영 #7 · 스킬트리 UI (스크린샷 1장)
-     담을 것: 스킬트리 창에서 노드 몇 개를 찍어 레벨이 오른 상태. 설명 텍스트가 보이면 좋습니다.
-     URL을 채운 뒤 이 주석 기호를 지우세요.
+- 기본 스킬 : 즉발 형태, 적 적중 시 한 번 폭발
 
-![스킬트리](URL)
--->
+https://github.com/user-attachments/assets/6c20cdb9-27b5-433f-b94d-791fd5d9d64f
+
+<br>
+
+- 스킬트리 적용 : 차징 기능, 폭발 한 번 추가
+
+https://github.com/user-attachments/assets/5681eec3-d619-420a-a7ec-bc0dcb3f605b
+
 
 <br/>
 
