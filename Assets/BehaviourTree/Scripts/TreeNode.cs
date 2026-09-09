@@ -1,3 +1,4 @@
+﻿using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
@@ -17,6 +18,12 @@ namespace Apis.BehaviourTreeTool
 
         [HideInInspector] public State state;
         [HideInInspector] public bool isStarted;
+
+        /// <summary>
+        ///     이 노드가 마지막으로 평가된 시각. state는 "마지막 결과"라서 평가되지 않은 노드에도 계속 남는다.
+        ///     지금 틱에 실제로 지나간 노드만 에디터가 색칠하도록 구분하는 용도이며, 런타임 판정에는 쓰지 않는다.
+        /// </summary>
+        [NonSerialized] public float lastEvaluatedTime = float.NegativeInfinity;
         [HideInInspector] public string guid;
         [HideInInspector] public Vector2 position;
         [TextArea] public string description;
@@ -31,6 +38,8 @@ namespace Apis.BehaviourTreeTool
 
         public virtual State Update()
         {
+            lastEvaluatedTime = Time.time;
+
             if (!isStarted)
             {
                 OnStart();
@@ -59,7 +68,9 @@ namespace Apis.BehaviourTreeTool
                 isStarted = false;
             }
 
-            state = State.Failure;
+            // 중단은 "실패"가 아니라 "평가되지 않음"이다. Failure로 덮으면 실행된 적도 없는
+            // 하위 노드까지 에디터에서 전부 빨갛게 뜬다.
+            state = State.Null;
 
             BehaviourTree.GetChildren(this).ForEach(child => child.Abort());
         }
