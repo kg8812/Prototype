@@ -202,7 +202,13 @@ SFX는 짧아서 라벨 단위로 다 올리지만, BGM은 클립 하나가 수 
 사용법은 두 단계입니다.
 
 1. 에디터에서 노드를 놓고 연결해 트리 애셋(ScriptableObject)을 만든다
-2. 몬스터 프리팹에 `BehaviourTreeRunner`를 붙이고 그 트리를 지정한다
+
+<img width="400" height="401" alt="image" src="https://github.com/user-attachments/assets/14525c9a-e316-48f1-9944-be1839892f38" />
+
+2. 유닛 프리팹에 `BehaviourTreeRunner`를 붙이고 그 트리를 지정한다
+
+<img width="430" height="168" alt="image" src="https://github.com/user-attachments/assets/5e10963f-5331-4750-8506-5f91020b624c" />
+
 
 ```csharp
 public class BehaviourTreeRunner : MonoBehaviour
@@ -218,8 +224,8 @@ public class BehaviourTreeRunner : MonoBehaviour
 
 | 종류 | 역할 | 구현 예 |
 |---|---|---|
-| `ActionNode` | 실제 행동 | `MoveNode`, `DashToPos`, `JumpNode`, `SetAnimation`, `TeleportToPos`, `BossAtk` |
-| `DecoratorNode` | 조건 · 흐름 제어 | `HpCheck`, `IfPlayerDistance`, `CoolDownCheck`, `RaycastCheck`, `RepeatNode`, `CheckPhase` |
+| `ActionNode` | 실제 행동 | `이동`, `대쉬`, `점프`, `공격`, `순간이동` 등 |
+| `DecoratorNode` | 조건 · 흐름 제어 | `체력`, `거리`, `쿨타임`, `레이캐스트`, `반복`, `페이즈체크` 등 |
 | `CompositeNode` | 자식 노드 조합 | `SequenceNode`, `SelectNode`, `ExcuteAll`, `ProbSelect`(확률 선택) |
 
 ### 문제
@@ -265,6 +271,8 @@ public virtual State Update()
 **① 새 노드는 상속만 하면 에디터 메뉴에 자동으로 뜹니다.**
 노드를 추가할 때 에디터 코드를 건드리지 않도록, `TypeCache`로 파생 타입을 훑어 컨텍스트 메뉴를 구성합니다.
 
+<img width="600" height="300" alt="image" src="https://github.com/user-attachments/assets/a1ea4b16-56d2-4768-9794-fca46cf370e9" />
+
 ```csharp
 var types = TypeCache.GetTypesDerivedFrom<ActionNode>();
 // ...
@@ -276,12 +284,17 @@ evt.menu.AppendAction($"Action/{type.Name}/{t.Name}", _ => CreateNode(t, nodePos
 **② 새 노드 스크립트를 에디터에서 바로 만듭니다.**
 그래프 우클릭 메뉴의 `Create New Script`를 누르면 템플릿을 기반으로 `.cs` 파일이 생성되고, `Create New Type`은 새 카테고리 폴더와 추상 베이스까지 함께 만듭니다.
 
+<img width="400" height="211" alt="image" src="https://github.com/user-attachments/assets/2e76a577-6f03-4f74-a9bc-09c8cecfdc0a" />
+<img width="325" height="202" alt="image" src="https://github.com/user-attachments/assets/1ce7deaf-6175-4afb-933d-ac04878a541c" />
+
 ```csharp
 var template = File.ReadAllText("Assets/BehaviourTree/Templates/ActionNodeTemplate.txt");
 template = template.Replace("#Name#", scriptName).Replace("#Name2#", classOriginalName);
 File.WriteAllText(scriptPath, template);
 AssetDatabase.Refresh();
 ```
+
+<img width="348" height="402" alt="image" src="https://github.com/user-attachments/assets/322ae04f-40e9-4988-a443-d330cd847cb3" />
 
 생성된 파일은 `OnStart` / `OnStop` / `OnUpdate` 뼈대만 있는 상태라, 바로 내용만 채우면 됩니다. 노드를 하나 늘리는 데 드는 작업이 "파일 만들고 → 폴더 정하고 → 베이스 상속하고"에서 **버튼 하나**로 줄었습니다.
 
@@ -299,12 +312,18 @@ tree.Init(actor, Repeat);
 **⑤ 실행 중인 노드를 추적합니다.**
 `BlackBoard`가 노드 간 공유 상태와 현재 실행 노드를 들고 있어서, 에디터에서 플레이 중 어느 노드가 도는지 볼 수 있습니다. AI가 의도대로 안 움직일 때 디버깅 시간이 가장 많이 줄어든 부분입니다.
 
-<!-- ▼ 촬영 #2 · Behaviour Tree 에디터 조작 (GIF, 8~12초)
-     담을 것: 노드를 드래그해 배치 → 포트 연결 → 플레이 진입 → 실행 중인 노드가 하이라이트되는 흐름
-     URL을 채운 뒤 이 주석 기호를 지우세요.
+<br>
 
-![Behaviour Tree 에디터 조작](URL)
--->
+**BehaviourTree 조작 영상**
+
+https://github.com/user-attachments/assets/2cf4a363-a5d1-42a7-891a-cb034e8192c5
+
+<br>
+
+**BehaviourTree 작동 영상**
+
+https://github.com/user-attachments/assets/2c2b9840-01e5-4876-b491-c65adf0467b5
+
 
 <br/>
 
