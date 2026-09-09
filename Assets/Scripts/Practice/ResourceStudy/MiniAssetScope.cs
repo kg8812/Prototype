@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -11,7 +12,7 @@ public class MiniAssetScope : IDisposable
     {
         readonly string address;
         private readonly Type type;
-
+        
         public AssetKey(string address, Type type)
         {
             this.address = address;
@@ -42,25 +43,44 @@ public class MiniAssetScope : IDisposable
 
     public int handleCount => _handles.Count;
     
-    public T Load<T>(string address) where T : UnityEngine.Object
+    private bool _disposed;
+
+    void Release(AsyncOperationHandle handle)
+    {
+        Addressables.Release(handle);
+        releaseCount++;
+    }
+    
+    public async Awaitable<T> LoadAsync<T>(string address) where T : UnityEngine.Object
     {
         AssetKey key = new AssetKey(address, typeof(T));
+
+        if (!_handles.TryGetValue(key, out var handle))
+        {
+            handle = Addressables.LoadAssetAsync<T>(address);
+            loadCount++;
+            _handles.Add(key, handle);
+        }
         
-        if(_handles.TryGetValue(key, out var temp)) return (T)temp.Result;
+        while (handle.IsValid() && !handle.IsDone)
+        {
+            await Awaitable.NextFrameAsync();
+        }
 
-        var handle = Addressables.LoadAssetAsync<T>(address);
-        handle.WaitForCompletion();
-
+        if (_disposed)
+        {
+            if(handle.IsValid()) Release(handle);
+            return null;
+        }
         if (handle.IsValid() && handle.Status == AsyncOperationStatus.Succeeded)
         {
-            _handles.Add(key, handle);
-            loadCount++;
-            return handle.Result;
+            return (T)handle.Result;
         }
 
         if (handle.IsValid())
         {
-            Addressables.Release(handle);
+            _handles.Remove(key);
+            Release(handle);
         }
         
         Debug.LogWarning($"{address} 로드에 실패했습니다");
@@ -75,10 +95,10 @@ public class MiniAssetScope : IDisposable
         {
             if (handle.IsValid())
             {
-                Addressables.Release(handle);
-                releaseCount++;
+                Release(handle);
             }
         }
-        
+
+        _disposed = true;
     }
 }

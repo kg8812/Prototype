@@ -5,17 +5,21 @@ public class MiniScopeTest : MonoBehaviour
 {
     private MiniAssetScope scope;
 
-    private void Start()
+    private async void Start()
     {
         scope = new();
-        var triangle = scope.Load<GameObject>("Triangle");
-        Debug.Log(triangle);
-        var triangle2 = scope.Load<GameObject>("Triangle");
+
+        Debug.Log("start: " + Time.frameCount);
+        var a = scope.LoadAsync<GameObject>("Triangle");
+        
         scope.Dispose();
-        Debug.Log(ReferenceEquals(triangle,triangle2));
-        Debug.Log(scope.LoadCount + ","+ scope.ReleaseCount);
-        Debug.Log(scope.handleCount);
+
+        Debug.Log("dispose: " + Time.frameCount);
         
+        var r = await a;
         
+        Debug.Log("return: " + Time.frameCount);
+        Debug.Log(r == null);
+        Debug.Log(scope.LoadCount + "," + scope.ReleaseCount + "," + scope.handleCount);
     }
 }
