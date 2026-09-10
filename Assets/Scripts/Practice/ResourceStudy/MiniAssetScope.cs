@@ -51,7 +51,7 @@ public class MiniAssetScope : IDisposable
         releaseCount++;
     }
     
-    public async Awaitable<T> LoadAsync<T>(string address) where T : UnityEngine.Object
+    public async Awaitable<T> LoadAsync<T>(string address , CancellationToken token = default) where T : UnityEngine.Object
     {
         AssetKey key = new AssetKey(address, typeof(T));
 
@@ -64,6 +64,11 @@ public class MiniAssetScope : IDisposable
         
         while (handle.IsValid() && !handle.IsDone)
         {
+            if (token.IsCancellationRequested)
+            {
+                Debug.LogWarning($"{address} 로드가 취소됐습니다.");
+                return null;
+            }
             await Awaitable.NextFrameAsync();
         }
 
