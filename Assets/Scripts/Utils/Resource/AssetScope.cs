@@ -34,6 +34,10 @@ namespace Default
         // 로그 식별용 이름("Global" / "Scene"). 동작에는 관여하지 않는다.
         private readonly string _name;
 
+        // Dispose가 끝난 스코프는 다시 반납할 기회가 없다.
+        // 씬 전환 중에 끝난 비동기 로드가 늦게 돌아오는 경우를 식별하기 위해 상태를 남긴다.
+        private bool _disposed;
+
         public AssetScope(string name)
         {
             _name = name;
@@ -53,6 +57,8 @@ namespace Default
             _assets.Clear();
             _byAddress.Clear();
             _labelAssets.Clear();
+
+            _disposed = true;
         }
 
         #region 동기 조회
@@ -301,7 +307,18 @@ namespace Default
             if (TryGetCached<TAsset>(address, out var hit)) return hit;
 
             var handle = Addressables.LoadAssetAsync<TAsset>(address);
-            await WaitFor(handle, ct);
+
+            try
+            {
+                await WaitFor(handle, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                // 취소 예외는 Register를 건너뛰고 빠져나간다.
+                // 이 핸들은 아직 장부에 들어간 적이 없어 주인이 없으므로 여기서 반납한다.
+                if (handle.IsValid()) Addressables.Release(handle);
+                throw;
+            }
 
             return Register<TAsset>(address, handle);
         }
@@ -406,6 +423,16 @@ namespace Default
         /// </summary>
         private TAsset Register<TAsset>(string address, AsyncOperationHandle<TAsset> handle) where TAsset : Object
         {
+            // [수명] 이미 Dispose된 스코프에는 등록하지 않는다.
+            // 장부에 넣어도 이 스코프는 다시 Dispose되지 않으므로 반납할 사람이 사라진다.
+            // 받은 자리에서 즉시 반납하고, 곧 파기될 애셋을 호출부에 넘기지 않는다.
+            if (_disposed)
+            {
+                Debug.LogWarning($"[AssetScope:{_name}] '{address}' arrived after Dispose. Releasing immediately.");
+                if (handle.IsValid()) Addressables.Release(handle);
+                return null;
+            }
+
             if (handle.Status != AsyncOperationStatus.Succeeded || handle.Result == null)
             {
                 Debug.LogError($"[AssetScope:{_name}] Failed to load '{address}' as {typeof(TAsset).Name}.");
