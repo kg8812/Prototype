@@ -22,28 +22,6 @@
 
 <br/>
 
-**미리보기**
-
-────────────────────────────────────────────────────────────────
-
-[Behaviour Tree 에디터]
-
-https://github.com/user-attachments/assets/2c2b9840-01e5-4876-b491-c65adf0467b5
-
-[UI 포커스 네비게이션]
-
-https://github.com/user-attachments/assets/f169a3b6-6434-4b5f-8cda-8bc81ba41ea8
-
-
-[스킬 사용 방식]
-
-https://github.com/user-attachments/assets/9f6923f3-172e-4361-9823-345d56060bc1
-
-────────────────────────────────────────────────────────────────
-
-
-<br/>
-
 ## 목차
 
 - [핵심 시스템](#핵심-시스템)
