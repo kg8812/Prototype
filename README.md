@@ -768,6 +768,21 @@ public bool CheckDuplicationAtk(AttackObject atkObj)
     => recentHitInfo != Guid.Empty && atkObj.firedAtkGuid == recentHitInfo;
 ```
 
+**공격 오브젝트 설정**
+
+공격 설정은 Scriptable로 데이터화해서 사용하며, 컴포넌트에서 갈아 끼울 수 있도록 설계했습니다.
+
+<img width="430" height="137" alt="image" src="https://github.com/user-attachments/assets/167a7f91-2cd0-4c09-be72-20ba3877877a" />
+
+<img width="246" height="277" alt="image" src="https://github.com/user-attachments/assets/86218d27-d361-4497-8794-9c49f4a4b6ac" />
+
+<br>
+
+**틱 공격**
+
+https://github.com/user-attachments/assets/1ae7c02e-2b9e-441c-b038-6d6364d73985
+
+
 ### 축 3 — 투사체 (`Projectile`)
 
 물리 파라미터(중력·가속도·최대 이동거리·초기 속도·방향 회전·속도 0 처리)를 인스펙터에서 조절하고, **충돌 대상별로 다른 반응**을 지정합니다.
@@ -785,7 +800,19 @@ public enum ProjectileConflictType
 
 벽 / 바닥 / 타겟 / 보스에 각각 다른 타입을 줄 수 있어서, "벽에는 반사되고 적은 관통하는" 투사체 같은 조합이 설정만으로 나옵니다.
 
+<img width="455" height="345" alt="image" src="https://github.com/user-attachments/assets/37d892bd-41f5-4442-8db0-1a28f99838d3" />
+
+<br>
+
+**투사체 시연**
+
+https://github.com/user-attachments/assets/c4a3816d-7abb-4c05-a59d-29970daefe7c
+
+<br>
+
 ### 확장은 컴포넌트 조합으로
+
+<img width="422" height="351" alt="image" src="https://github.com/user-attachments/assets/b90a7b68-f511-45c4-bd62-78f684a865af" />
 
 기능을 상속으로 늘리지 않고 `ProjectileExtension` 컴포넌트를 붙이는 방식입니다. Odin의 `[Button]`으로 **인스펙터에서 드롭다운으로 추가**할 수 있게 해서 기획자도 조합할 수 있습니다.
 
@@ -798,22 +825,6 @@ public enum ProjectileConflictType
 | `SoundWaveExtension` | 점점 커지거나 작아짐 |
 
 파생 타입으로 `Boomerang`, `CircleAroundProjectile`, `Grab` 등이 있습니다.
-
-<!-- ▼ 촬영 #9 · 투사체 확장 조합 (GIF, 8~12초)
-     담을 것: 유도 → 벽 반사 → 적 관통(관통마다 크기 변화) → 파괴 시 방사체 생성 순으로.
-     같은 프리팹에서 설정만 바꿔 다르게 날아간다는 게 보이면 가장 좋습니다.
-     URL을 채운 뒤 이 주석 기호를 지우세요.
-
-![투사체 확장 조합](URL)
--->
-
-<!-- ▼ 촬영 #10 · 판정 방식 차이 (GIF, 5~8초)
-     담을 것: Tick 장판 위에 서 있을 때 주기적으로 데미지가 들어가는 장면과,
-     Once 판정 공격이 같은 대상을 한 번만 때리는 장면 비교.
-     URL을 채운 뒤 이 주석 기호를 지우세요.
-
-![판정 방식](URL)
--->
 
 </details>
 
@@ -1241,14 +1252,7 @@ Assets/
 
   #    자리                    형식        내용                                     우선순위
   ──────────────────────────────────────────────────────────────
-  1    최상단 히어로           이미지 4    #2/#4/#6/#9에서 대표 프레임 추출         높음
-  2    Behaviour Tree          GIF         노드 배치·연결 + 실행 노드 하이라이트     높음
-  3    UI 어떤기능인가         스크린샷    HUD + 팝업 스택 + 월드 HP바 동시 표시     보통
-  4    UI 마지막               GIF         패드 그리드 탐색 + 창 간 포커스 이동      높음
   5    Actor 전투 흐름         GIF         일반 → 크리 → 백어택 데미지 차이          보통
-  6    스킬 마지막             GIF         즉발/차지/캐스팅/토글/지속 + 차징 취소    높음
-  7    스킬 마지막             스크린샷    스킬트리 창                               낮음
-  8    리소스 마지막           스크린샷 2  프로파일러 before / after (44ade73 비교)  ★최우선
   9    AttackObject            GIF         유도 → 반사 → 관통 → 방사                 보통
   10   AttackObject            GIF         Tick 장판 vs Once 판정 비교               낮음
   11   버프 마지막             GIF         독 부여 → 도트뎀 → 아이콘 스택 → 해제     보통
