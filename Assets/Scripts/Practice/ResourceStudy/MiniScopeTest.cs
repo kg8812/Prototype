@@ -2,6 +2,8 @@ using System;
 using System.Threading;
 using Default;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 public class MiniScopeTest : MonoBehaviour
 {
@@ -19,5 +21,6 @@ public class MiniScopeTest : MonoBehaviour
         var r = await a;
 
         Debug.Log($"[실물] 복귀 후 old={old.LoadedCount} / new={AssetRegistry.Scene.LoadedCount} / r==null:{r == null}");
+
     }
 }

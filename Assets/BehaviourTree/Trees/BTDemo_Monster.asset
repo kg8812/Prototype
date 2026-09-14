@@ -15,7 +15,7 @@ MonoBehaviour:
   state: 0
   isStarted: 0
   guid: b0506177be7d46c4f8455c3e71957518
-  position: {x: 79.95998, y: 461.60007}
+  position: {x: 8.000046, y: 469.59998}
   description: 
   blackBoard:
     currentNodeName: 
@@ -40,7 +40,7 @@ MonoBehaviour:
   state: 0
   isStarted: 0
   guid: d0280a4db72498a4c8c68775733b0e2f
-  position: {x: -242.20003, y: 418.2001}
+  position: {x: -238.79189, y: 424.8}
   description: 
   blackBoard:
     currentNodeName: 
@@ -98,7 +98,7 @@ MonoBehaviour:
   state: 0
   isStarted: 0
   guid: c81bfbaf8ae16584197bb545ac0f387a
-  position: {x: -234.4, y: 524.6401}
+  position: {x: -240.39192, y: 538.39996}
   description: 
   blackBoard:
     currentNodeName: 
@@ -126,7 +126,7 @@ MonoBehaviour:
   state: 0
   isStarted: 0
   guid: 2bc5563118fdfec4993cd05b07d8e0c3
-  position: {x: -2.4000244, y: 167.99994}
+  position: {x: 89.59997, y: 163.4008}
   description: 
   blackBoard:
     currentNodeName: 
@@ -156,7 +156,7 @@ MonoBehaviour:
   state: 0
   isStarted: 0
   guid: 0fa5c50b979e662419778d4341f9e295
-  position: {x: 0, y: 0}
+  position: {x: 16.000051, y: -5.656227}
   description: 
   blackBoard:
     currentNodeName: 
@@ -274,7 +274,7 @@ MonoBehaviour:
   state: 0
   isStarted: 0
   guid: 6e4285f439cce594e9de02c2d5961721
-  position: {x: -154.75996, y: 659.2}
+  position: {x: -160.39186, y: 672.8}
   description: 
   blackBoard:
     currentNodeName: 
@@ -325,7 +325,7 @@ MonoBehaviour:
   state: 0
   isStarted: 0
   guid: 0bbbd4639dda1034680d11686e2171ca
-  position: {x: -127.200035, y: 320.00003}
+  position: {x: -226.39992, y: 281.82626}
   description: 
   blackBoard:
     currentNodeName: 
@@ -427,7 +427,7 @@ MonoBehaviour:
       m_Calls: []
   child: {fileID: -167650032214591892}
   distanceType: 0
-  Method: 0
+  Method: 2
   distance: 1.5
   objectName: Player
 --- !u!114 &5434518984481123560
@@ -471,7 +471,7 @@ MonoBehaviour:
   state: 0
   isStarted: 0
   guid: e73f69dc5d0e99945a42b3bb6fe45722
-  position: {x: -355.96008, y: 651.16016}
+  position: {x: -361.99188, y: 664.8}
   description: 
   blackBoard:
     currentNodeName: 
