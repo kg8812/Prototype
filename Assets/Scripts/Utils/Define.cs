@@ -1,3 +1,4 @@
+using Default;
 using PlayerState;
 
 public class Define
@@ -74,14 +75,12 @@ public class Define
     public struct SoundMixer
     {
         // 애셋 주소는 Assets/Sounds/SoundMixer.mixer 기준. 아래 그룹들은 그 서브애셋이다.
-        public const string AudioMixer = "SoundMixer";
-        public const string BGMMixer = "SoundMixer[BGM]";
-        public const string SFXMixer = "SoundMixer[SFX]";
-        public const string UIMixer = "SoundMixer[UI]";
-        public const string AmbienceMixer = "SoundMixer[Ambience]";
-        public const string MasterMixer = "SoundMixer[Master]";
-        
-
+        public static readonly AssetAddress AudioMixer = new("SoundMixer", AssetLifetime.Global);
+        public static readonly AssetAddress BGMMixer = new("SoundMixer[BGM]", AssetLifetime.Global);
+        public static readonly AssetAddress SFXMixer = new("SoundMixer[SFX]", AssetLifetime.Global);
+        public static readonly AssetAddress UIMixer = new("SoundMixer[UI]", AssetLifetime.Global);
+        public static readonly AssetAddress AmbienceMixer = new("SoundMixer[Ambience]", AssetLifetime.Global);
+        public static readonly AssetAddress MasterMixer = new("SoundMixer[Master]", AssetLifetime.Global);
     }
     public struct BGMList
     {
@@ -124,7 +123,7 @@ public class Define
 
     public static class CommonObjects
     {
-        public const string DmgText = "DmgText";
+        public static readonly AssetAddress DmgText = new("DmgText", AssetLifetime.Global);
     }
 
     public static class AccessoryObjects
@@ -145,7 +144,7 @@ public class Define
 
     public class PlayerData
     {
-        public const string Player1 = "Player1Data";
+        public static readonly AssetAddress Player1 = new("Player1Data", AssetLifetime.Global);
     }
 
     #endregion
@@ -168,8 +167,8 @@ public class Define
 
     public class ActorCommands
     {
-        public const string EndWeaponSkill = "EndWeaponSkill";
-        public const string EndActiveSkill = "EndActiveSkill";
+        public static readonly AssetAddress EndWeaponSkill = new("EndWeaponSkill", AssetLifetime.Global);
+        public static readonly AssetAddress EndActiveSkill = new("EndActiveSkill", AssetLifetime.Global);
     }
 
     #endregion
