@@ -22,23 +22,6 @@
 
 <br/>
 
-<!--
-────────────────────────────────────────────────────────────────
-촬영 #1 · 대표 이미지 4컷
-아래 #2 / #4 / #6 / #9 GIF에서 대표 프레임을 뽑아 쓰면 따로 찍을 필요가 없습니다.
-URL을 채운 뒤 이 주석 기호를 지우세요.
-
-|  |  |
-|:---:|:---:|
-| ![Behaviour Tree 에디터](URL) | ![UI 포커스 네비게이션](URL) |
-| **Behaviour Tree 에디터** — 노드 조립으로 AI 구성 | **UI 네비게이션** — 패드/키보드 그룹 포커스 이동 |
-| ![스킬 사용 방식](URL) | ![투사체 확장](URL) |
-| **스킬 5종** — 즉발/차지/캐스팅/토글/지속 | **투사체** — 유도 · 관통 · 반사 · 방사 |
-────────────────────────────────────────────────────────────────
--->
-
-<br/>
-
 ## 목차
 
 - [핵심 시스템](#핵심-시스템)
@@ -72,6 +55,7 @@ URL을 채운 뒤 이 주석 기호를 지우세요.
 
 ### 어떤 기능인가
 
+모든 리소스를 ResourceUtil 한 곳에 접근해서 로드하고 가져올 수 있는 스크립트입니다.
 저는 Addressables를 이용하여 비동기로 리소스를 관리하는 형식을 사용합니다.
 
 Addressables은 주소로 리소스를 관리하고, 비동기로 불러올 수 있는 유니티 기능입니다. 리소스를 한 번에 불러오면 화면이 순간적으로 멈추는 현상이 생기는데, Addressables를 쓰면 이런 끊김 없이 리소스를 불러올 수 있습니다. 다만 이 기능을 여러 코드에서 각자 사용하면 "누가 언제 리소스를 정리해야 하는지"가 헷갈리기 쉬워서, 이를 한곳에서 관리하는 레이어를 직접 만들어 사용하고 있습니다.
@@ -202,7 +186,13 @@ SFX는 짧아서 라벨 단위로 다 올리지만, BGM은 클립 하나가 수 
 사용법은 두 단계입니다.
 
 1. 에디터에서 노드를 놓고 연결해 트리 애셋(ScriptableObject)을 만든다
-2. 몬스터 프리팹에 `BehaviourTreeRunner`를 붙이고 그 트리를 지정한다
+
+<img width="400" height="401" alt="image" src="https://github.com/user-attachments/assets/14525c9a-e316-48f1-9944-be1839892f38" />
+
+2. 유닛 프리팹에 `BehaviourTreeRunner`를 붙이고 그 트리를 지정한다
+
+<img width="430" height="168" alt="image" src="https://github.com/user-attachments/assets/5e10963f-5331-4750-8506-5f91020b624c" />
+
 
 ```csharp
 public class BehaviourTreeRunner : MonoBehaviour
@@ -218,8 +208,8 @@ public class BehaviourTreeRunner : MonoBehaviour
 
 | 종류 | 역할 | 구현 예 |
 |---|---|---|
-| `ActionNode` | 실제 행동 | `MoveNode`, `DashToPos`, `JumpNode`, `SetAnimation`, `TeleportToPos`, `BossAtk` |
-| `DecoratorNode` | 조건 · 흐름 제어 | `HpCheck`, `IfPlayerDistance`, `CoolDownCheck`, `RaycastCheck`, `RepeatNode`, `CheckPhase` |
+| `ActionNode` | 실제 행동 | `이동`, `대쉬`, `점프`, `공격`, `순간이동` 등 |
+| `DecoratorNode` | 조건 · 흐름 제어 | `체력`, `거리`, `쿨타임`, `레이캐스트`, `반복`, `페이즈체크` 등 |
 | `CompositeNode` | 자식 노드 조합 | `SequenceNode`, `SelectNode`, `ExcuteAll`, `ProbSelect`(확률 선택) |
 
 ### 문제
@@ -265,6 +255,8 @@ public virtual State Update()
 **① 새 노드는 상속만 하면 에디터 메뉴에 자동으로 뜹니다.**
 노드를 추가할 때 에디터 코드를 건드리지 않도록, `TypeCache`로 파생 타입을 훑어 컨텍스트 메뉴를 구성합니다.
 
+<img width="600" height="300" alt="image" src="https://github.com/user-attachments/assets/a1ea4b16-56d2-4768-9794-fca46cf370e9" />
+
 ```csharp
 var types = TypeCache.GetTypesDerivedFrom<ActionNode>();
 // ...
@@ -276,12 +268,17 @@ evt.menu.AppendAction($"Action/{type.Name}/{t.Name}", _ => CreateNode(t, nodePos
 **② 새 노드 스크립트를 에디터에서 바로 만듭니다.**
 그래프 우클릭 메뉴의 `Create New Script`를 누르면 템플릿을 기반으로 `.cs` 파일이 생성되고, `Create New Type`은 새 카테고리 폴더와 추상 베이스까지 함께 만듭니다.
 
+<img width="400" height="211" alt="image" src="https://github.com/user-attachments/assets/2e76a577-6f03-4f74-a9bc-09c8cecfdc0a" />
+<img width="325" height="202" alt="image" src="https://github.com/user-attachments/assets/1ce7deaf-6175-4afb-933d-ac04878a541c" />
+
 ```csharp
 var template = File.ReadAllText("Assets/BehaviourTree/Templates/ActionNodeTemplate.txt");
 template = template.Replace("#Name#", scriptName).Replace("#Name2#", classOriginalName);
 File.WriteAllText(scriptPath, template);
 AssetDatabase.Refresh();
 ```
+
+<img width="348" height="402" alt="image" src="https://github.com/user-attachments/assets/322ae04f-40e9-4988-a443-d330cd847cb3" />
 
 생성된 파일은 `OnStart` / `OnStop` / `OnUpdate` 뼈대만 있는 상태라, 바로 내용만 채우면 됩니다. 노드를 하나 늘리는 데 드는 작업이 "파일 만들고 → 폴더 정하고 → 베이스 상속하고"에서 **버튼 하나**로 줄었습니다.
 
@@ -299,12 +296,18 @@ tree.Init(actor, Repeat);
 **⑤ 실행 중인 노드를 추적합니다.**
 `BlackBoard`가 노드 간 공유 상태와 현재 실행 노드를 들고 있어서, 에디터에서 플레이 중 어느 노드가 도는지 볼 수 있습니다. AI가 의도대로 안 움직일 때 디버깅 시간이 가장 많이 줄어든 부분입니다.
 
-<!-- ▼ 촬영 #2 · Behaviour Tree 에디터 조작 (GIF, 8~12초)
-     담을 것: 노드를 드래그해 배치 → 포트 연결 → 플레이 진입 → 실행 중인 노드가 하이라이트되는 흐름
-     URL을 채운 뒤 이 주석 기호를 지우세요.
+<br>
 
-![Behaviour Tree 에디터 조작](URL)
--->
+**BehaviourTree 조작 영상**
+
+https://github.com/user-attachments/assets/2cf4a363-a5d1-42a7-891a-cb034e8192c5
+
+<br>
+
+**BehaviourTree 작동 영상**
+
+https://github.com/user-attachments/assets/2c2b9840-01e5-4876-b491-c65adf0467b5
+
 
 <br/>
 
@@ -618,10 +621,16 @@ actor.AddEvent(EventType.OnHit, OnHitHandler);
 - **강화 수치를 더할 자리가 없었습니다.** 스킬 레벨·룬·장비 효과가 겹칠 때 원본 스탯을 직접 수정하면 해제할 때 되돌릴 수가 없고, 적용 순서에 따라 결과가 달라졌습니다.
 
 ### 접근
+**스킬을 ScriptableObject로 데이터화**
 
-**① 사용 방식을 전략으로 분리**
+<img width="227" height="327" alt="image" src="https://github.com/user-attachments/assets/d2b403dd-038c-42d7-8518-71de3068c6e0" />
+<img width="225" height="513" alt="image" src="https://github.com/user-attachments/assets/6ab933f5-1249-4646-972c-4db925c5e015" />
 
-스킬을 "발동한다"가 아니라 **"어떻게 발동되는가"를 교체 가능한 축**으로 뒀습니다. `ISkillActive` 구현체만 바꾸면 같은 스킬이 즉발형에서 차지형이 됩니다.
+<br>
+
+**① 사용 방식을 전략패턴으로 분리**
+
+스킬의 쿨타임,발동 조건들을 전략패턴으로 **"교체 가능한 축**으로 뒀습니다. `ISkillActive` 구현체만 바꾸면 같은 스킬이 즉발형에서 차지형이 됩니다.
 
 ```csharp
 public interface ISkillActive
@@ -648,6 +657,20 @@ public interface ISkillActive
 
 차징 완료·취소 같은 순간은 Actor 이벤트(`OnChargeEnd`, `OnCastingCancel` 등)로 발화되므로, UI 게이지나 이펙트가 스킬을 직접 참조하지 않고 붙습니다.
 
+즉발형 스킬
+
+https://github.com/user-attachments/assets/8df994fa-3651-4e97-84a1-227d4b99dcc5
+
+차징형 스킬
+
+https://github.com/user-attachments/assets/9f6923f3-172e-4361-9823-345d56060bc1
+
+토글형 스킬
+
+https://github.com/user-attachments/assets/15e15b02-5453-4b1a-889a-65f836c4d6f7
+
+<br>
+
 **② 스탯 합성을 데코레이터로**
 
 원본을 수정하는 대신 감쌉니다.
@@ -668,6 +691,9 @@ public class SkillDecorator : ISkill
 
 `SkillTree`는 `SerializedScriptableObject`이고 `ISkillVisitor`를 구현합니다. 액티브/패시브에 각각 다른 처리를 하도록 오버로드로 분기시켰습니다.
 
+<img width="227" height="340" alt="image" src="https://github.com/user-attachments/assets/379d7577-9d8d-4614-83db-793172d97e80" />
+<img width="447" height="298" alt="image" src="https://github.com/user-attachments/assets/bc6c1cfa-51ae-411f-8af5-d920cc7db89c" />
+
 ```csharp
 public virtual void Activate(PlayerActiveSkill active, int level)   { ... }
 public virtual void Activate(PlayerPassiveSkill passive, int level) { ... }
@@ -675,20 +701,20 @@ public virtual void Activate(PlayerPassiveSkill passive, int level) { ... }
 
 스킬 쪽은 `Accept(visitor, level)`만 호출하므로, **트리 노드가 늘어도 스킬 클래스는 그대로**입니다. 이름·설명은 `LanguageManager`의 문자열 테이블에서 가져와 다국어를 지원합니다.
 
-<!-- ▼ 촬영 #6 · 스킬 사용 방식 5종 (GIF, 10~15초)
-     담을 것: 즉발 → 차지(게이지 차오름) → 캐스팅(캐스팅 바) → 토글(켜고 끄기) → 지속 순으로 하나씩 발동.
-     차징 도중 한 번 취소해서 OnChargeCancel이 도는 장면까지 넣으면 설명이 확실해집니다.
-     URL을 채운 뒤 이 주석 기호를 지우세요.
+**스킬트리 적용 예시 영상**
 
-![스킬 사용 방식 5종](URL)
--->
+<br>
 
-<!-- ▼ 촬영 #7 · 스킬트리 UI (스크린샷 1장)
-     담을 것: 스킬트리 창에서 노드 몇 개를 찍어 레벨이 오른 상태. 설명 텍스트가 보이면 좋습니다.
-     URL을 채운 뒤 이 주석 기호를 지우세요.
+- 기본 스킬 : 즉발 형태, 적 적중 시 한 번 폭발
 
-![스킬트리](URL)
--->
+https://github.com/user-attachments/assets/6c20cdb9-27b5-433f-b94d-791fd5d9d64f
+
+<br>
+
+- 스킬트리 적용 : 차징 기능, 폭발 한 번 추가
+
+https://github.com/user-attachments/assets/5681eec3-d619-420a-a7ec-bc0dcb3f605b
+
 
 <br/>
 
@@ -742,6 +768,21 @@ public bool CheckDuplicationAtk(AttackObject atkObj)
     => recentHitInfo != Guid.Empty && atkObj.firedAtkGuid == recentHitInfo;
 ```
 
+**공격 오브젝트 설정**
+
+공격 설정은 Scriptable로 데이터화해서 사용하며, 컴포넌트에서 갈아 끼울 수 있도록 설계했습니다.
+
+<img width="430" height="137" alt="image" src="https://github.com/user-attachments/assets/167a7f91-2cd0-4c09-be72-20ba3877877a" />
+
+<img width="246" height="277" alt="image" src="https://github.com/user-attachments/assets/86218d27-d361-4497-8794-9c49f4a4b6ac" />
+
+<br>
+
+**틱 공격**
+
+https://github.com/user-attachments/assets/1ae7c02e-2b9e-441c-b038-6d6364d73985
+
+
 ### 축 3 — 투사체 (`Projectile`)
 
 물리 파라미터(중력·가속도·최대 이동거리·초기 속도·방향 회전·속도 0 처리)를 인스펙터에서 조절하고, **충돌 대상별로 다른 반응**을 지정합니다.
@@ -759,7 +800,19 @@ public enum ProjectileConflictType
 
 벽 / 바닥 / 타겟 / 보스에 각각 다른 타입을 줄 수 있어서, "벽에는 반사되고 적은 관통하는" 투사체 같은 조합이 설정만으로 나옵니다.
 
+<img width="455" height="345" alt="image" src="https://github.com/user-attachments/assets/37d892bd-41f5-4442-8db0-1a28f99838d3" />
+
+<br>
+
+**투사체 시연**
+
+https://github.com/user-attachments/assets/c4a3816d-7abb-4c05-a59d-29970daefe7c
+
+<br>
+
 ### 확장은 컴포넌트 조합으로
+
+<img width="422" height="351" alt="image" src="https://github.com/user-attachments/assets/b90a7b68-f511-45c4-bd62-78f684a865af" />
 
 기능을 상속으로 늘리지 않고 `ProjectileExtension` 컴포넌트를 붙이는 방식입니다. Odin의 `[Button]`으로 **인스펙터에서 드롭다운으로 추가**할 수 있게 해서 기획자도 조합할 수 있습니다.
 
@@ -772,22 +825,6 @@ public enum ProjectileConflictType
 | `SoundWaveExtension` | 점점 커지거나 작아짐 |
 
 파생 타입으로 `Boomerang`, `CircleAroundProjectile`, `Grab` 등이 있습니다.
-
-<!-- ▼ 촬영 #9 · 투사체 확장 조합 (GIF, 8~12초)
-     담을 것: 유도 → 벽 반사 → 적 관통(관통마다 크기 변화) → 파괴 시 방사체 생성 순으로.
-     같은 프리팹에서 설정만 바꿔 다르게 날아간다는 게 보이면 가장 좋습니다.
-     URL을 채운 뒤 이 주석 기호를 지우세요.
-
-![투사체 확장 조합](URL)
--->
-
-<!-- ▼ 촬영 #10 · 판정 방식 차이 (GIF, 5~8초)
-     담을 것: Tick 장판 위에 서 있을 때 주기적으로 데미지가 들어가는 장면과,
-     Once 판정 공격이 같은 대상을 한 번만 때리는 장면 비교.
-     URL을 채운 뒤 이 주석 기호를 지우세요.
-
-![판정 방식](URL)
--->
 
 </details>
 
@@ -1215,14 +1252,7 @@ Assets/
 
   #    자리                    형식        내용                                     우선순위
   ──────────────────────────────────────────────────────────────
-  1    최상단 히어로           이미지 4    #2/#4/#6/#9에서 대표 프레임 추출         높음
-  2    Behaviour Tree          GIF         노드 배치·연결 + 실행 노드 하이라이트     높음
-  3    UI 어떤기능인가         스크린샷    HUD + 팝업 스택 + 월드 HP바 동시 표시     보통
-  4    UI 마지막               GIF         패드 그리드 탐색 + 창 간 포커스 이동      높음
   5    Actor 전투 흐름         GIF         일반 → 크리 → 백어택 데미지 차이          보통
-  6    스킬 마지막             GIF         즉발/차지/캐스팅/토글/지속 + 차징 취소    높음
-  7    스킬 마지막             스크린샷    스킬트리 창                               낮음
-  8    리소스 마지막           스크린샷 2  프로파일러 before / after (44ade73 비교)  ★최우선
   9    AttackObject            GIF         유도 → 반사 → 관통 → 방사                 보통
   10   AttackObject            GIF         Tick 장판 vs Once 판정 비교               낮음
   11   버프 마지막             GIF         독 부여 → 도트뎀 → 아이콘 스택 → 해제     보통
