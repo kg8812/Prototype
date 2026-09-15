@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DG.Tweening;
+using Default;
 using Spine.Unity;
 using UnityEngine;
 
@@ -21,9 +22,9 @@ namespace Apis
         }
 
         /// <summary>로딩 단계에서 미리 인스턴스를 만들어 둔다.</summary>
-        public static void PrewarmPool(string address, int count)
+        public static void PrewarmPool(string address, int count, AssetLifetime lifetime = AssetLifetime.Global)
         {
-            Pool.Prewarm(address, count);
+            Pool.Prewarm(address, count, lifetime);
         }
 
         /// <summary>씬 전환 시 게임플레이 오브젝트를 모두 파기한다.</summary>

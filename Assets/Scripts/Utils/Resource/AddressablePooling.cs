@@ -49,14 +49,15 @@ namespace Apis
 
         /// <summary>
         ///     로딩 단계에서 미리 인스턴스를 만들어 둔다. 런타임 중 첫 생성 스파이크를 없애기 위한 것.
+        ///     프리팹이 이미 다른 스코프(예: Scene)로 로드돼 있다면 같은 lifetime을 넘겨야 그 캐시를 그대로 쓴다.
         /// </summary>
-        public void Prewarm(string address, int count)
+        public void Prewarm(string address, int count, AssetLifetime lifetime = AssetLifetime.Global)
         {
             var idle = GetIdleQueue(address);
 
             for (var i = 0; i < count; i++)
             {
-                var obj = CreateNew(address);
+                var obj = CreateNew(address, lifetime);
                 if (obj == null) return; // 주소가 잘못된 경우이므로 반복해도 의미가 없다
 
                 Park(obj, idle);
@@ -147,10 +148,10 @@ namespace Apis
             _infos.Clear();
         }
 
-        private GameObject CreateNew(string address)
+        private GameObject CreateNew(string address, AssetLifetime lifetime = AssetLifetime.Global)
         {
             // 부모를 지정하지 않고 생성해 프리팹 원본 트랜스폼 값을 그대로 캡처한다.
-            var obj = ResourceUtil.Instantiate(address);
+            var obj = ResourceUtil.Instantiate(address, null, lifetime);
             if (obj == null)
             {
                 Debug.LogError($"[Pool:{_name}] Failed to instantiate '{address}'.");
