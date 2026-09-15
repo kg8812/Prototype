@@ -16,15 +16,22 @@ namespace Default
         private static SceneManifestTable _sceneManifests;
 
         /// <summary>
-        ///     이미 올라와 있는 스코프가 있으면 그걸 쓰고, 없을 때만 lifetime이 가리키는 스코프로 로드한다.
-        ///     씬 프리로드가 Scene 스코프에 올려둔 애셋을, 호출부가 lifetime을 넘기지 않아도 찾아 쓸 수 있게 하기 위한 것.
+        ///     주소가 어느 스코프 것인지 모를 때 쓰는 경로. lifetime이 가리키는 스코프로 바로 로드하며,
+        ///     그 주소가 실제로는 다른 스코프에 이미 있어도(예: 씬 프리로드) 찾아주지 않고 새로 로드한다.
+        ///     스코프를 미리 아는 주소는 <see cref="Load{T}(AssetAddress)"/>를 써서 중복 로드를 피할 것.
         /// </summary>
         public static T Load<T>(string path, AssetLifetime lifetime = AssetLifetime.Global) where T : Object
         {
-            if (AssetRegistry.Scene.TryGet<T>(path, out var inScene)) return inScene;
-            if (AssetRegistry.Global.TryGet<T>(path, out var inGlobal)) return inGlobal;
-
             return AssetRegistry.Of(lifetime).Load<T>(path);
+        }
+
+        /// <summary>
+        ///     주소에 스코프가 이미 선언돼 있으므로 Scene/Global을 라이브로 뒤지지 않고 그 스코프로 직행한다.
+        ///     씬 프리로드가 같은 주소를 다른 스코프에 올려놔도 이 선언이 우선한다.
+        /// </summary>
+        public static T Load<T>(AssetAddress address) where T : Object
+        {
+            return AssetRegistry.Of(address.Lifetime).Load<T>(address.Path);
         }
 
         public static T[] LoadAll<T>(string label, AssetLifetime lifetime = AssetLifetime.Global) where T : Object
@@ -38,6 +45,11 @@ namespace Default
             return AssetRegistry.Of(lifetime).LoadAsync<T>(path, ct);
         }
 
+        public static Awaitable<T> LoadAsync<T>(AssetAddress address, CancellationToken ct = default) where T : Object
+        {
+            return AssetRegistry.Of(address.Lifetime).LoadAsync<T>(address.Path, ct);
+        }
+
         /// <summary>
         ///     프리팹은 스코프가 핸들 하나로 보유하고, 인스턴스는 순수 Unity 오브젝트로 생성한다.
         ///     인스턴스마다 Addressables 핸들이 생기지 않으므로 풀링과 충돌하지 않으며,
@@ -46,7 +58,16 @@ namespace Default
         public static GameObject Instantiate(string path, Transform parent = null,
             AssetLifetime lifetime = AssetLifetime.Global)
         {
-            var prefab = Load<GameObject>(path, lifetime);
+            return InstantiateFrom(Load<GameObject>(path, lifetime), parent);
+        }
+
+        public static GameObject Instantiate(AssetAddress address, Transform parent = null)
+        {
+            return InstantiateFrom(Load<GameObject>(address), parent);
+        }
+
+        private static GameObject InstantiateFrom(GameObject prefab, Transform parent)
+        {
             if (prefab == null) return null;
 
             var go = Object.Instantiate(prefab);
