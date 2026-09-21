@@ -65,6 +65,9 @@ namespace Apis
 
         private void ReturnTarget(GameObject target)
         {
+            // 지연 반환(Return의 time > 0)은 씬 전환 뒤에 도착할 수 있다. 그때 target은 이미 파괴돼 있다.
+            if (target == null) return;
+
             if (target.TryGetComponent(out BoneFollower boneFollower)) Object.Destroy(boneFollower);
 
             Pool.Return(target);
