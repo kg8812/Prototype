@@ -108,7 +108,7 @@ namespace Default
             {
                 if (string.IsNullOrEmpty(entry.address)) continue;
 
-                // 프리팹을 먼저 비동기로 캐시에 올려둬야 PrewarmPool의 동기 Load가 캐시 히트로 끝난다.
+                // LoadAsync를 먼저 호출해 프리팹을 먼저 비동기로 캐시에 올려둬야 PrewarmPool의 동기 Load가 캐시 히트로 끝난다.
                 // 순서를 바꾸면 WaitForCompletion으로 프레임이 멈추고, SyncLoaded 진단에도 오탐으로 찍힌다.
                 await scope.LoadAsync<GameObject>(entry.address, ct);
                 IObjectFactory.PrewarmPool(entry.address, Mathf.Max(1, entry.count), lifetime);
