@@ -93,8 +93,12 @@ namespace Apis
 
             obj.transform.SetParent(null);
 
+            // 트랜스폼은 반환할 때가 아니라 꺼낼 때 프리팹 원래 값으로 되돌린다.
+            // 반환 시점에 바꾸면, 반환 직후 같은 오브젝트를 참조하는 코드(예: 데미지 처리 중 죽어서 반환된 대상의
+            // 위치를 읽는 명중 이펙트)가 원래 값을 읽게 된다. 꺼낼 때 덮어쓰면 반환 후 얼마나 늦게 건드려도 안전하다.
             if (_infos.TryGetValue(obj.GetInstanceID(), out var info))
             {
+                obj.transform.localPosition = info.position; // 부모가 없으므로 월드 기준 (생성 시 캡처한 값)
                 obj.transform.rotation = info.rotation;
                 obj.transform.localScale = info.scale;
             }
@@ -125,11 +129,9 @@ namespace Apis
 
             foreach (var poolObject in obj.GetComponents<IPoolObject>()) poolObject.OnReturn();
 
+            // 비활성화하고 풀 아래로 옮기기만 한다(월드 위치 유지). 트랜스폼 초기화는 Get에서 한다.
             obj.SetActive(false);
             obj.transform.SetParent(pool.transform);
-            obj.transform.localPosition = info.position;
-            obj.transform.rotation = info.rotation;
-            obj.transform.localScale = info.scale;
 
             GetIdleQueue(info.address).Enqueue(obj);
         }

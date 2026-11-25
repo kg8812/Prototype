@@ -263,6 +263,9 @@ namespace Apis
 
             firstAttackedTarget ??= targetParameters.target.gameObject;
 
+            // 명중 위치는 데미지 처리 전에 기록한다. 데미지로 대상이 죽어 풀로 반환되거나 옮겨질 수 있기 때문.
+            var hitPosition = targetParameters.target.Position;
+
             var parameters = _attacker.Attack(targetParameters);
             if (!isAttacked)
             {
@@ -280,7 +283,7 @@ namespace Apis
                 if (hitEffect != null)
                 {
                     var effect = GameManager.Factory.Get<ParticleSystem>(FactoryManager.FactoryType.Effect,
-                        hitEffect, parameters.target.Position);
+                        hitEffect, hitPosition);
                     GameManager.Factory.Return(effect.gameObject, effect.main.duration);
                 }
             }

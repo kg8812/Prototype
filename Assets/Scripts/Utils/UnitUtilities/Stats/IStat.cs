@@ -23,7 +23,9 @@ namespace Apis
             { ActorStatType.Def, false },
             { ActorStatType.AtkSpeed, true },
             { ActorStatType.MoveSpeed, true },
-            { ActorStatType.MaxHp, true }
+            { ActorStatType.MaxHp, true },
+            { ActorStatType.CritProb, true },
+            { ActorStatType.CritDmg, true }
         };
 
         public ActorStatType Type { get; }
