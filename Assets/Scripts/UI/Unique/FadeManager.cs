@@ -42,6 +42,16 @@ namespace Apis.UI
 
         Tween fadingTween;
         private bool isLoading = false;
+        /// <summary>
+        ///     페이드 없이 즉시 화면을 가리고 그대로 둔다. 다음 Fading의 페이드 아웃으로 걷힌다.
+        ///     게임 시작(Init) 때 프리로드 동안 빈 화면이 보이지 않게 쓴다.
+        /// </summary>
+        public void Cover()
+        {
+            fadingTween?.Kill();
+            canvasGroup.alpha = 1;
+            canvas.enabled = true;
+        }
         
         public void Fading(UnityAction middleAction, UnityAction endAction = null, float fadeDuration = 1f, bool isFadeIn = true, bool isFadeOut = true, bool enterDefaultState = true)
         {

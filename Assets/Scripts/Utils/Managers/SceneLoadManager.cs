@@ -47,6 +47,14 @@ namespace Apis.Managers
 
         private void Fading(Scene scene1, Scene scene2)
         {
+            // 게임 시작(Init)에서는 밝히지 않고 가려 둔다. 여기서 페이드 아웃하면 프리로드 동안 빈 화면이 보였다가
+            // 첫 씬으로 넘어갈 때 다시 암전되어 페이드가 두 번 생긴다. 첫 씬이 준비된 뒤 한 번만 밝아진다.
+            if (scene2.name == Define.SceneNames.Init)
+            {
+                FadeManager.instance.Cover();
+                return;
+            }
+
             FadeManager.instance.Fading(null, isFadeIn: false, isFadeOut: true);
         }
 
