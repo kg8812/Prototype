@@ -46,6 +46,15 @@ namespace Apis.UI
                 Effectors[i].matPropInt = Shader.PropertyToID(Effectors[i].matProperty.ToString());
                 Effectors[i].looopPropInt = Shader.PropertyToID(Effectors[i].loopProperty.ToString());
                 
+                // 머티리얼 값을 바꾸는 효과(isSetMat·isLoop)가 아니면 복제하지 않는다.
+                // UI는 같은 머티리얼끼리 묶어서 한 번에 그리는데(배칭), 그래픽마다 복제본을 쓰면 묶이지 않아
+                // 버튼 수만큼 드로우콜이 늘어난다. 색만 바꾸는 효과(isSetColor)는 Graphic.color라 복제가 필요 없다.
+                if (!Effectors[i].isSetMat && !Effectors[i].isLoop)
+                {
+                    Effectors[i].matForCode = Array.Empty<Material>();
+                    continue;
+                }
+
                 Effectors[i].matForCode = new Material[Effectors[i].graphics.Length];
                 for (int j = 0; j < Effectors[i].graphics.Length; j++)
                 {

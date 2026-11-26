@@ -70,7 +70,22 @@ namespace Managers
         {
             get
             {
-                if (_uiCam == null) _uiCam = transform.GetChild(1).GetComponent<Camera>();
+                // 별도 UI 카메라가 없으면 메인 카메라로 UI를 그린다.
+                // 자식 순서에 기대지 않고, 메인 카메라가 아닌 Camera가 붙은 자식을 찾는다
+                // (두 번째 자식이 카메라가 아닌 오브젝트면 null이 되어 캔버스가 카메라 없이 그려진다).
+                if (_uiCam == null)
+                {
+                    for (var i = 0; i < transform.childCount; i++)
+                    {
+                        if (transform.GetChild(i).TryGetComponent(out Camera cam) && cam != MainCam)
+                        {
+                            _uiCam = cam;
+                            break;
+                        }
+                    }
+
+                    if (_uiCam == null) _uiCam = MainCam;
+                }
                 return _uiCam;
             }
         }

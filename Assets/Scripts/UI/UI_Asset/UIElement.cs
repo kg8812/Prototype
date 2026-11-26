@@ -256,12 +256,13 @@ namespace Apis.UI
             SelectOn();
         }
 
-        public void OnPointerDown(PointerEventData eventData)
+        // 꾹 누르기 같은 동작을 하위 클래스에서 덧붙일 수 있도록 virtual (재정의 시 base 호출 필수)
+        public virtual void OnPointerDown(PointerEventData eventData)
         {
             PressOn();
         }
-        
-        public void OnPointerUp(PointerEventData eventData)
+
+        public virtual void OnPointerUp(PointerEventData eventData)
         {
             PressOff();
         }
